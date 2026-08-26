@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply overflow-x-hidden;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans antialiased overflow-x-hidden m-0 p-0;
+    -webkit-overflow-scrolling: touch;
+  }
+}
