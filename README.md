@@ -1,4 +1,3 @@
-```markdown
 <div align="center">
 
   <h1>🌾 AgriNexus</h1>
