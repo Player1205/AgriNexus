@@ -1,0 +1,19 @@
+{
+  "name": "agrinexus-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for AgriNexus",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network base_sepolia"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "dotenv": "^16.4.1",
+    "hardhat": "^2.19.4"
+  }
+}
