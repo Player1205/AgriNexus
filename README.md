@@ -3,11 +3,11 @@
   <h1>🌾 AgriNexus</h1>
 
   <p align="center">
-    <strong>"Maximum Backend Complexity, Zero Frontend Friction."</strong>
+    <strong>Autonomous Agricultural Verification & Pathology Intelligence Engine</strong>
   </p>
 
   <p align="center">
-    An enterprise-grade, autonomous agricultural platform engineered to eliminate counterfeit farming inputs and diagnose crop pathologies using a zero-trust multi-agent architecture.
+    An enterprise-grade, zero-trust platform engineered to eliminate counterfeit farming inputs and diagnose crop pathologies—delivering instant, localized audio guidance directly to farmers without technological friction.
   </p>
 
   <p align="center">
@@ -23,47 +23,75 @@
 
 ---
 
-> **Executive Overview:** AgriNexus bridges multi-agent LLM reasoning with deterministic real-world safety. By sandboxing model outputs through a native C++ compiled safety core, the system guarantees 100% regulatory compliance with ICAR and CIB&RC agricultural standards while recording immutable batch verification on-chain.
+> **TL;DR:** AgriNexus operates on a simple principle: **Maximum Backend Complexity, Zero Frontend Friction.** A farmer simply takes a photo of a crop leaf or seed package. In response, the system returns a plain-language audio note in their native regional dialect detailing the exact diagnosis and safety instructions. Behind the scenes, five AI agents, a deterministic C++ safety core, and an immutable blockchain ledger handle all validation seamlessly.
+
+---
+
+## 💡 What is AgriNexus? (Plain English Summary)
+
+Rural farmers frequently face two major threats:
+1. **Fake Agricultural Inputs:** Spurious seeds and adulterated pesticides that destroy crop yields and cause severe financial strain.
+2. **Dangerous AI Advice:** Generic AI chatbots that "hallucinate" incorrect chemical dosages, leading to ruined soil or illegal chemical usage.
+
+**AgriNexus solves both problems effortlessly.**
+
+### The Farmer Experience: Zero Technical Overhead
+The end user requires **no knowledge of blockchain, AI, or complex software**. They do not manage crypto wallets, pay gas fees, read dense technical manuals, or navigate multi-step forms.
+
+
+```
+
+[ 1. Snap Photo ] ──> [ 2. Tap Upload ] ──> [ 3. Listen to Regional Audio ]
+
+```
+
+1. **Snap a Picture:** The farmer uploads an image of a diseased leaf or a pesticide package label.
+2. **Automated Verification:** AgriNexus processes the image through an advanced AI and hardcoded safety network.
+3. **Instant Audio Output:** The farmer receives a spoken voice message in their regional dialect (e.g., Hindi, Punjabi) explaining exactly what is wrong, whether the input is genuine, and precisely how much water to mix with the treatment.
 
 ---
 
 ## 🛠️ Engineering Constraints & Solutions
 
-| Core Challenge | Engineering Solution | Architectural Impact |
+To make the user experience completely effortless, the underlying system handles immense structural complexity:
+
+| Engineering Constraint | Technical Solution | System Impact |
 | :--- | :--- | :--- |
-| **Spurious Inputs** | Computer Vision micro-printing audit via EfficientNet | Blocks counterfeit seed/pesticide distribution before application. |
-| **LLM Hallucinations** | Native C++17 mathematical firewall bound via `pybind11` | Overrides hazardous chemical proposals with hardcoded safety thresholds. |
-| **Web3 Friction** | Gasless account abstraction on Base Sepolia | Generates cryptographic crop passports without requiring wallet setup. |
-| **Accessibility** | Sarvam AI / Edge-TTS audio synthesis pipeline | Converts complex diagnostic reports into regional dialect voice notes. |
+| **Counterfeit Seed/Pesticide Trade** | Micro-printing analysis via EfficientNet vision model | Detects packaging anomalies before counterfeit chemicals hit the field. |
+| **LLM Safety & Hallucinations** | Native C++17 decision firewall bound via `pybind11` | Intercepts AI proposals to enforce strict, hardcoded ICAR / CIB&RC safety limits. |
+| **Blockchain Complexity** | Gasless account abstraction on Base Sepolia | Automatically anchors immutable audit records on-chain without requiring user wallets. |
+| **Literacy & Language Barriers** | Sarvam AI Bulbul V3 / Edge-TTS audio pipeline | Translates structural diagnostic data into clear, natural voice notes in local dialects. |
 
 ---
 
 ## 🔄 Dual Telemetry Workflows
 
+AgriNexus balances hyper-simple field operations with comprehensive system-wide monitoring:
+
 
 ```
 
 ┌─────────────────────────────────────────┐     ┌─────────────────────────────────────────┐
-│     A. Farmer Field Operations          │     │    B. Swarm Control Room Telemetry     │
+│     A. Farmer Field Workspace           │     │   B. Swarm Control Room Telemetry       │
 ├─────────────────────────────────────────┤     ├─────────────────────────────────────────┤
-│ • Ultra-clean single-tap interaction    │     │ • Real-time node execution graph        │
-│ • Crop leaf & package micro-print audit │ ──> │ • Live JSON state & vector search logs  │
-│ • Zero-knowledge batch verification     │     │ • C++ safety interlocks & Base hashes   │
-│ • Native voice-note diagnostic audio    │     │ • LangGraph orchestration visualization │
+│ • Single-tap image submission           │     │ • Real-time node execution graph        │
+│ • Automatic batch verification          │ ──> │ • Vector search logs & state state-machine│
+│ • Zero wallet setup or gas fees         │     │ • C++ safety interlocks & Base hashes   │
+│ • Localized voice note diagnosis        │     │ • LangGraph multi-agent execution telemetry│
 └─────────────────────────────────────────┘     └─────────────────────────────────────────┘
 
 ```
 
 ---
 
-## 🤖 Multi-Agent LangGraph Engine
+## 🤖 The 5-Agent LangGraph Engine
 
-The state graph orchestrates five isolated agents running sequential validation pipelines:
+When an image is submitted, it flows through five synchronized, specialized agents bound by a central state machine:
 
 
 ```
 
-[ Field Image Capture ]
+[ Field Image Input ]
 │
 ▼
 ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
@@ -77,66 +105,80 @@ The state graph orchestrates five isolated agents running sequential validation 
 └─────────┬────────┘      │     Agent 4      │
 │               │ Base Web3 Ledger │
 ▼               └──────────────────┘
-[ Regional Audio Note ]
+[ Regional Audio Output ]
 
 ```
 
-* **Agent 1 (Vision Pathology):** Analyzes leaf tissue anomalies and package micro-printing authenticity using an EfficientNet vision backbone.
-* **Agent 2 (Grounded RAG):** Executes semantic retrieval over a local **ChromaDB** instance containing regional ICAR agricultural guidelines and hyper-local spatial weather data.
-* **Agent 3 (C++ Safeguard Engine):** Intercepts RAG payloads and evaluates dosage bounds using a compiled C++ binary via `pybind11` to prevent illegal chemical combinations.
-* **Agent 4 (Web3 Crop Passport):** Mints immutable diagnostic dossiers to **Base Sepolia** smart contracts for transparent input provenance.
-* **Agent 5 (Vernacular Supervisor):** Synthesizes structural findings into regional dialect audio files via **Sarvam AI Bulbul V3**.
+1. **Agent 1 (Vision Pathology & Inspection):** Analyzes leaf tissue anomalies and screens package micro-printing for counterfeit markers using an EfficientNet backbone.
+2. **Agent 2 (Grounded RAG & Agronomy):** Executes semantic searches over a local **ChromaDB** vector store containing official ICAR guidelines, combining them with local weather data.
+3. **Agent 3 (C++ Safeguard Engine):** Intercepts proposed treatments and passes them into a compiled C++ binary via `pybind11`. It enforces mathematical safety boundaries for chemical mixing ratios, overriding any AI errors.
+4. **Agent 4 (Web3 Crop Passport):** Mints a cryptographically signed batch dossier to **Base Sepolia** smart contracts, maintaining transparent input history without user intervention.
+5. **Agent 5 (Vernacular Audio Supervisor):** Converts verified diagnostics into natural dialect speech via **Sarvam AI Bulbul V3** / **Edge-TTS**.
 
 ---
 
-## 📂 Monorepo Architecture
+## 🔒 Security & Mathematical Safety
+
+To prevent dangerous chemical recommendations, AgriNexus routes AI suggestions through a hardcoded C++ compiled binary. The mathematical evaluation for water-to-chemical ratios enforces strict linear bounds:
+
+$$\text{Safe Dosage } (D) = \min \left( D_{\text{RAG}}, \frac{C_{\text{max}} \times A}{\text{Dilution Factor}} \right)$$
+
+Where $C_{\text{max}}$ is the maximum allowable active ingredient per acre ($A$) under CIB&RC regulatory standards. If $D_{\text{RAG}} > D$, the C++ layer automatically overrides the LLM output and enforces $D$.
+
+---
+
+## 📂 Repository Structure
 
 ```hdfs
 agrinexus-monorepo/
-├── contracts/             # EVM Smart contracts deployed to Base Sepolia
-├── core-safety/           # Hardcoded C++ deterministic mathematical engine
+├── contracts/             # EVM Smart contracts deployed on Base Sepolia
+├── core-safety/           # Hardcoded C++ deterministic mathematical safety layer
 │   ├── src/               # Native C++ logic for dose bounds & safety rules
 │   └── bindings.cpp       # pybind11 Python wrapper module
-├── server/                # FastAPI Application & LangGraph Engine
-│   ├── agents/            # Agents 1-5 execution controllers
-│   ├── db/                # ChromaDB vector store bindings
-│   └── main.py            # API Gateway & state router
-└── web/                   # React + Vite + Tailwind Telemetry Dashboard
+├── server/                # FastAPI Application & LangGraph Orchestration State Machine
+│   ├── agents/            # Isolated agent execution modules (Agents 1-5)
+│   ├── db/                # Vector store setup (ChromaDB)
+│   └── main.py            # API gateway & state machine router
+└── web/                   # Vite + React + Tailwind Frontend (Dual Workspace)
 
 ```
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start & Setup Guide
 
 ### Prerequisites
 
-* **Python** 3.10+
-* **Node.js** v18+
-* **C++17 Compiler** (`g++` or `clang`)
-* **CMake** 3.16+
+* **Python:** v3.10+
+* **Node.js:** v18+
+* **C++ Compiler:** `g++` (v9+) or `clang` (v11+) supporting C++17
+* **CMake:** v3.16+
 
-### 1. Build Native C++ Core
+---
+
+### 1. Compile the C++ Safety Core
 
 ```bash
 cd core-safety
 mkdir build && cd build
-cmake .. && make
+cmake ..
+make
 
 ```
 
-### 2. Launch FastAPI Server
+### 2. Configure & Launch the Backend Server
 
 ```bash
 cd ../../server
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ```
 
-### 3. Run Telemetry Workspace
+### 3. Start the Frontend Telemetry Interface
 
 ```bash
 cd ../web
