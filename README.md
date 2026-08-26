@@ -19,10 +19,6 @@
     <a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="Frontend" /></a>
   </p>
 
-  <br />
-
-  <img src="https://via.placeholder.com/800x400/0f172a/6366f1?text=AgriNexus+Control+Room+%26+Field+Telemetry" alt="AgriNexus Architecture Preview" width="100%" />
-
 </div>
 
 ---
@@ -88,7 +84,7 @@ The state graph orchestrates five isolated agents running sequential validation 
 * **Agent 1 (Vision Pathology):** Analyzes leaf tissue anomalies and package micro-printing authenticity using an EfficientNet vision backbone.
 * **Agent 2 (Grounded RAG):** Executes semantic retrieval over a local **ChromaDB** instance containing regional ICAR agricultural guidelines and hyper-local spatial weather data.
 * **Agent 3 (C++ Safeguard Engine):** Intercepts RAG payloads and evaluates dosage bounds using a compiled C++ binary via `pybind11` to prevent illegal chemical combinations.
-* **Agent 4 (Web3 Crop Passport):** Mint immutable diagnostic dossiers to **Base Sepolia** smart contracts for transparent input provenance.
+* **Agent 4 (Web3 Crop Passport):** Mints immutable diagnostic dossiers to **Base Sepolia** smart contracts for transparent input provenance.
 * **Agent 5 (Vernacular Supervisor):** Synthesizes structural findings into regional dialect audio files via **Sarvam AI Bulbul V3**.
 
 ---
