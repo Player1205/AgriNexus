@@ -1,166 +1,147 @@
 ```markdown
 <div align="center">
 
-  <img src="https://via.placeholder.com/800x200?text=AgriNexus+Autonomous+Platform" alt="AgriNexus Banner" width="100%" />
-
-  <br /><br />
-
-  <img src="https://img.shields.io/badge/Version-1.0.0--release-blue?style=for-the-badge&logo=git" alt="Version" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
-  <img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20LangGraph-009688?style=for-the-badge&logo=fastapi" alt="Backend" />
-  <img src="https://img.shields.io/badge/Safety_Engine-C%2B%2B17%20%7C%20pybind11-00599C?style=for-the-badge&logo=cplusplus" alt="Safety Engine" />
-  <img src="https://img.shields.io/badge/Web3-Base%20Sepolia-0052FF?style=for-the-badge&logo=ethereum" alt="Web3" />
-  <img src="https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20Tailwind-61DAFB?style=for-the-badge&logo=react" alt="Frontend" />
-
-  <h1>AgriNexus</h1>
-
-  <h3><em>"Maximum Backend Complexity, Zero Frontend Friction."</em></h3>
+  <h1>🌾 AgriNexus</h1>
 
   <p align="center">
-    An enterprise-grade, autonomous agricultural engine built to eliminate counterfeit farming inputs (seeds/pesticides) and diagnose crop pathologies deterministically using a zero-trust multi-agent architecture.
+    <strong>"Maximum Backend Complexity, Zero Frontend Friction."</strong>
   </p>
+
+  <p align="center">
+    An enterprise-grade, autonomous agricultural platform engineered to eliminate counterfeit farming inputs and diagnose crop pathologies using a zero-trust multi-agent architecture.
+  </p>
+
+  <p align="center">
+    <a href="https://github.com"><img src="https://img.shields.io/badge/Version-1.0.0-blue?style=for-the-badge&logo=git&logoColor=white" alt="Version" /></a>
+    <a href="https://github.com"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" /></a>
+    <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20LangGraph-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="Backend" /></a>
+    <a href="https://isocpp.org"><img src="https://img.shields.io/badge/Safety_Engine-C%2B%2B17%20%7C%20pybind11-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="Safety Engine" /></a>
+    <a href="https://base.org"><img src="https://img.shields.io/badge/Web3-Base%20Sepolia-0052FF?style=for-the-badge&logo=ethereum&logoColor=white" alt="Web3" /></a>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="Frontend" /></a>
+  </p>
+
+  <br />
+
+  <img src="https://via.placeholder.com/800x400/0f172a/6366f1?text=AgriNexus+Control+Room+%26+Field+Telemetry" alt="AgriNexus Architecture Preview" width="100%" />
 
 </div>
 
 ---
 
-> **TL;DR:** AgriNexus bridges the gap between sophisticated multi-agent AI and seamless field application. It sandboxes LLM outputs through a native C++ safety firewall to eliminate hallucinations, enforces regulatory compliance (ICAR/CIB&RC), and anchors verified crop diagnostics on-chain—all delivered to the farmer via localized voice notes.
+> **Executive Overview:** AgriNexus bridges multi-agent LLM reasoning with deterministic real-world safety. By sandboxing model outputs through a native C++ compiled safety core, the system guarantees 100% regulatory compliance with ICAR and CIB&RC agricultural standards while recording immutable batch verification on-chain.
 
 ---
 
-## 🌾 Real-World Problems Solved
+## 🛠️ Engineering Constraints & Solutions
 
-* **The Counterfeit Input Crisis:** Eradicates spurious seeds and unregulated pesticides that drive rural financial distress. Aligns strictly with verification frameworks specified in the *Draft Seeds Bill* and *Pesticides Management Bill*.
-* **AI Hallucination & Safety Hazards:** Eliminates dangerous or illegal chemical recommendation risks. Standard LLM outputs are sandboxed and intercepted by a compiled, deterministic safety layer to guarantee compliance with **ICAR** and **CIB&RC** parameters.
-* **The Accessibility Barrier:** Removes Web3 friction (gas fees, seed phrases) and language barriers. The complex multi-agent execution pipeline collapses down to a single image upload and local audio output.
+| Core Challenge | Engineering Solution | Architectural Impact |
+| :--- | :--- | :--- |
+| **Spurious Inputs** | Computer Vision micro-printing audit via EfficientNet | Blocks counterfeit seed/pesticide distribution before application. |
+| **LLM Hallucinations** | Native C++17 mathematical firewall bound via `pybind11` | Overrides hazardous chemical proposals with hardcoded safety thresholds. |
+| **Web3 Friction** | Gasless account abstraction on Base Sepolia | Generates cryptographic crop passports without requiring wallet setup. |
+| **Accessibility** | Sarvam AI / Edge-TTS audio synthesis pipeline | Converts complex diagnostic reports into regional dialect voice notes. |
 
 ---
 
-## 🔄 System Architecture & Workflows
-
-AgriNexus operates a synchronized dual-interface workflow designed for field execution and live administrative oversight.
+## 🔄 Dual Telemetry Workflows
 
 
 ```
 
 ┌─────────────────────────────────────────┐     ┌─────────────────────────────────────────┐
-│     A. Farmer-Facing Interface          │     │    B. Swarm Telemetry Control Room     │
+│     A. Farmer Field Operations          │     │    B. Swarm Control Room Telemetry     │
 ├─────────────────────────────────────────┤     ├─────────────────────────────────────────┤
-│ • Ultra-clean, single-tap interaction   │     │ • Dark-mode real-time node graph        │
-│ • Upload package or diseased leaf image │ ──> │ • Live JSON payloads & execution timers │
-│ • Instant visual verification           │     │ • C++ safety logs & Base contract hashes│
-│ • Localized voice note diagnosis        │     │ • Powered by LangGraph state machine    │
+│ • Ultra-clean single-tap interaction    │     │ • Real-time node execution graph        │
+│ • Crop leaf & package micro-print audit │ ──> │ • Live JSON state & vector search logs  │
+│ • Zero-knowledge batch verification     │     │ • C++ safety interlocks & Base hashes   │
+│ • Native voice-note diagnostic audio    │     │ • LangGraph orchestration visualization │
 └─────────────────────────────────────────┘     └─────────────────────────────────────────┘
 
 ```
 
 ---
 
-## 🤖 The 5-Agent LangGraph Orchestration Engine
+## 🤖 Multi-Agent LangGraph Engine
 
-Data is routed through five specialized, sequence-driven agents bound by a central state machine:
+The state graph orchestrates five isolated agents running sequential validation pipelines:
 
 
 ```
 
-[ Farmer Image Input ]
+[ Field Image Capture ]
 │
 ▼
 ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
 │     Agent 1      │ ──>  │     Agent 2      │ ──>  │     Agent 3      │
-│  Vision / CNN    │      │   Grounded RAG   │      │   C++ Safeguard  │
+│ Vision Pathology │      │ Grounded RAG     │      │ C++ Safeguard    │
 └──────────────────┘      └──────────────────┘      └──────────────────┘
 │
 ┌──────────────────┐                                         │
 │     Agent 5      │ <───────────────────────────────────────┘
-│  Voice Synthesis │ <──  ┌──────────────────┐
+│ Vernacular Audio │ <──  ┌──────────────────┐
 └─────────┬────────┘      │     Agent 4      │
-│               │  Web3 Passport   │
+│               │ Base Web3 Ledger │
 ▼               └──────────────────┘
-[ Native Audio Out ]
+[ Regional Audio Note ]
 
 ```
 
-* **Agent 1: Vision Pathology & Package Inspection:** Leverages an EfficientNet model to detect package micro-printing anomalies (counterfeit screening) or classify leaf pathogens (e.g., *Wheat Stripe Rust*).
-* **Agent 2: Grounded RAG & Spatial Agronomy:** Queries a local **ChromaDB** vector store populated with official **ICAR** guidelines, cross-referencing real-time spatial weather parameters.
-* **Agent 3: Deterministic C++ Safety Engine:** Intercepts proposed treatments and passes payloads into a compiled C++ binary via `pybind11`. Blocks restricted compounds and calculates strict per-acre chemical-to-water ratios.
-* **Agent 4: Web3 Crop Passport:** Generates an immutable, cryptographically signed dossier and writes the state to a **Base Sepolia** smart contract via account abstraction (gasless for the end user).
-* **Agent 5: Vernacular Supervisor & Voice Synthesis:** Converts structured diagnostic output into regional dialects (e.g., Punjabi, Hindi) using **Sarvam AI Bulbul V3 / Edge-TTS**.
+* **Agent 1 (Vision Pathology):** Analyzes leaf tissue anomalies and package micro-printing authenticity using an EfficientNet vision backbone.
+* **Agent 2 (Grounded RAG):** Executes semantic retrieval over a local **ChromaDB** instance containing regional ICAR agricultural guidelines and hyper-local spatial weather data.
+* **Agent 3 (C++ Safeguard Engine):** Intercepts RAG payloads and evaluates dosage bounds using a compiled C++ binary via `pybind11` to prevent illegal chemical combinations.
+* **Agent 4 (Web3 Crop Passport):** Mint immutable diagnostic dossiers to **Base Sepolia** smart contracts for transparent input provenance.
+* **Agent 5 (Vernacular Supervisor):** Synthesizes structural findings into regional dialect audio files via **Sarvam AI Bulbul V3**.
 
 ---
 
-## ⚙️ Hardware & Technical Specifications
-
-| Component | Technology Stack | Core Function |
-| :--- | :--- | :--- |
-| **Orchestration** | LangGraph / FastAPI | Asynchronous multi-agent state graph execution |
-| **Deterministic Layer** | C++17 / pybind11 | Sub-millisecond hazard interception & dose calculations |
-| **Vector Engine** | ChromaDB | Local RAG grounding against regulatory ag-binders |
-| **Blockchain** | Base Sepolia (EVM) | Immutable cryptographic batch verification & provenance |
-| **Voice / Speech** | Sarvam AI / Edge-TTS | Regional dialect translation and speech synthesis |
-| **Frontend UI** | React / Tailwind CSS | Dual-view workspace (Field UX & System Telemetry) |
-
----
-
-## 📂 Repository Structure
+## 📂 Monorepo Architecture
 
 ```hdfs
 agrinexus-monorepo/
-├── contracts/             # Solidity smart contracts for Base Sepolia Crop Passports
+├── contracts/             # EVM Smart contracts deployed to Base Sepolia
 ├── core-safety/           # Hardcoded C++ deterministic mathematical engine
-│   ├── CMakeLists.txt     # Build specifications
 │   ├── src/               # Native C++ logic for dose bounds & safety rules
 │   └── bindings.cpp       # pybind11 Python wrapper module
-├── server/                # FastAPI Application & LangGraph Orchestration Engine
-│   ├── agents/            # Isolated agent controllers (Agents 1-5)
-│   ├── db/                # Vector store setup & ChromaDB integrations
-│   └── main.py            # API gateway & state machine router
-└── web/                   # Vite + React + Tailwind Frontend (Farmer/Admin Telemetry)
+├── server/                # FastAPI Application & LangGraph Engine
+│   ├── agents/            # Agents 1-5 execution controllers
+│   ├── db/                # ChromaDB vector store bindings
+│   └── main.py            # API Gateway & state router
+└── web/                   # React + Vite + Tailwind Telemetry Dashboard
 
 ```
 
 ---
 
-## ⚡ Setup & Deployment Guide
+## ⚡ Quick Start
 
 ### Prerequisites
 
-* **Python:** v3.10 or higher
-* **Node.js:** v18 or higher
-* **C++ Compiler:** `g++` (v9+) or `clang` (v11+) supporting C++17
-* **Build Tools:** `cmake` (v3.16+)
+* **Python** 3.10+
+* **Node.js** v18+
+* **C++17 Compiler** (`g++` or `clang`)
+* **CMake** 3.16+
 
----
-
-### 1. Compile the C++ Safety Core
+### 1. Build Native C++ Core
 
 ```bash
 cd core-safety
 mkdir build && cd build
-cmake ..
-make
+cmake .. && make
 
 ```
 
-*This compiles the shared object file (`.so`/`.pyd`) for high-speed Python bindings.*
-
----
-
-### 2. Configure & Launch the FastAPI Server
+### 2. Launch FastAPI Server
 
 ```bash
 cd ../../server
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-
 pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload
 
 ```
 
----
-
-### 3. Initialize the Frontend Telemetry Dashboard
+### 3. Run Telemetry Workspace
 
 ```bash
 cd ../web
@@ -168,12 +149,5 @@ npm install
 npm run dev
 
 ```
-
----
-
-## 🛡️ Zero-Trust Security Model
-
-* **Hard-Compiled Matrix Protection:** Adversarial prompt injections cannot bypass safety thresholds because logic execution is enforced within the native C++ binary post-LLM generation.
-* **Immutable Provenance:** Batch signatures and diagnostic reports are anchored directly to Base Sepolia, establishing a transparent audit chain from manufacturer to rural application.
 
 ---
