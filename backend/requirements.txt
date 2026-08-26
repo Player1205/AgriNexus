@@ -1,0 +1,14 @@
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+langchain==0.1.7
+langchain-google-genai==0.0.9
+langgraph==0.0.24
+chromadb==0.4.22
+web3==6.15.1
+pydantic==2.6.1
+pydantic-settings==2.1.0
+edge-tts==6.1.9
+python-multipart==0.0.9
+pybind11==2.11.1
+setuptools==69.0.3
+pytest==8.0.0
