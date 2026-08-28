@@ -54,3 +54,7 @@ typechain-types/
 # OS
 .DS_Store
 Thumbs.db
+
+# Temp Files & Audio Uploads
+backend/temp/
+backend/static/audio/
