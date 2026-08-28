@@ -1,6 +1,7 @@
-export const uploadImage = async (file) => {
+export const uploadImage = async (file, language = 'hi') => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('language', language);
 
     const response = await fetch('/api/v1/analyze', {
         method: 'POST',

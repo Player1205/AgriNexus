@@ -24,6 +24,7 @@ class AgriNexusState(TypedDict, total=False):
     passport_id: Optional[int]
     
     # Voice Agent Outputs
+    language_code: Optional[str]
     vernacular_audio_url: Optional[str]
     translated_text: Optional[str]
 

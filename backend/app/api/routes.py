@@ -1,7 +1,7 @@
 import os
 import shutil
 import asyncio
-from fastapi import APIRouter, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, UploadFile, File, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from app.agents.graph import agrinexus_app
 from app.state import AgriNexusState
@@ -32,7 +32,10 @@ async def broadcast_telemetry(node_name: str, state_data: dict):
             pass
 
 @router.post("/api/v1/analyze")
-async def analyze_image(file: UploadFile = File(...)):
+async def analyze_image(
+    file: UploadFile = File(...),
+    language: str = Form("hi")
+):
     # Save uploaded image temporarily
     temp_dir = os.path.join(os.path.dirname(__file__), "..", "..", "temp")
     os.makedirs(temp_dir, exist_ok=True)
@@ -41,9 +44,10 @@ async def analyze_image(file: UploadFile = File(...)):
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Initialize state as TypedDict
+    # Initialize state as TypedDict with farmer's selected vernacular language
     initial_state = {
         "image_path": temp_path,
+        "language_code": language,
         "errors": []
     }
     
