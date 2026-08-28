@@ -1,6 +1,5 @@
 import os
 from web3 import Web3
-from web3.middleware import construct_sign_and_send_raw_middleware
 from eth_account import Account
 import json
 
@@ -10,10 +9,14 @@ class Web3Client:
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         
         self.private_key = os.environ.get("DEVELOPER_PRIVATE_KEY")
-        if self.private_key:
-            self.account = Account.from_key(self.private_key)
-            self.w3.middleware_onion.add(construct_sign_and_send_raw_middleware(self.account))
-            self.w3.eth.default_account = self.account.address
+        if self.private_key and self.private_key != "your_developer_wallet_private_key_here":
+            try:
+                self.account = Account.from_key(self.private_key)
+                self.w3.eth.default_account = self.account.address
+            except Exception:
+                self.account = None
+        else:
+            self.account = None
         
         # Basic ABI for the CropPassport create function
         self.contract_abi = [
