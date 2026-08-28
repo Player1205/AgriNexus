@@ -41,24 +41,24 @@ async def analyze_image(file: UploadFile = File(...)):
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Initialize state
-    initial_state = AgriNexusState(image_path=temp_path)
+    # Initialize state as TypedDict
+    initial_state = {
+        "image_path": temp_path,
+        "errors": []
+    }
     
-    # We will run the graph manually step by step to broadcast telemetry
-    current_state = initial_state.model_dump()
+    current_state = initial_state.copy()
     
     try:
-        for output in agrinexus_app.astream(initial_state):
+        async for output in agrinexus_app.astream(initial_state):
             for node_name, state_update in output.items():
-                if isinstance(state_update, AgriNexusState):
-                    current_state = state_update.model_dump()
-                else:
-                    current_state = state_update
+                if isinstance(state_update, dict):
+                    current_state.update(state_update)
                 
                 # Broadcast the node execution to the dashboard
                 await broadcast_telemetry(node_name, current_state)
-                # Small delay to visualize graph progression
-                await asyncio.sleep(0.5)
+                # 1.8s delay per node = ~9 seconds total for the swarm to execute, building trust
+                await asyncio.sleep(1.8)
                 
         return JSONResponse(content=current_state)
     except Exception as e:
