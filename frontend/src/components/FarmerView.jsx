@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, Upload, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
-import { uploadImage } from '../services/api';
+import { uploadImage, createTelemetrySocket } from '../services/api';
 
 const STATUS = {
     IDLE: 'idle',
@@ -10,13 +10,37 @@ const STATUS = {
     ERROR: 'error',
 };
 
+const NODE_STYLES = {
+    vision: { text: "Running computer vision...", size: "text-xl", color: "text-cyan-600" },
+    rag: { text: "Fetching ICAR guidelines...", size: "text-lg", color: "text-purple-600" },
+    safety: { text: "Verifying safety engine...", size: "text-xl", color: "text-emerald-600" },
+    web3: { text: "Putting on blockchain...", size: "text-2xl", color: "text-amber-500" },
+    voice: { text: "Synthesizing voice...", size: "text-lg", color: "text-green-600" }
+};
+
 export default function FarmerView({ onAnalysisComplete }) {
     const [status, setStatus] = useState(STATUS.IDLE);
+    const [activeNode, setActiveNode] = useState(null);
     const [audioUrl, setAudioUrl] = useState(null);
     const [diagnosis, setDiagnosis] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const fileInputRef = useRef(null);
     const audioRef = useRef(null);
+
+    // Listen to live agent steps to update the UI
+    useEffect(() => {
+        let ws;
+        if (status === STATUS.PROCESSING) {
+            ws = createTelemetrySocket((data) => {
+                setActiveNode(data.node);
+            });
+        } else {
+            setActiveNode(null);
+        }
+        return () => {
+            if (ws) ws.close();
+        };
+    }, [status]);
 
     const handleFileSelect = useCallback(async (event) => {
         const file = event.target.files?.[0];
@@ -26,6 +50,7 @@ export default function FarmerView({ onAnalysisComplete }) {
         setErrorMessage('');
         setAudioUrl(null);
         setDiagnosis('');
+        setActiveNode(null);
 
         try {
             setStatus(STATUS.PROCESSING);
@@ -89,11 +114,20 @@ export default function FarmerView({ onAnalysisComplete }) {
                 className="hidden"
             />
 
-            {/* Status Indicator */}
+            {/* Status Indicator (Dynamic Animation per Node) */}
             {status === STATUS.PROCESSING && (
-                <div className="flex items-center gap-2 text-amber-600">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span className="font-medium">Analyzing your crop...</span>
+                <div className="flex flex-col items-center h-16 justify-center overflow-visible">
+                    <span 
+                        key={activeNode} 
+                        className={`font-bold tracking-wide animate-bounce transition-all duration-500 ease-in-out ${
+                            activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].size : "text-base"
+                        } ${
+                            activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].color : "text-amber-600"
+                        }`}
+                        style={{ textShadow: "0px 2px 10px rgba(0,0,0,0.1)" }}
+                    >
+                        {activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].text : "Initializing AI..."}
+                    </span>
                 </div>
             )}
 
