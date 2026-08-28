@@ -25,11 +25,11 @@ const LANGUAGES = [
 ];
 
 const NODE_STYLES = {
-    vision: { text: "Running computer vision...", size: "text-xl", color: "text-cyan-600" },
-    rag: { text: "Fetching ICAR guidelines...", size: "text-lg", color: "text-purple-600" },
-    safety: { text: "Verifying safety engine...", size: "text-xl", color: "text-emerald-600" },
-    web3: { text: "Putting on blockchain...", size: "text-2xl", color: "text-amber-500" },
-    voice: { text: "Synthesizing voice via Sarvam AI...", size: "text-lg", color: "text-green-600" }
+    vision: { text: "Running computer vision...", size: "text-lg sm:text-xl", color: "text-cyan-600" },
+    rag: { text: "Fetching ICAR guidelines...", size: "text-base sm:text-lg", color: "text-purple-600" },
+    safety: { text: "Verifying safety engine...", size: "text-lg sm:text-xl", color: "text-emerald-600" },
+    web3: { text: "Putting on blockchain...", size: "text-xl sm:text-2xl", color: "text-amber-500" },
+    voice: { text: "Synthesizing voice via Sarvam AI...", size: "text-base sm:text-lg", color: "text-green-600" }
 };
 
 export default function FarmerView({ onAnalysisComplete }) {
@@ -104,58 +104,63 @@ export default function FarmerView({ onAnalysisComplete }) {
     const currentLangObj = LANGUAGES.find((l) => l.code === selectedLang) || LANGUAGES[0];
 
     return (
-        <div className="flex flex-col items-center justify-between w-full h-full min-h-[100dvh] lg:min-h-0 bg-gradient-to-b from-green-50 via-white to-green-50/30 px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 overflow-x-hidden">
+        <div className="flex flex-col items-center justify-start w-full h-full min-h-0 bg-gradient-to-b from-green-50 via-white to-green-50/20 px-3 sm:px-6 py-2.5 sm:py-5 gap-2.5 sm:gap-4 overflow-y-auto overflow-x-hidden">
             
-            {/* Header */}
-            <div className="text-center space-y-1 sm:space-y-1.5 w-full">
-                <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl sm:text-3xl">🌾</span>
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900 tracking-tight">AgriNexus</h1>
+            {/* Header with Compact Spacing */}
+            <div className="text-center space-y-0.5 sm:space-y-1 w-full shrink-0">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    <span className="text-xl sm:text-2xl">🌾</span>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-green-900 tracking-tight">AgriNexus</h1>
                 </div>
-                <p className="text-gray-600 text-xs sm:text-sm font-medium">फसल सुरक्षा एवं प्रामाणिक सलाह</p>
+                <p className="text-gray-500 text-[11px] sm:text-xs font-medium">फसल सुरक्षा एवं प्रामाणिक सलाह • Verified AI Agricultural Swarm</p>
             </div>
 
-            {/* Language Selector Bar */}
-            <div className="w-full max-w-md bg-white p-2 rounded-2xl shadow-sm border border-green-100 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between px-2 text-[11px] font-semibold text-gray-500">
+            {/* Language Selector Bar with English & Regional Names */}
+            <div className="w-full max-w-md bg-white p-2 rounded-2xl shadow-sm border border-green-100 flex flex-col gap-1.5 shrink-0">
+                <div className="flex items-center justify-between px-2 text-[10px] sm:text-[11px] font-semibold text-gray-500">
                     <span className="flex items-center gap-1 text-green-700">
                         <Globe className="w-3.5 h-3.5" /> भाषा चुनें (Select Language)
                     </span>
-                    <span className="text-green-600 font-bold">{currentLangObj.name} ({currentLangObj.label})</span>
+                    <span className="text-green-700 font-bold bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                        {currentLangObj.name} ({currentLangObj.label})
+                    </span>
                 </div>
                 
-                {/* Horizontal Scrollable Language Pills */}
+                {/* Horizontal Scrollable Language Pills (Both Native + English Name) */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
                     {LANGUAGES.map((lang) => (
                         <button
                             key={lang.code}
                             onClick={() => setSelectedLang(lang.code)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shrink-0 ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shrink-0 ${
                                 selectedLang === lang.code
-                                    ? 'bg-green-600 text-white shadow-md scale-105'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-green-600 text-white shadow-md scale-105 ring-2 ring-green-300'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                             }`}
                         >
                             <span>{lang.flag}</span>
                             <span>{lang.name}</span>
+                            <span className={`text-[10px] font-normal ${selectedLang === lang.code ? 'text-green-100' : 'text-gray-500'}`}>
+                                ({lang.label})
+                            </span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Main Upload Trigger Button */}
-            <div className="flex flex-col items-center justify-center my-auto">
+            {/* Main Upload Trigger Button (Compact, Professional & No Gap Waste) */}
+            <div className="flex flex-col items-center justify-center shrink-0 my-1 sm:my-2">
                 <button
                     onClick={triggerFileInput}
                     disabled={status === STATUS.PROCESSING}
-                    className="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-dashed border-green-500 bg-gradient-to-br from-green-50 to-emerald-100 flex flex-col items-center justify-center gap-2 sm:gap-3 hover:scale-105 hover:bg-green-100 transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-green-300"
+                    className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border-4 border-dashed border-green-500 bg-gradient-to-br from-green-50 to-emerald-100 flex flex-col items-center justify-center gap-2 hover:scale-105 hover:bg-green-100 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-green-300"
                 >
                     {status === STATUS.PROCESSING ? (
-                        <Loader2 className="w-14 h-14 text-green-600 animate-spin" />
+                        <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
                     ) : (
                         <>
-                            <div className="p-3 bg-white rounded-full shadow-md">
-                                <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-green-600" />
+                            <div className="p-2.5 sm:p-3 bg-white rounded-full shadow-md">
+                                <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                             </div>
                             <span className="text-green-800 font-bold text-xs sm:text-sm">फोटो खींचें / Upload</span>
                         </>
@@ -174,11 +179,11 @@ export default function FarmerView({ onAnalysisComplete }) {
 
             {/* Status Indicator (Dynamic Animated Swarm Feedback) */}
             {status === STATUS.PROCESSING && (
-                <div className="flex flex-col items-center h-14 justify-center overflow-visible">
+                <div className="flex flex-col items-center h-12 justify-center overflow-visible shrink-0">
                     <span 
                         key={activeNode} 
                         className={`font-bold tracking-wide animate-bounce transition-all duration-500 ease-in-out ${
-                            activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].size : "text-base"
+                            activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].size : "text-sm"
                         } ${
                             activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].color : "text-amber-600"
                         }`}
@@ -191,14 +196,14 @@ export default function FarmerView({ onAnalysisComplete }) {
 
             {/* Success Card */}
             {status === STATUS.SUCCESS && (
-                <div className="w-full max-w-md bg-white p-4 rounded-2xl border border-green-200 shadow-md flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-300">
-                    <div className="flex items-center gap-2">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                        <p className="text-green-800 font-extrabold text-base">सत्यापित उपचार (Verified Safe ✓)</p>
+                <div className="w-full max-w-md bg-white p-3.5 sm:p-4 rounded-2xl border border-green-200 shadow-md flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-300 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <p className="text-green-800 font-extrabold text-sm sm:text-base">सत्यापित उपचार (Verified Safe ✓)</p>
                     </div>
-                    <div className="bg-green-50 p-2.5 rounded-xl w-full text-center">
-                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Crop Diagnosis</p>
-                        <p className="text-green-900 font-bold text-sm">{diagnosis}</p>
+                    <div className="bg-green-50 p-2 rounded-xl w-full text-center">
+                        <p className="text-[10px] text-gray-500 font-semibold">Crop Diagnosis</p>
+                        <p className="text-green-900 font-bold text-xs sm:text-sm">{diagnosis}</p>
                     </div>
                     {translatedText && (
                         <p className="text-xs text-gray-700 text-center italic bg-gray-50 p-2.5 rounded-xl border border-gray-100 w-full leading-relaxed">
@@ -210,20 +215,20 @@ export default function FarmerView({ onAnalysisComplete }) {
 
             {/* Warning Card */}
             {status === STATUS.ERROR && (
-                <div className="w-full max-w-md bg-red-50 p-4 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-300">
-                    <AlertTriangle className="w-10 h-10 text-red-500" />
-                    <p className="text-red-800 font-bold text-sm">⚠ सुरक्षा चेतावनी (Safety Warning)</p>
+                <div className="w-full max-w-md bg-red-50 p-3.5 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-300 shrink-0">
+                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                    <p className="text-red-800 font-bold text-xs sm:text-sm">⚠ सुरक्षा चेतावनी (Safety Warning)</p>
                     <p className="text-red-700 text-center text-xs">{errorMessage}</p>
                 </div>
             )}
 
             {/* Sarvam AI Audio Player */}
             {audioUrl && (
-                <div className="w-full max-w-md bg-white p-3 rounded-2xl shadow-lg border border-emerald-200 flex flex-col gap-2 animate-in slide-in-from-bottom-4 duration-300">
+                <div className="w-full max-w-md bg-white p-3 rounded-2xl shadow-lg border border-emerald-200 flex flex-col gap-1.5 animate-in slide-in-from-bottom-4 duration-300 shrink-0">
                     <div className="flex items-center justify-between px-1 text-xs">
                         <span className="flex items-center gap-1.5 text-emerald-800 font-bold">
                             <Volume2 className="w-4 h-4 text-emerald-600 animate-pulse" /> 
-                            {currentLangObj.name} Voice Advisory
+                            {currentLangObj.name} ({currentLangObj.label}) Audio Advisory
                         </span>
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
                             Sarvam AI Bulbul:v3
@@ -234,7 +239,7 @@ export default function FarmerView({ onAnalysisComplete }) {
                         controls
                         autoPlay
                         src={audioUrl}
-                        className="w-full h-10 rounded-lg"
+                        className="w-full h-9 rounded-lg"
                     />
                 </div>
             )}
