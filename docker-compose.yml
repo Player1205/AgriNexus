@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  agrinexus-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrinexus_production_node
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - SARVAM_API_KEY=${SARVAM_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - BASE_SEPOLIA_RPC_URL=${BASE_SEPOLIA_RPC_URL:-https://sepolia.base.org}
+      - DEVELOPER_PRIVATE_KEY=${DEVELOPER_PRIVATE_KEY}
+      - CROP_PASSPORT_CONTRACT_ADDRESS=${CROP_PASSPORT_CONTRACT_ADDRESS:-0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7}
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/temp:/app/backend/temp
+      - ./backend/static/audio:/app/backend/static/audio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

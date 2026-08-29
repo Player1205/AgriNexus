@@ -7,6 +7,7 @@
   </p>
 
   <p align="center">
+    <a href="https://github.com/Player1205/AgriNexus/actions"><img src="https://github.com/Player1205/AgriNexus/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline" /></a>
     <a href="https://sepolia.basescan.org/address/0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7"><img src="https://img.shields.io/badge/Base_Sepolia-Live_Contract-0052FF?style=for-the-badge&logo=ethereum&logoColor=white" alt="Base Sepolia" /></a>
     <a href="https://sarvam.ai"><img src="https://img.shields.io/badge/Voice_Engine-Sarvam_AI_Bulbul:v3-FF6F00?style=for-the-badge&logo=soundcharts&logoColor=white" alt="Sarvam AI" /></a>
     <a href="https://open-meteo.com"><img src="https://img.shields.io/badge/Weather_API-Open--Meteo_Live_GPS-00A86B?style=for-the-badge&logo=icloud&logoColor=white" alt="Open-Meteo" /></a>
