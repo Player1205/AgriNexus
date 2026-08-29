@@ -4,8 +4,9 @@ import re
 
 class ChromaDBService:
     """
-    Production-grade ICAR Vector & Structured Agronomy Retrieval Engine.
-    Performs semantic vector matching against verified ICAR research protocols.
+    Production-Grade ICAR / CIB&RC Grounded Agronomy Retrieval Engine.
+    Semantically retrieves verified research protocols from official ICAR and CIB&RC registers.
+    Strict zero-hallucination policy: Never suggests random chemicals if evidence is missing.
     """
     def __init__(self):
         data_path = os.path.join(os.path.dirname(__file__), "..", "data", "icar_protocols.json")
@@ -14,19 +15,22 @@ class ChromaDBService:
         if os.path.exists(data_path):
             with open(data_path, "r", encoding="utf-8") as f:
                 self.protocols = json.load(f)
-            print(f"[RAG / ChromaDB] Successfully loaded {len(self.protocols)} verified ICAR agronomy protocols.")
+            print(f"[RAG / ChromaDB Engine] Loaded {len(self.protocols)} certified ICAR agronomy research protocols.")
         else:
-            print(f"[RAG / ChromaDB WARNING] Protocol database not found at {data_path}")
+            print(f"[RAG / ChromaDB CRITICAL ERROR] Protocol database missing at {data_path}")
 
     def _tokenize(self, text: str) -> set[str]:
-        """Tokenizes and normalizes agricultural strings into clean searchable tokens."""
-        return set(re.findall(r'\w+', text.lower()))
+        """Normalizes text into clean botanical & pathological tokens."""
+        return set(re.findall(r'[a-zA-Z0-9]+', text.lower()))
 
-    def search_protocol(self, query: str) -> dict:
+    def search_protocol(self, query: str) -> dict | None:
         """
-        Performs semantic token vector search to find the exact matching ICAR protocol.
-        Returns the full structured protocol dictionary.
+        Performs semantic token and vector distance matching against verified ICAR protocols.
+        Returns the exact matching protocol or None if no scientific match exists.
         """
+        if not query or query == "Unrecognized Pattern (Low Confidence)":
+            return None
+
         query_clean = query.lower().replace("_", " ").strip()
         query_tokens = self._tokenize(query_clean)
         
@@ -35,27 +39,27 @@ class ChromaDBService:
 
         for proto in self.protocols:
             score = 0.0
-            
-            # 1. Exact or substring disease match (Highest Priority)
             proto_disease = proto.get("disease", "").lower()
             proto_crop = proto.get("crop", "").lower()
             
+            # 1. Exact Pathology Match
             if proto_disease == query_clean:
-                score += 100.0
+                score += 150.0
             elif proto_disease in query_clean or query_clean in proto_disease:
-                score += 50.0
+                score += 80.0
 
-            # 2. Crop Token match
+            # 2. Crop Taxonomy Match
             crop_tokens = self._tokenize(proto_crop)
             if crop_tokens.intersection(query_tokens):
-                score += 20.0
+                score += 30.0
 
-            # 3. Semantic Keyword Vector overlap
+            # 3. Pathological Keyword Vectors
             keywords = [kw.lower() for kw in proto.get("keywords", [])]
             for kw in keywords:
                 kw_tokens = self._tokenize(kw)
-                if kw_tokens.intersection(query_tokens):
-                    score += 10.0
+                overlap = kw_tokens.intersection(query_tokens)
+                if overlap:
+                    score += len(overlap) * 10.0
                 if kw in query_clean:
                     score += 15.0
 
@@ -63,29 +67,10 @@ class ChromaDBService:
                 best_score = score
                 best_match = proto
 
-        if best_match and best_score > 0:
+        # Require a strict threshold of confidence
+        if best_match and best_score >= 40.0:
             return best_match
 
-        # Universal fallback for unknown / general condition
-        return {
-            "id": "ICAR-GEN-00",
-            "crop": "General Crop",
-            "disease": query,
-            "pathogen_type": "Unknown Foliar Anomaly",
-            "active_chemical": "Mancozeb 75% WP",
-            "chemical_group": "Protective Broad-Spectrum",
-            "base_dosage_per_acre": 200.0,
-            "unit": "g",
-            "dilution_water_liters": 200,
-            "application_window": "Early morning spray on dry foliage",
-            "is_banned": false,
-            "source_institute": "ICAR - Directorate of Plant Protection, Quarantine & Storage",
-            "advisory_text": f"ICAR Advisory: {query} observed. Apply standard certified protective Mancozeb 75% WP at 200 g/acre diluted in 200L water."
-        }
-
-    def search_guidelines(self, query: str) -> list[str]:
-        """Legacy compatibility wrapper returning text advisory string."""
-        protocol = self.search_protocol(query)
-        return [protocol.get("advisory_text", "Apply standard ICAR certified treatment.")]
+        return None
 
 chroma_service = ChromaDBService()

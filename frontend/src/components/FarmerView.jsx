@@ -222,9 +222,19 @@ export default function FarmerView({ onAnalysisComplete }) {
                 {/* 6. Warning Card */}
                 {status === STATUS.ERROR && (
                     <div className="w-full bg-red-50 p-4 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-300">
-                        <AlertTriangle className="w-8 h-8 text-red-500" />
-                        <p className="text-red-800 font-bold text-xs sm:text-sm">⚠ सुरक्षा चेतावनी (Safety Warning)</p>
-                        <p className="text-red-700 text-center text-xs">{errorMessage}</p>
+                        <AlertTriangle className="w-6 h-6 text-red-600 animate-bounce" />
+                        <p className="text-red-900 font-extrabold text-sm sm:text-base">⚠ सुरक्षा चेतावनी (Safety Alert / Inspection Required)</p>
+                        {diagnosis && (
+                            <div className="bg-red-100/70 px-3 py-1 rounded-lg">
+                                <p className="text-red-950 font-bold text-xs">{diagnosis}</p>
+                            </div>
+                        )}
+                        <p className="text-red-800 text-center text-xs font-medium leading-relaxed">{errorMessage}</p>
+                        {translatedText && (
+                            <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-red-100 w-full leading-relaxed mt-1">
+                                "{translatedText}"
+                            </p>
+                        )}
                     </div>
                 )}
 

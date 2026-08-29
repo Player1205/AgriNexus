@@ -48,15 +48,41 @@ PATHOLOGY_TRANSLATIONS = {
     "Tomato Early Blight": {
         "hi": "अगेती झुलसा (Early Blight)",
         "pa": "ਅਗੇਤਾ ਝੁਲਸ ਰੋਗ (Early Blight)",
-        "te": "అರ್లీ బ్లైట్ తెగులు (Early Blight)",
+        "te": "అర్లీ బ్లైట్ తెగులు (Early Blight)",
         "ta": "முன் பருவ கருகல் நோய் (Early Blight)",
-        "ml": "ഏರ್ലി ബ്ലൈറ്റ് രോഗം (Early Blight)",
+        "ml": "ഏർലി ബ്ലൈറ്റ് രോഗം (Early Blight)",
         "kn": "ಮುಂಗಾರು ಅಂಗಮಾರಿ (Early Blight)",
         "bn": "আগাম ধসা রোগ (Early Blight)",
         "mr": "लवकर येणारा करपा (Early Blight)",
         "gu": "અગેતરો સુકારો (Early Blight)",
         "od": "ଆଗୁଆ ପୋଡ଼ା ରୋଗ (Early Blight)",
         "en": "Tomato Early Blight"
+    },
+    "Tomato Target Spot": {
+        "hi": "टारगेट स्पॉट रोग (Target Spot)",
+        "pa": "ਟਾਰਗੇਟ ਸਪਾਟ (Target Spot)",
+        "te": "టార్గెట్ స్పాట్ తెగులు (Target Spot)",
+        "ta": "இலக்கு புள்ளி நோய் (Target Spot)",
+        "ml": "ടാർഗെറ്റ് സ്പോട്ട് രോഗം (Target Spot)",
+        "kn": "ಟಾರ್ಗೆಟ್ ಸ್ಪಾಟ್ (Target Spot)",
+        "bn": "টার্গেট স্পট রোগ (Target Spot)",
+        "mr": "टार्गेट स्पॉट करपा (Target Spot)",
+        "gu": "ટાર્ગેટ સ્પોટ રોગ (Target Spot)",
+        "od": "ଟାର୍ଗେଟ୍ ସ୍ପଟ୍ ରୋଗ (Target Spot)",
+        "en": "Tomato Target Spot"
+    },
+    "Tomato Bacterial Spot": {
+        "hi": "जीवाणु धब्बा रोग (Bacterial Spot)",
+        "pa": "ਜੀਵਾਣੂ ਧੱਬਾ ਰੋਗ (Bacterial Spot)",
+        "te": "బాక్టీరియల్ మచ్చల తెగులు (Bacterial Spot)",
+        "ta": "பாக்டீரியா புள்ளி நோய் (Bacterial Spot)",
+        "ml": "ബാക്ടീരിയൽ സ്പോട്ട് (Bacterial Spot)",
+        "kn": "ಬ್ಯಾಕ್ಟೀರಿಯಾದ ಕಲೆ ರೋಗ (Bacterial Spot)",
+        "bn": "ব্যাকটেরিয়াল স্পট রোগ (Bacterial Spot)",
+        "mr": "जिवाणू ठिपके रोग (Bacterial Spot)",
+        "gu": "બેક્ટેરિયલ સ્પોટ રોગ (Bacterial Spot)",
+        "od": "ବ୍ୟାକ୍ଟେରିଆଲ୍ ଦାଗ ରୋଗ (Bacterial Spot)",
+        "en": "Tomato Bacterial Spot"
     },
     "Tomato Yellow Leaf Curl Virus": {
         "hi": "पत्ता मरोड़ वायरस (Yellow Leaf Curl Virus)",
@@ -70,6 +96,32 @@ PATHOLOGY_TRANSLATIONS = {
         "gu": "પાન સંકોચન વાયરસ (Leaf Curl Virus)",
         "od": "ପତ୍ର କୁଞ୍ଚନ ଭୂତାଣୁ (Leaf Curl Virus)",
         "en": "Tomato Yellow Leaf Curl Virus"
+    },
+    "Apple Apple Scab": {
+        "hi": "सेब का स्कैब रोग (Apple Scab)",
+        "pa": "ਸੇਬ ਦਾ ਸਕੈਬ ਰੋਗ (Apple Scab)",
+        "te": "యాపిల్ స్కాబ్ తెగులు (Apple Scab)",
+        "ta": "ஆப்பிள் ஸ்கேப் நோய் (Apple Scab)",
+        "ml": "ആപ്പിൾ സ്കാബ് രോഗം (Apple Scab)",
+        "kn": "ಸೇಬು ಸ್ಕ್ಯಾಬ್ ರೋಗ (Apple Scab)",
+        "bn": "আপেল স্ক্যাব রোগ (Apple Scab)",
+        "mr": "सफरचंद स्कॅब रोग (Apple Scab)",
+        "gu": "સફરજન સ્કેબ રોગ (Apple Scab)",
+        "od": "ସେଓ ସ୍କାବ୍ ରୋଗ (Apple Scab)",
+        "en": "Apple Scab"
+    },
+    "Corn Common Rust": {
+        "hi": "मक्के का रतुआ रोग (Corn Rust)",
+        "pa": "ਮੱਕੀ ਦਾ ਕੁੰਗੀ ਰੋਗ (Corn Rust)",
+        "te": "మొక్కజొన్న తుప్పు తెగులు (Corn Rust)",
+        "ta": "சோள துரு நோய் (Corn Rust)",
+        "ml": "മക്കാച്ചോളം തുരുമ്പ് രോഗം (Corn Rust)",
+        "kn": "ಮೆಕ್ಕೆಜೋಳದ ತುಕ್ಕು ರೋಗ (Corn Rust)",
+        "bn": "ভুট্টার মরিচা রোগ (Corn Rust)",
+        "mr": "मक्यावरील तांबेरा (Corn Rust)",
+        "gu": "મકાઈનો ગેરુ રોગ (Corn Rust)",
+        "od": "ମକା କଳଙ୍କୀ ରୋଗ (Corn Rust)",
+        "en": "Corn Common Rust"
     },
     "Healthy": {
         "hi": "स्वस्थ फसल (Healthy Crop)",
@@ -87,23 +139,21 @@ PATHOLOGY_TRANSLATIONS = {
 }
 
 def get_localized_pathology(diagnosis: str, lang: str) -> str:
-    """Returns localized pathology string or falls back to diagnosis name with English script."""
-    # Direct match or partial key match
+    """Returns localized pathology string or falls back to clean diagnosis."""
     for key, trans_dict in PATHOLOGY_TRANSLATIONS.items():
         if key.lower() in diagnosis.lower() or diagnosis.lower() in key.lower():
             return trans_dict.get(lang, f"{diagnosis}")
-    # Fallback to diagnosis
     return f"{diagnosis}"
 
 async def voice_node(state: AgriNexusState) -> dict:
     """
     Agent 5: Vernacular Translation & Comprehensive Voice Synthesis.
-    Dynamically maps the exact diagnosed pathology into natural, colloquial regional dialect.
+    Dynamically maps the verified diagnosis, chemical, and ICAR dosage into 11 Indic languages.
     """
     is_safe = state.get("is_safe", False)
-    vision_diagnosis = state.get("vision_diagnosis", "Tomato Leaf Condition")
-    proposed_chemical = state.get("proposed_chemical", "Mancozeb")
-    safe_dosage = state.get("safe_dosage_ml_per_acre", 150.0)
+    vision_diagnosis = state.get("vision_diagnosis", "Foliar Condition")
+    proposed_chemical = state.get("proposed_chemical", "None")
+    safe_dosage = state.get("safe_dosage_ml_per_acre", 0.0)
     safety_warning = state.get("safety_warning", "")
     language_code = state.get("language_code", "hi")
 
@@ -112,18 +162,18 @@ async def voice_node(state: AgriNexusState) -> dict:
     target_script = lang_meta["script"]
     localized_disease = get_localized_pathology(vision_diagnosis, language_code)
 
-    # Comprehensive structured advice in English
+    # High-accuracy structured advice in English
     if not is_safe:
         english_text = (
-            f"Dear Farmer, your crop shows signs of {vision_diagnosis}. "
-            f"However, the proposed chemical {proposed_chemical} was flagged as unsafe by the C++ safety engine. {safety_warning} "
-            f"Please do not spray this chemical to avoid crop damage and soil toxicity. Consult your local Krishi Vigyan Kendra (KVK) for an approved alternative."
+            f"Dear Farmer, your crop shows symptoms of {vision_diagnosis}. "
+            f"However, chemical application cannot be approved safely. {safety_warning} "
+            f"Please do not spray any unverified chemical to avoid crop damage and soil toxicity. Please bring a fresh leaf sample to your nearest Krishi Vigyan Kendra (KVK)."
         )
     else:
         english_text = (
-            f"Dear Farmer, your crop is affected by {vision_diagnosis}, which causes leaf discoloration and fungal damage. "
-            f"For safe, verified treatment, spray {proposed_chemical} at a certified dosage of {safe_dosage} ml per acre, thoroughly mixed in 200 liters of clean water. "
-            f"Apply the spray during early morning or late evening on dry foliage, and ensure proper field drainage to prevent disease recurrence."
+            f"Dear Farmer, your crop is affected by {vision_diagnosis}. "
+            f"For safe, certified treatment, spray {proposed_chemical} at an exact dosage of {safe_dosage} per acre, thoroughly mixed in 200 liters of clean water. "
+            f"Apply the spray during early morning or late evening on dry foliage, and maintain proper soil drainage."
         )
 
     try:
@@ -136,9 +186,9 @@ async def voice_node(state: AgriNexusState) -> dict:
             
             Structure of response:
             1. Respectful Greeting (e.g. '{lang_meta["greeting"]}').
-            2. Clear explanation of the diagnosed crop disease ('{localized_disease}') and its symptoms.
-            3. Detailed safe treatment: Chemical name ({proposed_chemical}), exact dosage ({safe_dosage} ml/acre), and mixing in 200 liters of water.
-            4. Practical field instructions (spray in morning/evening, check soil moisture, maintain drainage).
+            2. Clear explanation of the diagnosed condition ('{localized_disease}').
+            3. Treatment advisory: Chemical ({proposed_chemical}), exact certified dosage ({safe_dosage} per acre), and water dilution (200 Liters).
+            4. Practical field instructions (spray in cool hours, check drainage).
             
             Advisory text: '{english_text}'
             
@@ -148,69 +198,95 @@ async def voice_node(state: AgriNexusState) -> dict:
             translated_text = response.content.strip()
         else:
             # Dynamic high-depth, fully localized agronomic fallback templates
-            if language_code == "pa":
-                translated_text = (
-                    f"ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ {localized_disease} ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ, ਜੋ ਸਿੱਲ੍ਹੇ ਮੌਸਮ ਕਾਰਨ ਪੱਤਿਆਂ 'ਤੇ ਧੱਬੇ ਬਣਾ ਕੇ ਨੁਕਸਾਨ ਪਹੁੰਚਾਉਂਦਾ ਹੈ। "
-                    f"ਇਸ ਦੇ ਪੱਕੇ ਤੇ ਸੁਰੱਖਿਅਤ ਇਲਾਜ ਲਈ {proposed_chemical} ਦਾ {safe_dosage} ਮਿਲੀਲੀਟਰ 200 ਲੀਟਰ ਸਾਫ਼ ਪਾਣੀ ਵਿੱਚ ਘੋਲ ਕੇ ਪ੍ਰਤੀ ਏਕੜ ਛਿੜਕਾਅ ਕਰੋ। "
-                    f"ਛਿੜਕਾਅ ਸਵੇਰੇ ਜਾਂ ਸ਼ਾਮ ਦੇ ਸਮੇਂ ਸੁੱਕੇ ਪੱਤਿਆਂ 'ਤੇ ਕਰੋ ਅਤੇ ਖੇਤ ਵਿੱਚ ਪਾਣੀ ਦੀ ਨਿਕਾਸੀ ਦਾ ਖਾਸ ਧਿਆਨ ਰੱਖੋ।"
-                )
-            elif language_code == "te":
-                translated_text = (
-                    f"రైతు సోదరులారా, మీ పంటలో {localized_disease} లక్షణాలు గుర్తించబడ్డాయి. తేమ ఎక్కువగా ఉండటం వల్ల ఈ తెగులు ఆకులపై వేగంగా వ్యాపిస్తుంది. "
-                    f"దీని నివారణకు ఎకరానికి {safe_dosage} మిల్లీలీటర్ల {proposed_chemical} మందును 200 లీటర్ల నీటిలో కలిపి పిచికారీ చేయండి. "
-                    f"ఉదయం లేదా సాయంత్రం వేళల్లో పిచికారీ చేయడం వల్ల పంటకు గరిష్ట రక్షణ లభిస్తుంది ಮತ್ತು పొలంలో నీరు నిల్వ ఉండకుండా చూసుకోండి."
-                )
-            elif language_code == "ta":
-                translated_text = (
-                    f"விவசாய சகோதரர்களே, உங்கள் பயிரில் {localized_disease} கண்டறியப்பட்டுள்ளது. அதிக ஈரப்பதம் காரணமாக இது இலைகளை சேதப்படுத்துகிறது. "
-                    f"இதனை கட்டுப்படுத்த ஒரு ஏக்கருக்கு {safe_dosage} மி.லி {proposed_chemical} மருந்தை 200 லிட்டர் தண்ணீரில் கலந்து தெளிக்கவும். "
-                    f"காலை அல்லது மாலை வேளையில் தெளிப்பது சிறந்த பலனைத் தரும், மேலும் நிலத்தில் நீர் தேங்காமல் பார்த்துக் கொள்ளவும்."
-                )
-            elif language_code == "ml":
-                translated_text = (
-                    f"കർഷക സുഹൃത്തുക്കളെ, നിങ്ങളുടെ വിളയിൽ {localized_disease} കണ്ടെത്തിയിട്ടുണ്ട്. ഈ കുമിൾ രോഗം ഈർപ്പമുള്ള കാലാവസ്ഥയിൽ വേഗത്തിൽ പടരാൻ സാധ്യതയുണ്ട്. "
-                    f"ഇതിന്റെ സുരക്ഷിതമായ നിയന്ത്രണത്തിനായി ഏക്കറിന് {safe_dosage} മില്ലിലിറ്റർ {proposed_chemical} 200 ലിറ്റർ വെള്ളത്തിൽ കലക്കി തളിക്കുക. "
-                    f"രാവിലെ അല്ലെങ്കിൽ വൈകുന്നേരം തളിക്കുന്നത് ചെടികൾക്ക് കൂടുതൽ സംരക്ഷണം നൽകും."
-                )
-            elif language_code == "mr":
-                translated_text = (
-                    f"शेतकरी मित्रांनो, तुमच्या पिकात {localized_disease} लागण झाली आहे, जो दमट हवामानामुळे पानांवर वेगाने पसरतो. "
-                    f"याच्या प्रभावी नियंत्रणासाठी प्रति एकर {safe_dosage} मिली {proposed_chemical} २०० लिटर पाण्यात मिसळून फवारणी करा. "
-                    f"फवारणी नेहमी सकाळी किंवा संध्याकाळी कोरड्या पानांवर करावी आणि शेतात पाण्याचा निचरा योग्य ठेवावा."
-                )
-            elif language_code == "bn":
-                translated_text = (
-                    f"কৃষক ভাইয়েরা, আপনার ফসলে {localized_disease} শনাক্ত হয়েছে। অতিরিক্ত আর্দ্রতার কারণে এই রোগ দ্রুত পাতায় ছড়ায়। "
-                    f"এর নিরাপদ ও কার্যকর নিয়ন্ত্রণের জন্য একর প্রতি {safe_dosage} মিলি {proposed_chemical} ২০০ লিটার জলে গুলে স্প্রে করুন। "
-                    f"সকালে বা বিকেলে স্প্রে করলে সেরা ফলাফল পাওয়া যাবে এবং জমিতে অতিরিক্ত জল জমতে দেবেন না।"
-                )
-            elif language_code == "gu":
-                translated_text = (
-                    f"ખેડૂત મિત્રો, તમારા પાકમાં {localized_disease} જોવા મળ્યો છે. આ રોગ વધુ ભેજને કારણે પાંદડા પર ફેલાય છે. "
-                    f"તેના યોગ્ય નિયંત્રણ માટે એકર દીઠ {safe_dosage} મિલી {proposed_chemical} 200 લિટર પાણીમાં ભેળવીને છંટકાવ કરો. "
-                    f"સવારે અથવા સાંજે છંટકાવ કરવો વધુ ફાયદાકારક રહેશે અને ખેતરમાં પાણીનો ભરાવો ન થવા દો."
-                )
-            elif language_code == "kn":
-                translated_text = (
-                    f"ರೈತ ಮಿತ್ರರೇ, ನಿಮ್ಮ ಬೆಳೆಯಲ್ಲಿ {localized_disease} ಕಂಡುಬಂದಿದೆ. ಹೆಚ್ಚಿನ ತೇವಾಂಶದಿಂದ ಈ ರೋಗವು ಎಲೆಗಳ ಮೇಲೆ ಹರಡುತ್ತದೆ. "
-                    f"ಇದರ ಪರಿಣಾಮಕಾರಿ ನಿಯಂತ್ರಣಕ್ಕಾಗಿ ಎಕರೆಗೆ {safe_dosage} ಮಿಲಿ {proposed_chemical} ಅನ್ನು 200 ಲೀಟರ್ ನೀರಿನಲ್ಲಿ ಬೆರೆಸಿ ಸಿಂಪಡಿಸಿ. "
-                    f"ಮುಂಜಾನೆ ಅಥವಾ ಸಂಜೆ ವೇಳೆ ಸಿಂಪಡಿಸುವುದು ಸೂಕ್ತ ಹಾಗೂ ಹೊಲದಲ್ಲಿ ನೀರು ನಿಲ್ಲದಂತೆ ನೋಡಿಕೊಳ್ಳಿ."
-                )
-            elif language_code == "od":
-                translated_text = (
-                    f"କୃଷକ ଭାଇମାନେ, ଆପଣଙ୍କ ଫସଲରେ {localized_disease} ଚିହ୍ନଟ ହୋଇଛି। ଏହା ଅଧିକ ଆର୍ଦ୍ରତା ଯୋଗୁଁ ପତ୍ରରେ ବ୍ୟାପିଥାଏ। "
-                    f"ଏହାର ନିରାକରଣ ପାଇଁ ଏକର ପିଛା {safe_dosage} ମିଲି {proposed_chemical} ୨୦୦ ଲିଟର ପାଣିରେ ମିଶାଇ ସ୍ପ୍ରେ କରନ୍ତୁ। "
-                    f"ସକାଳ କିମ୍ବା ସନ୍ଧ୍ୟା ସମୟରେ ସ୍ପ୍ରେ କଲେ ଭଲ ଫଳ ମିଳିବ।"
-                )
-            elif language_code == "en":
-                translated_text = english_text
+            if not is_safe:
+                if language_code == "pa":
+                    translated_text = f"ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ {localized_disease} ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ। ਫਸਲ ਦੀ ਸੁਰੱਖਿਆ ਲਈ ਕਿਸੇ ਵੀ ਅਣਪ੍ਰਮਾਣਿਤ ਦਵਾਈ ਦਾ ਛਿੜਕਾਅ ਨਾ ਕਰੋ ਅਤੇ ਨੇੜਲੇ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ (KVK) ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
+                elif language_code == "te":
+                    translated_text = f"రైతు సోదరులారా, మీ పంటలో {localized_disease} లక్షణాలు ఉన్నాయి. రక్షణ దృష్ట్యా ఎటువంటి రసాయనాన్ని పిచికారీ చేయవద్దు మరియు సమీపంలోని కృషి విజ్ఞాన కేంద్రాన్ని (KVK) సంప్రదించండి."
+                elif language_code == "ta":
+                    translated_text = f"விவசாய சகோதரர்களே, உங்கள் பயிரில் {localized_disease} அறிகுறிகள் உள்ளன. பயிர் பாதுகாப்பிற்காக ரசாயனங்களை தெளிக்க வேண்டாம், அருகிலுள்ள வேளாண் அறிவியல் மையத்தை (KVK) அணுகவும்."
+                elif language_code == "ml":
+                    translated_text = f"കർഷക സുഹൃത്തുക്കളെ, നിങ്ങളുടെ വിളയിൽ {localized_disease} ലക്ഷണങ്ങൾ കാണുന്നു. ദയവായി ഇപ്പോൾ രാസവസ്തുക്കൾ തളിക്കരുത്, കൃഷി വിജ്ഞാൻ കേന്ദ്രവുമായി (KVK) ബന്ധപ്പെടുക."
+                elif language_code == "mr":
+                    translated_text = f"शेतकरी मित्रांनो, तुमच्या पिकात {localized_disease} लक्षणे दिसत आहेत. पिकाच्या सुरक्षेसाठी फवारणी करू नका आणि जवळच्या कृषी विज्ञान केंद्राशी (KVK) संपर्क साधा."
+                elif language_code == "bn":
+                    translated_text = f"কৃষক ভাইয়েরা, আপনার ফসলে {localized_disease} এর লক্ষণ দেখা গেছে। ফসলের সুরক্ষার জন্য কোনও রাসায়নিক স্প্রে করবেন না এবং নিকটস্থ কৃষি বিজ্ঞান কেন্দ্রের (KVK) সাথে যোগাযোগ করুন।"
+                elif language_code == "gu":
+                    translated_text = f"ખેડૂત મિત્રો, તમારા પાકમાં {localized_disease} ના લક્ષણો જોવા મળ્યા છે. પાકની સુરક્ષા માટે છંટકાવ ન કરો અને નજીકના કૃષિ વિજ્ઞાન કેન્દ્ર (KVK) નો સંપર્ક કરો."
+                elif language_code == "kn":
+                    translated_text = f"ರೈತ ಮಿತ್ರರೇ, ನಿಮ್ಮ ಬೆಳೆಯಲ್ಲಿ {localized_disease} ಲಕ್ಷಣಗಳು ಕಂಡುಬಂದಿವೆ. ಯಾವುದೇ ರಾಸಾಯನಿಕ ಸಿಂಪಡಿಸಬೇಡಿ ಮತ್ತು ಹತ್ತಿರದ ಕೃಷಿ ವಿಜ್ಞಾನ ಕೇಂದ್ರವನ್ನು (KVK) ಸಂಪರ್ಕಿಸಿ."
+                elif language_code == "od":
+                    translated_text = f"କୃଷକ ଭାଇମାନେ, ଆପଣଙ୍କ ଫସଲରେ {localized_disease} ର ଲକ୍ଷଣ ଦେଖାଯାଇଛି। କୌଣସି ରାସାୟନିକ ସ୍ପ୍ରେ କରନ୍ତୁ ନାହିଁ ଏବଂ ନିକଟସ୍ଥ କୃଷି ବିଜ୍ଞାନ କେନ୍ଦ୍ର ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।"
+                elif language_code == "en":
+                    translated_text = english_text
+                else:
+                    # Default Hindi
+                    translated_text = f"किसान भाई, आपकी फसल में {localized_disease} के लक्षण दिखे हैं। फसल की सुरक्षा के लिए किसी अप्रमाणित रसायन का छिड़काव न करें और नजदीकी कृषि विज्ञान केंद्र (KVK) से संपर्क करें।"
             else:
-                # Default Hindi
-                translated_text = (
-                    f"किसान भाई, आपकी फसल में {localized_disease} रोग पाया गया है, जो अधिक नमी के कारण पत्तियों पर तेजी से फैलता है। "
-                    f"इसके सुरक्षित और प्रमाणित उपचार के लिए {proposed_chemical} का {safe_dosage} मिलीलीटर 200 लीटर साफ पानी में मिलाकर प्रति एकड़ छिड़काव करें। "
-                    f"छिड़काव सुबह या शाम के समय करें और खेत में जल निकासी की उचित व्यवस्था रखें।"
-                )
+                # Safe Case: Prescribe verified ICAR treatment
+                if language_code == "pa":
+                    translated_text = (
+                        f"ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ {localized_disease} ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ। "
+                        f"ਇਸ ਦੇ ਪੱਕੇ ਤੇ ਸੁਰੱਖਿਅਤ ਇਲਾਜ ਲਈ {proposed_chemical} ਦਾ {safe_dosage} ਮਿਲੀਲੀਟਰ 200 ਲੀਟਰ ਸਾਫ਼ ਪਾਣੀ ਵਿੱਚ ਘੋਲ ਕੇ ਪ੍ਰਤੀ ਏਕੜ ਛਿੜਕਾਅ ਕਰੋ। "
+                        f"ਛਿੜਕਾਅ ਸਵੇਰੇ ਜਾਂ ਸ਼ਾਮ ਦੇ ਸਮੇਂ ਸੁੱਕੇ ਪੱਤਿਆਂ 'ਤੇ ਕਰੋ ਅਤੇ ਖੇਤ ਵਿੱਚ ਪਾਣੀ ਦੀ ਨਿਕਾਸੀ ਦਾ ਖਾਸ ਧਿਆਨ ਰੱਖੋ।"
+                    )
+                elif language_code == "te":
+                    translated_text = (
+                        f"రైతు సోదరులారా, మీ పంటలో {localized_disease} లక్షణాలు గుర్తించబడ్డాయి. "
+                        f"దీని నివారణకు ఎకరానికి {safe_dosage} మోతాదులో {proposed_chemical} మందును 200 లీటర్ల నీటిలో కలిపి పిచიკారీ చేయండి. "
+                        f"ఉదయం లేదా సాయంత్రం వేళల్లో పిచიკారీ చేయడం వల్ల పంటకు గరిష్ట రక్షణ లభిస్తుంది."
+                    )
+                elif language_code == "ta":
+                    translated_text = (
+                        f"விவசாய சகோதரர்களே, உங்கள் பயிரில் {localized_disease} கண்டறியப்பட்டுள்ளது. "
+                        f"இதனை கட்டுப்படுத்த ஒரு ஏக்கருக்கு {safe_dosage} அளவில் {proposed_chemical} மருந்தை 200 லிட்டர் தண்ணீரில் கலந்து தெளிக்கவும். "
+                        f"காலை அல்லது மாலை வேளையில் தெளிப்பது சிறந்த பலனைத் தரும்."
+                    )
+                elif language_code == "ml":
+                    translated_text = (
+                        f"കർഷക സുഹൃത്തുക്കളെ, നിങ്ങളുടെ വിളയിൽ {localized_disease} കണ്ടെത്തിയിട്ടുണ്ട്. "
+                        f"ഇതിന്റെ സുരക്ഷിതമായ നിയന്ത്രണത്തിനായി ഏക്കറിന് {safe_dosage} തോതിൽ {proposed_chemical} 200 ലിറ്റർ വെള്ളത്തിൽ കലക്കി തളിക്കുക. "
+                        f"രാവിലെ അല്ലെങ്കിൽ വൈകുന്നേരം തളിക്കുന്നത് ചെടികൾക്ക് കൂടുതൽ സംരക്ഷണം നൽകും."
+                    )
+                elif language_code == "mr":
+                    translated_text = (
+                        f"शेतकरी मित्रांनो, तुमच्या पिकात {localized_disease} लागण झाली आहे. "
+                        f"याच्या प्रभावी नियंत्रणासाठी प्रति एकर {safe_dosage} प्रमाणात {proposed_chemical} २०० लिटर पाण्यात मिसळून फवारणी करा. "
+                        f"फवारणी नेहमी सकाळी किंवा संध्याकाळी कोरड्या पानांवर करावी."
+                    )
+                elif language_code == "bn":
+                    translated_text = (
+                        f"কৃষক ভাইয়েরা, আপনার ফসলে {localized_disease} শনাক্ত হয়েছে। "
+                        f"এর নিরাপদ ও কার্যকর নিয়ন্ত্রণের জন্য একর প্রতি {safe_dosage} মাত্রায় {proposed_chemical} ২০০ লিটার জলে গুলে স্প্রে করুন। "
+                        f"সকালে বা বিকেলে স্প্রে করলে সেরা ফলাফল পাওয়া যাবে।"
+                    )
+                elif language_code == "gu":
+                    translated_text = (
+                        f"ખેડૂત મિત્રો, તમારા પાકમાં {localized_disease} જોવા મળ્યો છે. "
+                        f"તેના યોગ્ય નિયંત્રણ માટે એકર દીઠ {safe_dosage} પ્રમાણમાં {proposed_chemical} 200 લિટર પાણીમાં ભેળવીને છંટકાવ કરો. "
+                        f"સવારે અથવા સાંજે છંટકાવ કરવો વધુ ફાયદાકારક રહેશે."
+                    )
+                elif language_code == "kn":
+                    translated_text = (
+                        f"ರೈತ ಮಿತ್ರರೇ, ನಿಮ್ಮ ಬೆಳೆಯಲ್ಲಿ {localized_disease} ಕಂಡುಬಂದಿದೆ. "
+                        f"ಇದರ ಪರಿಣಾಮಕಾರಿ ನಿಯಂತ್ರಣಕ್ಕಾಗಿ ಎಕರೆಗೆ {safe_dosage} ಪ್ರಮಾಣದಲ್ಲಿ {proposed_chemical} ಅನ್ನು 200 ಲೀಟರ್ ನೀರಿನಲ್ಲಿ ಬೆರೆಸಿ ಸಿಂಪಡಿಸಿ. "
+                        f"ಮುಂಜಾನೆ ಅಥವಾ ಸಂಜೆ ವೇಳೆ ಸಿಂಪಡಿಸುವುದು ಸೂಕ್ತ."
+                    )
+                elif language_code == "od":
+                    translated_text = (
+                        f"କୃଷକ ଭାଇମାନେ, ଆପଣଙ୍କ ଫସଲରେ {localized_disease} ଚିହ୍ନଟ ହୋଇଛି। "
+                        f"ଏହାର ନିରାକରଣ ପାଇଁ ଏକର ପିଛା {safe_dosage} ମାତ୍ରାରେ {proposed_chemical} ୨୦୦ ଲିଟର ପାଣିରେ ମିଶାଇ ସ୍ପ୍ରେ କରନ୍ତୁ। "
+                        f"ସକାଳ କିମ୍ବା ସନ୍ଧ୍ୟା ସମୟରେ ସ୍ପ୍ରେ କଲେ ଭଲ ଫଳ ମିଳିବ।"
+                    )
+                elif language_code == "en":
+                    translated_text = english_text
+                else:
+                    # Default Hindi
+                    translated_text = (
+                        f"किसान भाई, आपकी फसल में {localized_disease} रोग पाया गया है। "
+                        f"इसके सुरक्षित और प्रमाणित उपचार के लिए {proposed_chemical} का {safe_dosage} प्रति एकड़ 200 लीटर साफ पानी में मिलाकर छिड़काव करें। "
+                        f"छिड़काव सुबह या शाम के समय करें और खेत में जल निकासी की उचित व्यवस्था रखें।"
+                    )
 
         # Generate authentic high-fidelity Indic TTS audio via Sarvam AI
         audio_url = await tts_client.generate_audio(translated_text, language_code)
