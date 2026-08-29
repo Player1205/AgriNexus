@@ -9,27 +9,47 @@ import json
 
 router = APIRouter()
 
-# Active websocket connections for telemetry
-active_connections: list[WebSocket] = []
+# Thread-safe set of active websocket connections for telemetry
+active_connections: set[WebSocket] = set()
 
 @router.websocket("/ws/telemetry")
 async def websocket_telemetry(websocket: WebSocket):
     await websocket.accept()
-    active_connections.append(websocket)
+    active_connections.add(websocket)
     try:
         while True:
-            # Just keep the connection alive
+            # Keep the connection alive
             await websocket.receive_text()
-    except WebSocketDisconnect:
-        active_connections.remove(websocket)
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
+        active_connections.discard(websocket)
 
 async def broadcast_telemetry(node_name: str, state_data: dict):
-    message = json.dumps({"node": node_name, "state": state_data})
-    for connection in active_connections:
+    """
+    Safely sanitizes state_data for JSON serialization (handling numpy floats/types)
+    and broadcasts to all active dashboard and farmer listeners.
+    """
+    safe_state = {}
+    for k, v in state_data.items():
+        if hasattr(v, 'item'):  # Numpy scalars (float32, int64, etc.)
+            safe_state[k] = v.item()
+        elif isinstance(v, (int, float, str, bool, list, dict, type(None))):
+            safe_state[k] = v
+        else:
+            safe_state[k] = str(v)
+
+    message = json.dumps({"node": node_name, "state": safe_state})
+    dead_connections = []
+    
+    for connection in list(active_connections):
         try:
             await connection.send_text(message)
         except Exception:
-            pass
+            dead_connections.append(connection)
+
+    for dead in dead_connections:
+        active_connections.discard(dead)
 
 @router.post("/api/v1/analyze")
 async def analyze_image(
@@ -59,11 +79,21 @@ async def analyze_image(
                 if isinstance(state_update, dict):
                     current_state.update(state_update)
                 
-                # Broadcast the node execution to the dashboard
+                # Broadcast the node execution to all active dashboards
                 await broadcast_telemetry(node_name, current_state)
-                # 1.8s delay per node = ~9 seconds total for the swarm to execute, building trust
-                await asyncio.sleep(1.8)
+                # 1.6s delay per node to clearly showcase the laser path animations in Telemetry
+                await asyncio.sleep(1.6)
                 
-        return JSONResponse(content=current_state)
+        # Clean numpy types for final JSONResponse
+        safe_response = {}
+        for k, v in current_state.items():
+            if hasattr(v, 'item'):
+                safe_response[k] = v.item()
+            elif isinstance(v, (int, float, str, bool, list, dict, type(None))):
+                safe_response[k] = v
+            else:
+                safe_response[k] = str(v)
+
+        return JSONResponse(content=safe_response)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

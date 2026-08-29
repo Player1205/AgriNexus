@@ -38,67 +38,89 @@ export default function TelemetryView() {
     };
 
     useEffect(() => {
-        const ws = createTelemetrySocket((data) => {
-            const { node, state } = data;
-            const nodeIdx = NODE_ORDER.indexOf(node);
+        let isMounted = true;
+        let ws = null;
+        let reconnectTimeout = null;
 
-            // If starting a fresh run from Agent 1 (Vision)
-            if (node === 'vision') {
-                clearAllTimers();
-                setDrawnEdges(new Set());
-                setActiveDrawingEdge(null);
-                setCompletedNodes(new Set(['vision']));
-                setEvents([{ node, timestamp: new Date().toLocaleTimeString(), state }]);
-                setIgnitingNode('vision');
-                setActiveNode('vision');
+        const connect = () => {
+            if (!isMounted) return;
+            
+            ws = createTelemetrySocket((data) => {
+                if (!isMounted) return;
+                const { node, state } = data;
+                const nodeIdx = NODE_ORDER.indexOf(node);
+                if (nodeIdx === -1) return;
 
-                const t1 = setTimeout(() => setIgnitingNode(null), 800);
-                timersRef.current.push(t1);
-                return;
-            }
+                // If starting a fresh run from Agent 1 (Vision)
+                if (node === 'vision') {
+                    clearAllTimers();
+                    setDrawnEdges(new Set());
+                    setActiveDrawingEdge(null);
+                    setCompletedNodes(new Set(['vision']));
+                    setEvents([{ node, timestamp: new Date().toLocaleTimeString(), state }]);
+                    setIgnitingNode('vision');
+                    setActiveNode('vision');
 
-            // For subsequent nodes (RAG, Safety, Web3, Voice):
-            // 1. Identify previous node and transition edge
-            const prevNode = NODE_ORDER[nodeIdx - 1];
-            const edgeId = `${prevNode}-${node}`;
+                    const t1 = setTimeout(() => {
+                        if (isMounted) setIgnitingNode(null);
+                    }, 800);
+                    timersRef.current.push(t1);
+                    return;
+                }
 
-            // 2. Stage 1: Trigger the progressive Laser Beam traveling from prevNode -> currentNode
-            setActiveDrawingEdge(edgeId);
-            setActiveNode(null); // Previous node completes, focus transfers to the beam
+                // For subsequent nodes (RAG, Safety, Web3, Voice):
+                const prevNode = NODE_ORDER[nodeIdx - 1];
+                const edgeId = `${prevNode}-${node}`;
 
-            // 3. Stage 2 (after 850ms beam travel): Laser beam arrives at target node!
-            const t2 = setTimeout(() => {
-                // Settle the drawn edge permanently
-                setDrawnEdges((prev) => new Set([...prev, edgeId]));
-                setActiveDrawingEdge(null);
+                // Stage 1: Trigger the progressive Laser Beam
+                setActiveDrawingEdge(edgeId);
+                setActiveNode(null);
 
-                // Ignite target node into glowing activation
-                setIgnitingNode(node);
-                setActiveNode(node);
+                // Stage 2 (after 850ms beam travel): Laser beam arrives at target node
+                const t2 = setTimeout(() => {
+                    if (!isMounted) return;
+                    setDrawnEdges((prev) => new Set([...prev, edgeId]));
+                    setActiveDrawingEdge(null);
 
-                // Update completed set
-                setCompletedNodes((prev) => {
-                    const next = new Set(prev);
-                    for (let i = 0; i <= nodeIdx; i++) {
-                        next.add(NODE_ORDER[i]);
-                    }
-                    return next;
-                });
+                    // Ignite target node into glowing activation
+                    setIgnitingNode(node);
+                    setActiveNode(node);
 
-                // Append event to cryptographic terminal
-                setEvents((prev) => [...prev, { node, timestamp: new Date().toLocaleTimeString(), state }]);
+                    setCompletedNodes((prev) => {
+                        const next = new Set(prev);
+                        for (let i = 0; i <= nodeIdx; i++) {
+                            next.add(NODE_ORDER[i]);
+                        }
+                        return next;
+                    });
 
-                // Cool down ignite burst to steady active state
-                const t3 = setTimeout(() => setIgnitingNode(null), 700);
-                timersRef.current.push(t3);
-            }, 850);
+                    // Append event to cryptographic terminal
+                    setEvents((prev) => [...prev, { node, timestamp: new Date().toLocaleTimeString(), state }]);
 
-            timersRef.current.push(t2);
-        });
+                    // Cool down ignite burst to steady active state
+                    const t3 = setTimeout(() => {
+                        if (isMounted) setIgnitingNode(null);
+                    }, 700);
+                    timersRef.current.push(t3);
+                }, 850);
+
+                timersRef.current.push(t2);
+            });
+
+            ws.onclose = () => {
+                if (isMounted) {
+                    reconnectTimeout = setTimeout(connect, 2000);
+                }
+            };
+        };
+
+        connect();
 
         return () => {
+            isMounted = false;
             clearAllTimers();
-            ws.close();
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+            if (ws) ws.close();
         };
     }, []);
 

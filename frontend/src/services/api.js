@@ -16,12 +16,20 @@ export const uploadImage = async (file, language = 'hi') => {
 };
 
 export const createTelemetrySocket = (onMessage) => {
-    // In production, use wss:// and correct domain
-    const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/telemetry`);
     
     ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        onMessage(data);
+        try {
+            const data = JSON.parse(event.data);
+            onMessage(data);
+        } catch (err) {
+            console.error("Telemetry WebSocket message parse error:", err);
+        }
+    };
+
+    ws.onerror = (err) => {
+        console.warn("Telemetry WebSocket error:", err);
     };
 
     return ws;

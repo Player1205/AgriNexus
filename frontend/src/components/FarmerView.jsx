@@ -98,7 +98,10 @@ export default function FarmerView({ onAnalysisComplete }) {
     }, [onAnalysisComplete, selectedLang]);
 
     const triggerFileInput = useCallback(() => {
-        fileInputRef.current?.click();
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+            fileInputRef.current.click();
+        }
     }, []);
 
     const currentLangObj = LANGUAGES.find((l) => l.code === selectedLang) || LANGUAGES[0];
