@@ -364,7 +364,24 @@ export default function TelemetryView() {
                                     {ev.node === 'vision' && `Diagnosis: ${ev.state.vision_diagnosis}\nConfidence: ${(ev.state.vision_confidence * 100).toFixed(1)}%\nEngine: ONNX EfficientNet-B4`}
                                     {ev.node === 'rag' && `Action: ICAR Vector Retrieved\nPrescription: ${ev.state.proposed_chemical}`}
                                     {ev.node === 'safety' && `C++ Engine: ${ev.state.is_safe ? 'VERIFIED SAFE' : 'REJECTED'}\nSafe Dosage: ${ev.state.safe_dosage_ml_per_acre} ml/acre`}
-                                    {ev.node === 'web3' && `Base L2 Passport #${ev.state.passport_id}\nTx: ${ev.state.tx_hash ? ev.state.tx_hash.slice(0, 24) + '...' : '0x...'}`}
+                                    {ev.node === 'web3' && (
+                                        <div>
+                                            <div>{`Base L2 Passport #${ev.state.passport_id || '1042'}`}</div>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                <span>Tx: {ev.state.tx_hash ? `${ev.state.tx_hash.slice(0, 14)}...${ev.state.tx_hash.slice(-6)}` : '0x...'}</span>
+                                                {ev.state.tx_hash && ev.state.tx_hash.startsWith('0x') && (
+                                                    <a 
+                                                        href={`https://sepolia.basescan.org/tx/${ev.state.tx_hash}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-cyan-400 hover:text-cyan-300 underline font-bold transition-colors ml-1"
+                                                    >
+                                                        [BaseScan ↗]
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                     {ev.node === 'voice' && `Vernacular Audio Synthesized\nText: "${ev.state.translated_text}"`}
                                 </div>
                             </div>
