@@ -106,6 +106,10 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      - name: 🧪 Execute Vitest Component & UI Unit Tests
+        working-directory: ./frontend
+        run: npm test
+
       - name: 🚀 Build Optimized Production Bundle (Vite)
         working-directory: ./frontend
         run: npm run build
