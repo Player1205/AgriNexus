@@ -68,7 +68,7 @@ async def vision_node(state: AgriNexusState) -> dict:
     # =========================================================================
     if HAS_EDGE_AI and os.path.exists(MODEL_PATH):
         try:
-            print("🟢 EDGE AI TRIGGERED: Running local ONNX EfficientNet-B4...")
+            print("[EDGE AI] Running local ONNX EfficientNet-B4...")
             
             # 1. Preprocess the image
             input_tensor = preprocess_image_for_efficientnet(image_path)
@@ -98,14 +98,14 @@ async def vision_node(state: AgriNexusState) -> dict:
             }
             
         except Exception as e:
-            print(f"⚠️ EDGE AI FAILED: {str(e)}. Falling back to Cloud...")
+            print(f"[EDGE AI NOTE] {str(e)}. Falling back to Cloud...")
             # Fall through to Cloud logic below...
 
     # =========================================================================
     # PATH B: CLOUD AI FALLBACK (GEMINI 1.5 FLASH VISION)
     # =========================================================================
     try:
-        print("☁️ CLOUD AI TRIGGERED: Calling Gemini Vision API...")
+        print("[CLOUD AI] Calling Gemini Vision API...")
         api_key = os.environ.get("GOOGLE_API_KEY")
         if not api_key or api_key == "your_google_api_key_here":
             return {

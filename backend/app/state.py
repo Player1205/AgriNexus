@@ -5,6 +5,15 @@ class AgriNexusState(TypedDict, total=False):
     # Image Input
     image_path: str
     
+    # Live GPS & Meteorological Data
+    weather_data: Optional[dict]
+    current_temperature: Optional[float]
+    current_humidity: Optional[float]
+    rain_risk_6h_percent: Optional[float]
+    wind_speed_kmh: Optional[float]
+    is_spray_safe: Optional[bool]
+    location_source: Optional[str]
+    
     # Vision Agent Outputs
     vision_diagnosis: Optional[str]
     vision_confidence: float
@@ -12,7 +21,6 @@ class AgriNexusState(TypedDict, total=False):
     # RAG Agent Outputs
     rag_treatment_plan: Optional[str]
     proposed_chemical: Optional[str]
-    current_humidity: float
     
     # Safety Engine Outputs
     is_safe: bool

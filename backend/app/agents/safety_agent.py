@@ -23,12 +23,15 @@ except ImportError:
 
 async def safety_node(state: AgriNexusState) -> dict:
     """
-    Agent 3: Deterministic Mathematical Safety Firewall.
-    Enforces CIB&RC statutory compliance and mathematical dosage boundary clamping.
-    Guarantees that no toxic overdose or banned chemical can reach the farmer.
+    Agent 3: Deterministic Mathematical Safety Firewall & Meteorological Spray Interlock.
+    Enforces CIB&RC statutory compliance, rain-fastness forecasting, wind drift prevention,
+    and mathematical dosage boundary clamping.
     """
     chemical = state.get("proposed_chemical", "None")
     humidity = float(state.get("current_humidity", 75.0))
+    temperature = float(state.get("current_temperature", 28.0))
+    rain_risk = float(state.get("rain_risk_6h_percent", 0.0))
+    wind_speed = float(state.get("wind_speed_kmh", 6.0))
     rag_dosage = float(state.get("safe_dosage_ml_per_acre", 0.0))
 
     # Case 1: No chemical proposed (Indeterminate or Unverified)
@@ -52,17 +55,21 @@ async def safety_node(state: AgriNexusState) -> dict:
                 )
             }
 
-    # Case 3: Mathematical Boundary Clamping & Humidity Attenuation
-    # Clamp dosage to statutory maximum
+    # Case 3: Meteorological Spray Safety Interlocks
+    weather_warnings = []
+    if rain_risk >= 40.0:
+        weather_warnings.append(f"High rain probability ({int(rain_risk)}% in next 6h). Delay spraying to avoid chemical wash-off.")
+    if wind_speed >= 15.0:
+        weather_warnings.append(f"High wind speed ({wind_speed} km/h). Delay spraying to prevent chemical drift into neighboring areas.")
+    if temperature >= 36.0:
+        weather_warnings.append(f"High temperature ({temperature}°C). Spray strictly during dawn or dusk to avoid foliar burn.")
+
+    # Case 4: Mathematical Boundary Clamping & Humidity Attenuation
     bounded_dosage = min(rag_dosage, MAX_STATUTORY_SINGLE_DOSE)
     
-    # Humidity-based phytotoxicity attenuation
-    # (High humidity (>80%) increases chemical uptake and risk of foliar burn; reduce dose by 10%)
+    # Humidity-based phytotoxicity attenuation (>80% relative humidity increases chemical absorption)
     if humidity > 80.0:
         bounded_dosage = bounded_dosage * 0.9
-    elif humidity < 35.0:
-        # Low humidity increases droplet evaporation; ensure high water volume is used
-        pass
 
     final_dosage = round(bounded_dosage, 1)
 
@@ -80,8 +87,14 @@ async def safety_node(state: AgriNexusState) -> dict:
         except Exception as e:
             print(f"[C++ Safety Engine Note] {e}")
 
+    # Build comprehensive safety confirmation
+    if weather_warnings:
+        warning_msg = " | ".join(weather_warnings)
+    else:
+        warning_msg = f"Deterministic Safety Core Verified: Live Weather Optimal ({temperature}°C, {humidity}% Humidity, Rain Risk: {int(rain_risk)}%)."
+
     return {
         "is_safe": True,
         "safe_dosage_ml_per_acre": final_dosage,
-        "safety_warning": "Deterministic Safety Core Verified: 100% Compliant with ICAR & CIB&RC Statutory Guidelines."
+        "safety_warning": warning_msg
     }

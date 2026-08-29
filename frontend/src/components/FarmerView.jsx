@@ -36,6 +36,7 @@ export default function FarmerView({ onAnalysisComplete }) {
     const [status, setStatus] = useState(STATUS.IDLE);
     const [selectedLang, setSelectedLang] = useState('hi');
     const [activeNode, setActiveNode] = useState(null);
+    const [weather, setWeather] = useState(null);
     const [audioUrl, setAudioUrl] = useState(null);
     const [diagnosis, setDiagnosis] = useState('');
     const [translatedText, setTranslatedText] = useState('');
@@ -67,6 +68,7 @@ export default function FarmerView({ onAnalysisComplete }) {
         setAudioUrl(null);
         setDiagnosis('');
         setTranslatedText('');
+        setWeather(null);
         setActiveNode(null);
 
         try {
@@ -78,6 +80,9 @@ export default function FarmerView({ onAnalysisComplete }) {
             }
 
             setDiagnosis(result.vision_diagnosis || 'Analysis complete');
+            if (result.weather_data) {
+                setWeather(result.weather_data);
+            }
             if (result.translated_text) {
                 setTranslatedText(result.translated_text);
             }
@@ -238,7 +243,31 @@ export default function FarmerView({ onAnalysisComplete }) {
                     </div>
                 )}
 
-                {/* 7. Sarvam AI Audio Player */}
+                {/* 7. Live Farm Meteorological Telemetry HUD */}
+                {weather && (
+                    <div className="w-full bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 p-3 rounded-2xl border border-blue-200/80 shadow-sm flex items-center justify-between animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2.5">
+                            <span className="text-xl">⛅</span>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-black text-blue-950 flex items-center gap-1.5">
+                                    {weather.temperature_c}°C · {weather.relative_humidity}% Humidity
+                                </span>
+                                <span className="text-[10px] text-blue-700 font-medium">
+                                    Rain Risk (6h): {weather.rain_risk_6h_percent}% · Wind: {weather.wind_speed_kmh} km/h
+                                </span>
+                            </div>
+                        </div>
+                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-sm ${
+                            weather.is_spray_safe 
+                                ? "bg-emerald-100 text-emerald-900 border border-emerald-300" 
+                                : "bg-amber-100 text-amber-900 border border-amber-300"
+                        }`}>
+                            {weather.is_spray_safe ? "Safe to Spray ✓" : "Delay Spray ⚠"}
+                        </span>
+                    </div>
+                )}
+
+                {/* 8. Sarvam AI Audio Player */}
                 {audioUrl && (
                     <div className="w-full bg-white p-3.5 rounded-2xl shadow-lg border border-emerald-200 flex flex-col gap-2 animate-in slide-in-from-bottom-4 duration-300">
                         <div className="flex items-center justify-between px-1 text-xs">

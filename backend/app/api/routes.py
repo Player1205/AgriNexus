@@ -1,10 +1,12 @@
 import os
 import shutil
 import asyncio
+from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from app.agents.graph import agrinexus_app
 from app.state import AgriNexusState
+from app.services.weather_service import fetch_live_weather
 import json
 
 router = APIRouter()
@@ -54,7 +56,9 @@ async def broadcast_telemetry(node_name: str, state_data: dict):
 @router.post("/api/v1/analyze")
 async def analyze_image(
     file: UploadFile = File(...),
-    language: str = Form("hi")
+    language: str = Form("hi"),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None)
 ):
     # Save uploaded image temporarily
     temp_dir = os.path.join(os.path.dirname(__file__), "..", "..", "temp")
@@ -64,10 +68,21 @@ async def analyze_image(
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Initialize state as TypedDict with farmer's selected vernacular language
+    # 1. Fetch Real-Time Hyper-Local Agricultural Weather (EXIF GPS -> Device GPS -> Regional Base)
+    weather = await fetch_live_weather(image_path=temp_path, client_lat=latitude, client_lng=longitude)
+    print(f"[WEATHER LIVE] {weather['temperature_c']}°C | Humidity: {weather['relative_humidity']}% | Rain Risk (6h): {weather['rain_risk_6h_percent']}% | Source: {weather['location_source']}")
+
+    # 2. Initialize Swarm State
     initial_state = {
         "image_path": temp_path,
         "language_code": language,
+        "weather_data": weather,
+        "current_temperature": weather["temperature_c"],
+        "current_humidity": weather["relative_humidity"],
+        "rain_risk_6h_percent": weather["rain_risk_6h_percent"],
+        "wind_speed_kmh": weather["wind_speed_kmh"],
+        "is_spray_safe": weather["is_spray_safe"],
+        "location_source": weather["location_source"],
         "errors": []
     }
     
