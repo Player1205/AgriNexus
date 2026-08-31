@@ -52,6 +52,8 @@ describe('FarmerView UI Component Suite', () => {
             vision_diagnosis: 'Tomato Late Blight',
             is_safe: true,
             safe_dosage_ml_per_acre: 150.0,
+            dosage_unit: 'ml',
+            is_mic_protected: true,
             translated_text: 'ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ ਪਛੇਤਾ ਝੁਲਸ ਰੋਗ ਮਿਲਿਆ ਹੈ...',
             vernacular_audio_url: '/static/audio/test_audio.wav',
             weather_data: {
@@ -77,16 +79,24 @@ describe('FarmerView UI Component Suite', () => {
             expect(screen.getByText('Tomato Late Blight')).toBeInTheDocument();
             expect(screen.getByText(/28.4°C · 76% Humidity/i)).toBeInTheDocument();
             expect(screen.getByText(/Safe to Spray ✓/i)).toBeInTheDocument();
+            expect(screen.getByText(/ICAR MIC Floor Protected/i)).toBeInTheDocument();
             expect(screen.getByText(/Sarvam AI Bulbul:v3/i)).toBeInTheDocument();
         });
     });
 
-    it('Renders the Safety Alert warning card when a chemical is flagged or inspection is required', async () => {
+    it('Renders the Statutory Non-Actionable warning card and nearest KVK center on low-confidence image', async () => {
         uploadImage.mockResolvedValueOnce({
             vision_diagnosis: 'Unrecognized Anomaly',
             is_safe: false,
-            safety_warning: 'No chemical approved. Physical agronomist inspection required.',
-            translated_text: 'किसान भाई, लक्षण स्पष्ट नहीं हैं। कृपया KVK से संपर्क करें।'
+            safety_warning: 'NON-ACTIONABLE: Mandatory Physical Verification by Local KVK Extension Officer Required.',
+            translated_text: 'किसान भाई, लक्षण स्पष्ट नहीं हैं। कृपया नजदीकी कृषि विज्ञान केंद्र से संपर्क करें।',
+            nearest_kvk: {
+                name: 'ICAR-KVK Samrala, Ludhiana',
+                distance_km: 7.8,
+                phone: '01628-261597',
+                address: 'Samrala-Chawa Road, Ludhiana, Punjab 141114',
+                maps_url: 'https://maps.google.com/?q=30.8336,76.1917'
+            }
         });
 
         render(<FarmerView />);
@@ -97,8 +107,10 @@ describe('FarmerView UI Component Suite', () => {
         fireEvent.change(input, { target: { files: [file] } });
 
         await waitFor(() => {
-            expect(screen.getByText(/Safety Alert \/ Inspection Required/i)).toBeInTheDocument();
-            expect(screen.getByText(/Physical agronomist inspection required/i)).toBeInTheDocument();
+            expect(screen.getByText(/NON-ACTIONABLE: KVK Verification Required/i)).toBeInTheDocument();
+            expect(screen.getByText(/ICAR-KVK Samrala, Ludhiana/i)).toBeInTheDocument();
+            expect(screen.getByText(/7.8 km away/i)).toBeInTheDocument();
+            expect(screen.getByText(/Call Agronomist \(01628-261597\)/i)).toBeInTheDocument();
         });
     });
 });

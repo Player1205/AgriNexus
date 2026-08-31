@@ -1,4 +1,5 @@
 from app.state import AgriNexusState
+from app.services.kvk_service import kvk_service
 import sys
 import os
 
@@ -9,9 +10,6 @@ CIBRC_BANNED_CHEMICALS = {
     "captafol", "lindane", "chlordane", "aldrin", "dieldrin", "paraquat",
     "phosphamidon", "sodium cyanide", "fenitrothion"
 }
-
-# Maximum statutory allowable single-dose active ingredient threshold in India (g or ml / acre)
-MAX_STATUTORY_SINGLE_DOSE = 350.0
 
 # Add cpp_core build dir to path if compiled
 try:
@@ -24,8 +22,11 @@ except ImportError:
 async def safety_node(state: AgriNexusState) -> dict:
     """
     Agent 3: Deterministic Mathematical Safety Firewall & Meteorological Spray Interlock.
-    Enforces CIB&RC statutory compliance, rain-fastness forecasting, wind drift prevention,
-    and mathematical dosage boundary clamping.
+    Enforces:
+    1. Formulation separation (ml vs g) and ICAR Minimum Inhibitory Concentration (MIC) floor protection.
+    2. CIB&RC statutory banned chemical firewall.
+    3. Meteorological spray safety interlocks (Rain-fastness, Wind drift, Temperature).
+    4. Statutory Non-Actionable Referral & Nearest ICAR KVK Geolocation Resolver on Low Confidence (<60%).
     """
     chemical = state.get("proposed_chemical", "None")
     humidity = float(state.get("current_humidity", 75.0))
@@ -33,26 +34,50 @@ async def safety_node(state: AgriNexusState) -> dict:
     rain_risk = float(state.get("rain_risk_6h_percent", 0.0))
     wind_speed = float(state.get("wind_speed_kmh", 6.0))
     rag_dosage = float(state.get("safe_dosage_ml_per_acre", 0.0))
+    confidence = float(state.get("vision_confidence", 0.0))
+    diagnosis = state.get("vision_diagnosis", "")
+    unit = state.get("dosage_unit", "g")
+    formulation_type = state.get("formulation_type", "SOLID_WP")
+    min_mic = float(state.get("min_mic_dosage", rag_dosage * 0.8 if rag_dosage > 0 else 0.0))
+    max_stat = float(state.get("max_statutory_dosage", 350.0))
+    
+    lat = state.get("client_latitude")
+    lon = state.get("client_longitude")
 
-    # Case 1: No chemical proposed (Indeterminate or Unverified)
-    if not chemical or "None" in chemical:
+    # Case 1: Low Confidence (<60%) or Unrecognized Anomaly -> Statutory KVK Extension Referral
+    if confidence < 0.60 or not chemical or "None" in chemical or "Unrecognized" in diagnosis:
+        nearest_kvk = kvk_service.find_nearest_kvk(lat, lon)
+        warning_msg = (
+            "NON-ACTIONABLE: Mandatory Physical Verification by Local KVK Extension Officer Required. "
+            f"Foliar diagnostic confidence ({round(confidence*100, 1)}%) is below statutory 60% threshold. "
+            f"Nearest Center: {nearest_kvk['name']} ({nearest_kvk['distance_km']} km away, Tel: {nearest_kvk['phone']})."
+        )
         return {
             "is_safe": False,
             "safe_dosage_ml_per_acre": 0.0,
-            "safety_warning": "No chemical approved for application. Physical agronomist inspection required."
+            "dosage_unit": unit,
+            "formulation_type": formulation_type,
+            "safety_warning": warning_msg,
+            "is_non_actionable_referral": True,
+            "nearest_kvk": nearest_kvk,
+            "is_mic_protected": False
         }
 
-    # Case 2: Statutory Banned Chemical Check (CIB&RC Gazette)
+    # Case 2: Statutory Banned Chemical Check (CIB&RC Gazette Schedule)
     chemical_lower = chemical.lower()
     for banned in CIBRC_BANNED_CHEMICALS:
         if banned in chemical_lower:
             return {
                 "is_safe": False,
                 "safe_dosage_ml_per_acre": 0.0,
+                "dosage_unit": unit,
+                "formulation_type": formulation_type,
                 "safety_warning": (
                     f"CRITICAL STATUTORY VIOLATION: '{chemical}' contains '{banned.upper()}', "
                     "which is strictly BANNED under the Insecticides Act, 1968 & CIB&RC Gazette. Field use is illegal."
-                )
+                ),
+                "is_non_actionable_referral": False,
+                "is_mic_protected": False
             }
 
     # Case 3: Meteorological Spray Safety Interlocks
@@ -64,37 +89,61 @@ async def safety_node(state: AgriNexusState) -> dict:
     if temperature >= 36.0:
         weather_warnings.append(f"High temperature ({temperature}°C). Spray strictly during dawn or dusk to avoid foliar burn.")
 
-    # Case 4: Mathematical Boundary Clamping & Humidity Attenuation
-    bounded_dosage = min(rag_dosage, MAX_STATUTORY_SINGLE_DOSE)
+    # Case 4: Mathematical Formulation Clamping & ICAR MIC Floor Enforcement
+    bounded_dosage = min(rag_dosage, max_stat)
+    mic_held = False
     
-    # Humidity-based phytotoxicity attenuation (>80% relative humidity increases chemical absorption)
+    # Humidity attenuation (>80% relative humidity increases foliar absorption)
     if humidity > 80.0:
-        bounded_dosage = bounded_dosage * 0.9
+        attenuated = bounded_dosage * 0.90
+        # Strict MIC Floor: Never drop below minimum inhibitory concentration
+        if min_mic > 0.0 and attenuated < min_mic:
+            bounded_dosage = min_mic
+            mic_held = True
+        else:
+            bounded_dosage = attenuated
 
     final_dosage = round(bounded_dosage, 1)
 
-    # If compiled C++ safety engine binary is available, execute native verification
+    # If compiled C++ safety engine binary is available, execute native C++ verification
     if HAS_CPP:
         try:
             engine = safety_engine.SafetyEngine()
-            result = engine.evaluate_treatment(chemical, humidity)
+            if hasattr(engine, 'evaluate_treatment_v2'):
+                result = engine.evaluate_treatment_v2(chemical, humidity, rag_dosage, min_mic, max_stat, unit, formulation_type)
+            else:
+                result = engine.evaluate_treatment(chemical, humidity, rag_dosage)
+            
             if not result.is_safe:
                 return {
                     "is_safe": False,
                     "safe_dosage_ml_per_acre": 0.0,
-                    "safety_warning": result.warning_message
+                    "dosage_unit": unit,
+                    "formulation_type": formulation_type,
+                    "safety_warning": result.warning_message,
+                    "is_non_actionable_referral": False,
+                    "is_mic_protected": False
                 }
+            final_dosage = round(result.recommended_dosage, 1)
+            mic_held = getattr(result, 'is_mic_protected', mic_held)
         except Exception as e:
-            print(f"[C++ Safety Engine Note] {e}")
+            print(f"[C++ Safety Engine Fallback] {e}")
 
-    # Build comprehensive safety confirmation
+    # Build comprehensive safety advisory
     if weather_warnings:
         warning_msg = " | ".join(weather_warnings)
     else:
-        warning_msg = f"Deterministic Safety Core Verified: Live Weather Optimal ({temperature}°C, {humidity}% Humidity, Rain Risk: {int(rain_risk)}%)."
+        warning_msg = f"Deterministic Safety Core: Verified compliant within ICAR therapeutic window [{min_mic}-{max_stat} {unit}/acre]."
+        if mic_held:
+            warning_msg += " (Protected at Minimum Inhibitory Concentration floor)."
 
     return {
         "is_safe": True,
         "safe_dosage_ml_per_acre": final_dosage,
-        "safety_warning": warning_msg
+        "dosage_unit": unit,
+        "formulation_type": formulation_type,
+        "safety_warning": warning_msg,
+        "is_non_actionable_referral": False,
+        "is_mic_protected": mic_held,
+        "nearest_kvk": None
     }

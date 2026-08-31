@@ -13,6 +13,8 @@ class AgriNexusState(TypedDict, total=False):
     wind_speed_kmh: Optional[float]
     is_spray_safe: Optional[bool]
     location_source: Optional[str]
+    client_latitude: Optional[float]
+    client_longitude: Optional[float]
     
     # Vision Agent Outputs
     vision_diagnosis: Optional[str]
@@ -21,11 +23,20 @@ class AgriNexusState(TypedDict, total=False):
     # RAG Agent Outputs
     rag_treatment_plan: Optional[str]
     proposed_chemical: Optional[str]
+    dosage_unit: Optional[str]
+    formulation_type: Optional[str]
+    min_mic_dosage: Optional[float]
+    max_statutory_dosage: Optional[float]
     
     # Safety Engine Outputs
     is_safe: bool
     safe_dosage_ml_per_acre: float
     safety_warning: Optional[str]
+    is_mic_protected: Optional[bool]
+    is_non_actionable_referral: Optional[bool]
+    
+    # Statutory KVK Extension Referral (on Low Confidence / Indeterminate Anomaly)
+    nearest_kvk: Optional[dict]
     
     # Web3 Agent Outputs
     tx_hash: Optional[str]

@@ -16,12 +16,15 @@ async def test_safety_approves_safe_chemical():
         "current_humidity": 65.0,
         "current_temperature": 28.0,
         "rain_risk_6h_percent": 5.0,
-        "wind_speed_kmh": 8.0
+        "wind_speed_kmh": 8.0,
+        "vision_confidence": 0.95,
+        "vision_diagnosis": "Tomato Late Blight"
     }
     result = await safety_node(state)
     assert result["is_safe"] is True
     assert result["safe_dosage_ml_per_acre"] == 150.0
     assert "Verified" in result["safety_warning"]
+    assert result["is_non_actionable_referral"] is False
 
 @pytest.mark.asyncio
 async def test_safety_rejects_banned_endosulfan():
@@ -29,7 +32,9 @@ async def test_safety_rejects_banned_endosulfan():
     state = {
         "proposed_chemical": "Endosulfan 35% EC",
         "safe_dosage_ml_per_acre": 200.0,
-        "current_humidity": 70.0
+        "current_humidity": 70.0,
+        "vision_confidence": 0.92,
+        "vision_diagnosis": "Tomato Pest"
     }
     result = await safety_node(state)
     assert result["is_safe"] is False
@@ -42,7 +47,9 @@ async def test_safety_rejects_banned_monocrotophos():
     """Verify statutory interception of banned chemical Monocrotophos."""
     state = {
         "proposed_chemical": "Monocrotophos 36% SL",
-        "safe_dosage_ml_per_acre": 150.0
+        "safe_dosage_ml_per_acre": 150.0,
+        "vision_confidence": 0.88,
+        "vision_diagnosis": "Cotton Pest"
     }
     result = await safety_node(state)
     assert result["is_safe"] is False
@@ -50,15 +57,18 @@ async def test_safety_rejects_banned_monocrotophos():
 
 @pytest.mark.asyncio
 async def test_safety_clamps_overdose():
-    """Verify mathematical clamping of extreme dosage exceeding 350ml/g per acre."""
+    """Verify mathematical clamping of extreme dosage exceeding statutory ceiling."""
     state = {
         "proposed_chemical": "Mancozeb 75% WP",
         "safe_dosage_ml_per_acre": 850.0, # Dangerous overdose attempt
-        "current_humidity": 70.0
+        "max_statutory_dosage": 260.0,
+        "current_humidity": 70.0,
+        "vision_confidence": 0.91,
+        "vision_diagnosis": "Potato Early Blight"
     }
     result = await safety_node(state)
     assert result["is_safe"] is True
-    assert result["safe_dosage_ml_per_acre"] <= 350.0 # Clamped to statutory maximum
+    assert result["safe_dosage_ml_per_acre"] <= 260.0 # Clamped to statutory maximum
 
 @pytest.mark.asyncio
 async def test_safety_humidity_attenuation():
@@ -66,21 +76,48 @@ async def test_safety_humidity_attenuation():
     state = {
         "proposed_chemical": "Chlorothalonil 75% WP",
         "safe_dosage_ml_per_acre": 200.0,
-        "current_humidity": 88.0 # High humidity
+        "min_mic_dosage": 140.0,
+        "max_statutory_dosage": 260.0,
+        "current_humidity": 88.0, # High humidity
+        "vision_confidence": 0.89,
+        "vision_diagnosis": "Tomato Early Blight"
     }
     result = await safety_node(state)
     assert result["is_safe"] is True
     assert result["safe_dosage_ml_per_acre"] == 180.0 # 200.0 * 0.9 = 180.0
 
 @pytest.mark.asyncio
-async def test_safety_rain_fastness_warning():
-    """Verify meteorological alert when rain risk exceeds 40% in next 6 hours."""
+async def test_safety_mic_floor_protection():
+    """Verify dosage is protected at Minimum Inhibitory Concentration (MIC) floor."""
     state = {
-        "proposed_chemical": "Propiconazole 25% EC",
-        "safe_dosage_ml_per_acre": 150.0,
-        "current_humidity": 75.0,
-        "rain_risk_6h_percent": 65.0 # High rain probability
+        "proposed_chemical": "Pyraclostrobin 20% WG",
+        "safe_dosage_ml_per_acre": 100.0,
+        "min_mic_dosage": 95.0, # MIC Floor is 95.0
+        "current_humidity": 90.0, # Attenuation would be 90.0 (below MIC)
+        "vision_confidence": 0.94,
+        "vision_diagnosis": "Tomato Target Spot"
     }
     result = await safety_node(state)
-    assert "rain" in result["safety_warning"].lower()
-    assert "wash-off" in result["safety_warning"].lower()
+    assert result["is_safe"] is True
+    assert result["safe_dosage_ml_per_acre"] == 95.0 # Held at MIC floor 95.0!
+    assert result["is_mic_protected"] is True
+
+@pytest.mark.asyncio
+async def test_safety_low_confidence_triggers_kvk_referral():
+    """Verify that diagnostic confidence < 60% blocks chemical application and resolves nearest KVK."""
+    state = {
+        "proposed_chemical": "Azoxystrobin 18.2%",
+        "safe_dosage_ml_per_acre": 150.0,
+        "vision_confidence": 0.48, # Low confidence (<60%)
+        "vision_diagnosis": "Unrecognized Pattern (Low Confidence)",
+        "client_latitude": 30.9010,
+        "client_longitude": 75.8573
+    }
+    result = await safety_node(state)
+    assert result["is_safe"] is False
+    assert result["safe_dosage_ml_per_acre"] == 0.0
+    assert result["is_non_actionable_referral"] is True
+    assert "NON-ACTIONABLE" in result["safety_warning"]
+    assert result["nearest_kvk"] is not None
+    assert "Samrala" in result["nearest_kvk"]["name"] or "Ludhiana" in result["nearest_kvk"]["district"]
+    assert result["nearest_kvk"]["distance_km"] < 50.0

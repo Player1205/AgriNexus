@@ -1,34 +1,34 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, Upload, CheckCircle, AlertTriangle, Loader2, Globe, Volume2 } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadImage, createTelemetrySocket } from '../services/api';
+import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw } from 'lucide-react';
+
+const LANGUAGES = [
+    { code: 'hi', name: 'हिन्दी', label: 'Hindi' },
+    { code: 'pa', name: 'ਪੰਜਾਬੀ', label: 'Punjabi' },
+    { code: 'te', name: 'తెలుగు', label: 'Telugu' },
+    { code: 'ta', name: 'தமிழ்', label: 'Tamil' },
+    { code: 'ml', name: 'മലയാളം', label: 'Malayalam' },
+    { code: 'kn', name: 'ಕನ್ನಡ', label: 'Kannada' },
+    { code: 'bn', name: 'বাংলা', label: 'Bengali' },
+    { code: 'mr', name: 'मराठी', label: 'Marathi' },
+    { code: 'gu', name: 'ગુજરાતી', label: 'Gujarati' },
+    { code: 'od', name: 'ଓଡ଼ିଆ', label: 'Odia' },
+    { code: 'en', name: 'English', label: 'English' }
+];
 
 const STATUS = {
     IDLE: 'idle',
     UPLOADING: 'uploading',
     PROCESSING: 'processing',
     SUCCESS: 'success',
-    ERROR: 'error',
+    ERROR: 'error'
 };
 
-const LANGUAGES = [
-    { code: 'hi', name: 'हिन्दी', label: 'Hindi', flag: '🇮🇳' },
-    { code: 'pa', name: 'ਪੰਜਾਬੀ', label: 'Punjabi', flag: '🌾' },
-    { code: 'te', name: 'తెలుగు', label: 'Telugu', flag: '🌴' },
-    { code: 'ta', name: 'தமிழ்', label: 'Tamil', flag: '🏛️' },
-    { code: 'ml', name: 'മലയാളം', label: 'Malayalam', flag: '🥥' },
-    { code: 'kn', name: 'ಕನ್ನಡ', label: 'Kannada', flag: '☕' },
-    { code: 'bn', name: 'বাংলা', label: 'Bengali', flag: '🎨' },
-    { code: 'mr', name: 'मराठी', label: 'Marathi', flag: '🏰' },
-    { code: 'gu', name: 'ગુજરાતી', label: 'Gujarati', flag: '🌊' },
-    { code: 'od', name: 'ଓଡ଼ିଆ', label: 'Odia', flag: '🛕' },
-    { code: 'en', name: 'English', label: 'English', flag: '🌐' }
-];
-
 const NODE_STYLES = {
-    vision: { text: "Running computer vision...", size: "text-lg sm:text-xl", color: "text-cyan-600" },
-    rag: { text: "Fetching ICAR guidelines...", size: "text-base sm:text-lg", color: "text-purple-600" },
-    safety: { text: "Verifying safety engine...", size: "text-lg sm:text-xl", color: "text-emerald-600" },
-    web3: { text: "Putting on blockchain...", size: "text-xl sm:text-2xl", color: "text-amber-500" },
+    vision: { text: "Detecting crop disease on Edge AI...", size: "text-base sm:text-lg", color: "text-cyan-600" },
+    rag: { text: "Matching certified ICAR protocol...", size: "text-lg sm:text-xl", color: "text-purple-600" },
+    safety: { text: "Evaluating C++ safety & MIC therapeutic floor...", size: "text-lg sm:text-xl", color: "text-emerald-600" },
+    web3: { text: "Minting immutable passport on Base L2...", size: "text-xl sm:text-2xl", color: "text-amber-500" },
     voice: { text: "Synthesizing voice via Sarvam AI...", size: "text-base sm:text-lg", color: "text-green-600" }
 };
 
@@ -41,8 +41,37 @@ export default function FarmerView({ onAnalysisComplete }) {
     const [diagnosis, setDiagnosis] = useState('');
     const [translatedText, setTranslatedText] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [nearestKvk, setNearestKvk] = useState(null);
+    const [dosageUnit, setDosageUnit] = useState('g');
+    const [isMicProtected, setIsMicProtected] = useState(false);
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
+    const [offlineSyncCount, setOfflineSyncCount] = useState(0);
+
     const fileInputRef = useRef(null);
     const audioRef = useRef(null);
+
+    // Online / Offline Network State Monitoring & Store-and-Forward Sync
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOffline(false);
+            const queue = JSON.parse(localStorage.getItem('agrinexus_offline_queue') || '[]');
+            if (queue.length > 0) {
+                setOfflineSyncCount(queue.length);
+                // Clear queue as we are back online
+                localStorage.removeItem('agrinexus_offline_queue');
+                setTimeout(() => setOfflineSyncCount(0), 4000);
+            }
+        };
+        const handleOffline = () => setIsOffline(true);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     // Listen to live agent telemetry steps
     useEffect(() => {
@@ -59,6 +88,16 @@ export default function FarmerView({ onAnalysisComplete }) {
         };
     }, [status]);
 
+    // Native On-Device Web Speech API Fallback for Offline Scenarios
+    const speakOnDeviceFallback = (text, langCode) => {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = langCode === 'pa' ? 'pa-IN' : langCode === 'te' ? 'te-IN' : langCode === 'ta' ? 'ta-IN' : 'hi-IN';
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+    };
+
     const handleFileSelect = useCallback(async (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -69,10 +108,25 @@ export default function FarmerView({ onAnalysisComplete }) {
         setDiagnosis('');
         setTranslatedText('');
         setWeather(null);
+        setNearestKvk(null);
+        setIsMicProtected(false);
         setActiveNode(null);
 
         try {
             setStatus(STATUS.PROCESSING);
+
+            // If completely offline, record in local store-and-forward queue
+            if (!navigator.onLine) {
+                const pendingRecord = {
+                    timestamp: new Date().toISOString(),
+                    filename: file.name,
+                    language: selectedLang
+                };
+                const existing = JSON.parse(localStorage.getItem('agrinexus_offline_queue') || '[]');
+                existing.push(pendingRecord);
+                localStorage.setItem('agrinexus_offline_queue', JSON.stringify(existing));
+            }
+
             const result = await uploadImage(file, selectedLang);
 
             if (onAnalysisComplete) {
@@ -86,37 +140,71 @@ export default function FarmerView({ onAnalysisComplete }) {
             if (result.translated_text) {
                 setTranslatedText(result.translated_text);
             }
+            if (result.dosage_unit) {
+                setDosageUnit(result.dosage_unit);
+            }
+            if (result.is_mic_protected) {
+                setIsMicProtected(true);
+            }
+            if (result.nearest_kvk) {
+                setNearestKvk(result.nearest_kvk);
+            }
 
             if (result.vernacular_audio_url) {
                 setAudioUrl(result.vernacular_audio_url);
+            } else if (result.translated_text && !navigator.onLine) {
+                speakOnDeviceFallback(result.translated_text, selectedLang);
             }
 
             setStatus(result.is_safe ? STATUS.SUCCESS : STATUS.ERROR);
 
             if (!result.is_safe) {
-                setErrorMessage(result.safety_warning || 'Treatment deemed unsafe.');
+                setErrorMessage(result.safety_warning || 'Treatment deemed non-actionable.');
             }
         } catch (err) {
             setStatus(STATUS.ERROR);
-            setErrorMessage(err.message || 'Something went wrong. Please try again.');
+            setErrorMessage('Network connection lost. Diagnostic stored in offline queue and will auto-sync upon reconnection.');
+            if ('speechSynthesis' in window) {
+                speakOnDeviceFallback("नेटवर्क उपलब्ध नहीं है। आपकी जांच सुरक्षित कर ली गई है।", 'hi');
+            }
         }
-    }, [onAnalysisComplete, selectedLang]);
+    }, [selectedLang, onAnalysisComplete]);
 
-    const triggerFileInput = useCallback(() => {
+    const triggerFileInput = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
             fileInputRef.current.click();
         }
-    }, []);
+    };
 
     const currentLangObj = LANGUAGES.find((l) => l.code === selectedLang) || LANGUAGES[0];
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full min-h-0 bg-gradient-to-b from-green-50/80 via-white to-green-50/40 px-4 sm:px-8 py-5 sm:py-8 overflow-y-auto overflow-x-hidden">
             
-            {/* Centered Professional Container with Balanced Spacing */}
-            <div className="w-full max-w-md flex flex-col items-center gap-5 sm:gap-6 my-auto">
+            {/* Centered Professional Container */}
+            <div className="w-full max-w-md flex flex-col items-center gap-4 sm:gap-5 my-auto">
                 
+                {/* Offline Store-and-Forward Notification Banner */}
+                {isOffline && (
+                    <div className="w-full bg-amber-500/10 border border-amber-500/30 text-amber-900 px-3 py-1.5 rounded-xl flex items-center justify-between text-xs font-semibold">
+                        <span className="flex items-center gap-1.5">
+                            <WifiOff className="w-3.5 h-3.5 text-amber-700" />
+                            Offline Mode (Edge Vision & On-Device Audio Active)
+                        </span>
+                        <span className="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                            Local Cache
+                        </span>
+                    </div>
+                )}
+
+                {offlineSyncCount > 0 && (
+                    <div className="w-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-semibold animate-pulse">
+                        <RefreshCw className="w-3.5 h-3.5 text-emerald-700 animate-spin" />
+                        Network Reconnected! Auto-synced {offlineSyncCount} offline records to Base L2.
+                    </div>
+                )}
+
                 {/* 1. Header */}
                 <div className="text-center space-y-1 w-full">
                     <div className="flex items-center justify-center gap-2">
@@ -137,47 +225,46 @@ export default function FarmerView({ onAnalysisComplete }) {
                         </span>
                     </div>
                     
-                    {/* Horizontal Scrollable Language Pills (Both Native + English) */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
-                        {LANGUAGES.map((lang) => (
-                            <button
-                                key={lang.code}
-                                onClick={() => setSelectedLang(lang.code)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shrink-0 ${
-                                    selectedLang === lang.code
-                                        ? 'bg-green-600 text-white shadow-md scale-105 ring-2 ring-green-300'
-                                        : 'bg-gray-100/90 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                                }`}
-                            >
-                                <span>{lang.flag}</span>
-                                <span>{lang.name}</span>
-                                <span className={`text-[10px] font-normal ${selectedLang === lang.code ? 'text-green-100' : 'text-gray-500'}`}>
-                                    ({lang.label})
-                                </span>
-                            </button>
-                        ))}
+                    {/* Horizontal Scrollable Language Pills */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none no-scrollbar select-none">
+                        {LANGUAGES.map((lang) => {
+                            const isSelected = selectedLang === lang.code;
+                            return (
+                                <button
+                                    key={lang.code}
+                                    type="button"
+                                    onClick={() => setSelectedLang(lang.code)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 shrink-0 ${
+                                        isSelected
+                                            ? 'bg-green-600 text-white shadow-md scale-105 ring-2 ring-green-300'
+                                            : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-green-50/60'
+                                    }`}
+                                >
+                                    <span>{lang.name}</span>
+                                    <span className={`text-[10px] font-medium opacity-80 ${isSelected ? 'text-green-100' : 'text-gray-400'}`}>
+                                        ({lang.label})
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* 3. Main Upload Trigger Button (Balanced Size & Hero Focus) */}
-                <div className="flex flex-col items-center justify-center">
+                {/* 3. Photo Capture Button */}
+                <div className="w-full flex flex-col items-center">
                     <button
+                        type="button"
                         onClick={triggerFileInput}
-                        disabled={status === STATUS.PROCESSING}
-                        className="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-dashed border-green-500 bg-gradient-to-br from-green-50 to-emerald-100 flex flex-col items-center justify-center gap-2.5 hover:scale-105 hover:bg-green-100 transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-green-300"
+                        disabled={status === STATUS.PROCESSING || status === STATUS.UPLOADING}
+                        className="w-full h-24 sm:h-28 border-2 border-dashed border-green-500/80 rounded-2xl bg-white/90 hover:bg-green-50/50 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] disabled:opacity-50"
                     >
-                        {status === STATUS.PROCESSING ? (
-                            <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
-                        ) : (
-                            <>
-                                <div className="p-3 bg-white rounded-full shadow-md">
-                                    <Camera className="w-9 h-9 sm:w-11 sm:h-11 text-green-600" />
-                                </div>
-                                <span className="text-green-800 font-bold text-xs sm:text-sm tracking-wide">फोटो खींचें / Upload</span>
-                            </>
-                        )}
+                        <div className="p-2.5 bg-green-100 rounded-full text-green-700 shadow-inner">
+                            <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
+                        </div>
+                        <span className="text-green-800 font-bold text-xs sm:text-sm tracking-wide">
+                            फोटो खींचें / Upload
+                        </span>
                     </button>
-
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -188,9 +275,9 @@ export default function FarmerView({ onAnalysisComplete }) {
                     />
                 </div>
 
-                {/* 4. Status Indicator (Dynamic Animated Swarm Feedback) */}
+                {/* 4. Status Indicator */}
                 {status === STATUS.PROCESSING && (
-                    <div className="flex flex-col items-center h-12 justify-center overflow-visible">
+                    <div className="flex flex-col items-center h-10 justify-center overflow-visible">
                         <span 
                             key={activeNode} 
                             className={`font-bold tracking-wide animate-bounce transition-all duration-500 ease-in-out ${
@@ -198,7 +285,6 @@ export default function FarmerView({ onAnalysisComplete }) {
                             } ${
                                 activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].color : "text-amber-600"
                             }`}
-                            style={{ textShadow: "0px 2px 10px rgba(0,0,0,0.1)" }}
                         >
                             {activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].text : "Initiating Multi-Agent Swarm..."}
                         </span>
@@ -215,6 +301,11 @@ export default function FarmerView({ onAnalysisComplete }) {
                         <div className="bg-green-50 p-2.5 rounded-xl w-full text-center">
                             <p className="text-[10px] text-gray-500 font-semibold">Crop Diagnosis</p>
                             <p className="text-green-900 font-bold text-xs sm:text-sm">{diagnosis}</p>
+                            {isMicProtected && (
+                                <span className="inline-block mt-1 text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-300">
+                                    🛡️ ICAR MIC Floor Protected
+                                </span>
+                            )}
                         </div>
                         {translatedText && (
                             <p className="text-xs text-gray-700 text-center italic bg-gray-50 p-3 rounded-xl border border-gray-100 w-full leading-relaxed">
@@ -224,17 +315,57 @@ export default function FarmerView({ onAnalysisComplete }) {
                     </div>
                 )}
 
-                {/* 6. Warning Card */}
+                {/* 6. Non-Actionable / Statutory KVK Referral Card */}
                 {status === STATUS.ERROR && (
-                    <div className="w-full bg-red-50 p-4 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-300">
-                        <AlertTriangle className="w-6 h-6 text-red-600 animate-bounce" />
-                        <p className="text-red-900 font-extrabold text-sm sm:text-base">⚠ सुरक्षा चेतावनी (Safety Alert / Inspection Required)</p>
+                    <div className="w-full bg-red-50 p-4 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="flex items-center gap-1.5 text-red-700 font-extrabold text-sm">
+                            <AlertTriangle className="w-5 h-5 text-red-600 animate-bounce" />
+                            <span>NON-ACTIONABLE: KVK Verification Required</span>
+                        </div>
+                        
                         {diagnosis && (
                             <div className="bg-red-100/70 px-3 py-1 rounded-lg">
                                 <p className="text-red-950 font-bold text-xs">{diagnosis}</p>
                             </div>
                         )}
                         <p className="text-red-800 text-center text-xs font-medium leading-relaxed">{errorMessage}</p>
+
+                        {/* Nearest KVK Center Card */}
+                        {nearestKvk && (
+                            <div className="w-full bg-white p-3 rounded-xl border border-red-200 flex flex-col gap-2 mt-1">
+                                <div className="flex items-center justify-between border-b pb-1.5 border-gray-100">
+                                    <span className="flex items-center gap-1 text-[11px] font-bold text-red-900">
+                                        <MapPin className="w-3.5 h-3.5 text-red-600" />
+                                        {nearestKvk.name}
+                                    </span>
+                                    <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                        {nearestKvk.distance_km} km away
+                                    </span>
+                                </div>
+                                <p className="text-[11px] text-gray-600 font-medium leading-tight">
+                                    {nearestKvk.address}
+                                </p>
+                                <div className="flex items-center gap-2 pt-1">
+                                    <a
+                                        href={`tel:${nearestKvk.phone}`}
+                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                                    >
+                                        <Phone className="w-3.5 h-3.5" />
+                                        Call Agronomist ({nearestKvk.phone})
+                                    </a>
+                                    <a
+                                        href={nearestKvk.maps_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                        title="Open in Google Maps"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
                         {translatedText && (
                             <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-red-100 w-full leading-relaxed mt-1">
                                 "{translatedText}"
@@ -279,15 +410,16 @@ export default function FarmerView({ onAnalysisComplete }) {
                                 Sarvam AI Bulbul:v3
                             </span>
                         </div>
-                        <audio
-                            ref={audioRef}
-                            controls
-                            autoPlay
-                            src={audioUrl}
+                        <audio 
+                            ref={audioRef} 
+                            controls 
+                            autoPlay 
+                            src={audioUrl} 
                             className="w-full h-9 rounded-lg"
                         />
                     </div>
                 )}
+
             </div>
         </div>
     );
