@@ -16,11 +16,12 @@ class TTSClient:
         os.makedirs(self.output_dir, exist_ok=True)
         self.sarvam_url = "https://api.sarvam.ai/text-to-speech"
 
-    async def generate_audio(self, text: str, language_code: str = "hi") -> str:
+    async def generate_audio(self, text: str, language_code: str = "hi") -> str | None:
         """
         Generates authentic Indic TTS audio using Sarvam AI (Bulbul:v3).
         Supports 11 regional languages: Hindi, Punjabi, Telugu, Tamil, Malayalam, Kannada, Bengali, Marathi, Gujarati, Odia, English.
         Automatically falls back to Microsoft Edge Neural TTS if Sarvam API is unreachable or key is missing.
+        Gracefully returns None if completely offline so on-device client Web Speech API takes over.
         """
         sarvam_key = os.environ.get("SARVAM_API_KEY")
 
@@ -61,7 +62,7 @@ class TTSClient:
                     "model": "bulbul:v3"
                 }
 
-                async with httpx.AsyncClient(timeout=15.0) as client:
+                async with httpx.AsyncClient(timeout=8.0) as client:
                     response = await client.post(self.sarvam_url, headers=headers, json=payload)
                     
                     if response.status_code == 200:
@@ -85,28 +86,35 @@ class TTSClient:
         # ---------------------------------------------------------------------
         # SECONDARY / FALLBACK: MICROSOFT EDGE NEURAL TTS
         # ---------------------------------------------------------------------
-        print(f"[EDGE-TTS] Fallback Triggered for language '{language_code}'...")
-        edge_voice_map = {
-            "hi": "hi-IN-MadhurNeural",
-            "pa": "pa-IN-OjasNeural",
-            "te": "te-IN-MohanNeural",
-            "ta": "ta-IN-ValluvarNeural",
-            "ml": "ml-IN-MidhunNeural",
-            "kn": "kn-IN-GaganNeural",
-            "bn": "bn-IN-BashkarNeural",
-            "mr": "mr-IN-AarohiNeural",
-            "gu": "gu-IN-DhwaniNeural",
-            "od": "hi-IN-MadhurNeural", # Odia fallback
-            "en": "en-IN-PrabhatNeural"
-        }
-        
-        voice = edge_voice_map.get(language_code, "hi-IN-MadhurNeural")
-        filename = f"treatment_edge_{language_code}_{int(time.time())}.mp3"
-        filepath = os.path.join(self.output_dir, filename)
-        
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(filepath)
-        
-        return f"/static/audio/{filename}"
+        try:
+            print(f"[EDGE-TTS] Fallback Triggered for language '{language_code}'...")
+            edge_voice_map = {
+                "hi": "hi-IN-MadhurNeural",
+                "pa": "pa-IN-OjasNeural",
+                "te": "te-IN-MohanNeural",
+                "ta": "ta-IN-ValluvarNeural",
+                "ml": "ml-IN-MidhunNeural",
+                "kn": "kn-IN-GaganNeural",
+                "bn": "bn-IN-BashkarNeural",
+                "mr": "mr-IN-AarohiNeural",
+                "gu": "gu-IN-DhwaniNeural",
+                "od": "hi-IN-MadhurNeural", # Odia fallback
+                "en": "en-IN-PrabhatNeural"
+            }
+            
+            voice = edge_voice_map.get(language_code, "hi-IN-MadhurNeural")
+            filename = f"treatment_edge_{language_code}_{int(time.time())}.mp3"
+            filepath = os.path.join(self.output_dir, filename)
+            
+            communicate = edge_tts.Communicate(text, voice)
+            await communicate.save(filepath)
+            
+            return f"/static/audio/{filename}"
+        except Exception as err:
+            print(f"[EDGE-TTS Offline] Cloud TTS unavailable: {err}. On-device Web Speech API will handle acoustic playback.")
+            return None
+
+    # Alias for backwards compatibility
+    synthesize_speech = generate_audio
 
 tts_client = TTSClient()

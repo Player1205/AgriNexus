@@ -888,6 +888,32 @@ Each record explains:
 > </details>
 </details>
 
+### ADR-055: TTS Client Method Aliasing & Resilient Acoustic Fallback
+
+* **Context & Problem:** When executing the 5-agent LangGraph pipeline, the state machine transitioned through `vision`, `rag`, `safety`, and `web3`, but failed during `voice` because `voice_agent.py` invoked `tts_client.synthesize_speech(...)` while `TTSClient` only declared `generate_audio(...)`. This threw an `AttributeError` that terminated the stream, leaving the Web3 node in a pending state on the telemetry screen and returning a 500 status to the client.
+* **What Was Changed & How:**
+  1. *Method Aliasing (`backend/app/services/tts_client.py`):* Defined `synthesize_speech = generate_audio` ensuring complete polymorphic compatibility across callers.
+  2. *Resilient Exception Boundary:* Wrapped both Sarvam AI Bulbul:v3 and Edge-TTS fallback paths in safe exception handlers returning `None` if completely offline, allowing the frontend's native `window.speechSynthesis` to speak without crashing backend state machine execution.
+* **Architectural Rationale:** Guarantees that acoustic synthesis failures never abort the core agronomic or cryptographic state pipelines.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-055</strong></summary>
+
+> **Question:** How does AgriNexus ensure that the multi-agent swarm never crashes if third-party speech synthesis APIs fail or disconnect?
+>
+> 1. It throws an unhandled server error.
+> 2. It wraps cloud TTS in a multi-tier fallback (Sarvam AI $\rightarrow$ Edge-TTS $\rightarrow$ None), allowing the state machine to complete and triggering on-device Web Speech API in the browser.
+> 3. It cancels the blockchain transaction.
+> 4. It asks the farmer to re-upload the photo.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Resilient acoustic boundaries ensure the state machine always transitions smoothly to completion, falling back to local on-device speech when cloud endpoints are unavailable.
+> </details>
+</details>
+
 ---
 
 ## 🏆 Summary Checklist for Developers & Auditors
@@ -900,5 +926,7 @@ Each record explains:
 * [x] **MIC Floor Protection:** Formulation separation with ICAR Minimum Inhibitory Concentration floor enforcement.
 * [x] **Geospatial KVK Resolver:** Sub-millisecond Haversine distance engine routing low-confidence anomalies to certified agricultural extension scientists.
 * [x] **Transparent Offline Voice Caution:** Native dialect voice warnings when live satellite weather is unreachable.
+* [x] **Resilient Acoustic Pipeline:** Polymorphic TTS client with seamless on-device voice fallback.
+
 
 
