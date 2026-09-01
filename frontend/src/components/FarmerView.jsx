@@ -376,24 +376,41 @@ export default function FarmerView({ onAnalysisComplete }) {
 
                 {/* 7. Live Farm Meteorological Telemetry HUD */}
                 {weather && (
-                    <div className="w-full bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 p-3 rounded-2xl border border-blue-200/80 shadow-sm flex items-center justify-between animate-in fade-in duration-300">
+                    <div className={`w-full p-3 rounded-2xl border shadow-sm flex items-center justify-between animate-in fade-in duration-300 ${
+                        weather.location_source === 'regional_baseline'
+                            ? 'bg-amber-50/90 border-amber-200'
+                            : 'bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 border-blue-200/80'
+                    }`}>
                         <div className="flex items-center gap-2.5">
-                            <span className="text-xl">⛅</span>
+                            <span className="text-xl">{weather.location_source === 'regional_baseline' ? '⚠️' : '⛅'}</span>
                             <div className="flex flex-col">
-                                <span className="text-xs font-black text-blue-950 flex items-center gap-1.5">
+                                <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
                                     {weather.temperature_c}°C · {weather.relative_humidity}% Humidity
+                                    {weather.location_source === 'regional_baseline' && (
+                                        <span className="text-[9px] bg-amber-200 text-amber-900 font-bold px-1.5 py-0.5 rounded">
+                                            Offline Baseline
+                                        </span>
+                                    )}
                                 </span>
-                                <span className="text-[10px] text-blue-700 font-medium">
-                                    Rain Risk (6h): {weather.rain_risk_6h_percent}% · Wind: {weather.wind_speed_kmh} km/h
+                                <span className="text-[10px] text-gray-600 font-medium">
+                                    {weather.location_source === 'regional_baseline' 
+                                        ? 'लाइव मौसम अनुपलब्ध — छिड़काव से पहले बारिश न होने की पुष्टि करें' 
+                                        : `Rain Risk (6h): ${weather.rain_risk_6h_percent}% · Wind: ${weather.wind_speed_kmh} km/h`
+                                    }
                                 </span>
                             </div>
                         </div>
                         <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-sm ${
-                            weather.is_spray_safe 
-                                ? "bg-emerald-100 text-emerald-900 border border-emerald-300" 
-                                : "bg-amber-100 text-amber-900 border border-amber-300"
+                            weather.location_source === 'regional_baseline'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                : weather.is_spray_safe 
+                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
                         }`}>
-                            {weather.is_spray_safe ? "Safe to Spray ✓" : "Delay Spray ⚠"}
+                            {weather.location_source === 'regional_baseline'
+                                ? 'Check Rain ⚠'
+                                : weather.is_spray_safe ? 'Safe to Spray ✓' : 'Delay Spray ⚠'
+                            }
                         </span>
                     </div>
                 )}

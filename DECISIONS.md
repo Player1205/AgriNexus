@@ -862,6 +862,34 @@ Each record explains:
 
 ---
 
+### ADR-054: Offline Live Weather Voice Caution & Visual Baseline Indicators
+
+* **Context & Problem:** When a farmer uses the app offline without cellular data, live satellite precipitation telemetry cannot be fetched from Open-Meteo. Simply providing the chemical prescription without warning the farmer to check the sky for rain could lead to the chemical washing off in an unexpected downpour.
+* **What Was Changed & How:**
+  1. *Vernacular Acoustic Invariant (`voice_agent.py`):* If `location_source == "regional_baseline"` (indicating offline status), the voice agent weaves an explicit spoken caution in all 11 Indic languages (*e.g. "सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका, छिड़काव से पहले बारिश न होने की पुष्टि करें"*).
+  2. *Visual HUD Feedback (`FarmerView.jsx`):* The Weather HUD dynamically switches from blue/green to an amber warning container with an `Offline Baseline` tag and `Check Rain ⚠` action badge.
+* **Architectural Rationale:** Enforces transparent agronomic safety communication so farmers never spray right before unmonitored rain events.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-054</strong></summary>
+
+> **Question:** When AgriNexus operates in an offline agrarian zone without internet, what cautionary measure is spoken to the farmer?
+>
+> 1. It tells the farmer to buy a new smartphone.
+> 2. It explicitly informs the farmer in their native dialect that live satellite weather could not be fetched due to lack of internet and reminds them to ensure there is no immediate rain before spraying to prevent chemical wash-off.
+> 3. It plays a loud siren sound.
+> 4. It blocks all voice output entirely.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Transparent spoken cautions guarantee that the farmer is aware that real-time rain risk could not be verified by satellite, prompting them to physically observe the weather before applying costly chemicals.
+> </details>
+</details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
@@ -871,4 +899,6 @@ Each record explains:
 * [x] **Offline-First Resilience:** Store-and-forward queue with on-device native speech synthesis.
 * [x] **MIC Floor Protection:** Formulation separation with ICAR Minimum Inhibitory Concentration floor enforcement.
 * [x] **Geospatial KVK Resolver:** Sub-millisecond Haversine distance engine routing low-confidence anomalies to certified agricultural extension scientists.
+* [x] **Transparent Offline Voice Caution:** Native dialect voice warnings when live satellite weather is unreachable.
+
 

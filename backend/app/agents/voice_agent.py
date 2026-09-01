@@ -52,7 +52,7 @@ PATHOLOGY_TRANSLATIONS = {
         "te": "ఆకు బూజు తెగులు (Leaf Mold)",
         "ta": "இலை பூஞ்சை நோய் (Leaf Mold)",
         "ml": "ഇല പൂപ്പൽ രോഗം (Leaf Mold)",
-        "kn": "ಎಲೆ ಬೂజు ರೋಗ (Leaf Mold)",
+        "kn": "ಎಲೆ ಬೂಜು ರೋಗ (Leaf Mold)",
         "bn": "পাতার ছত্রাক রোগ (Leaf Mold)",
         "mr": "पानावरील बुरशी (Leaf Mold)",
         "gu": "પાનની ફૂગ (Leaf Mold)",
@@ -150,7 +150,7 @@ async def voice_node(state: AgriNexusState) -> dict:
     """
     Agent 5: Vernacular Translation & Comprehensive Voice Synthesis.
     Dynamically maps verified diagnosis, chemical, and ICAR dosage into 11 Indic languages
-    incorporating real-time field weather metrics and nearest KVK extension location.
+    incorporating real-time field weather metrics, offline weather cautions, and nearest KVK extension location.
     """
     is_safe = state.get("is_safe", False)
     vision_diagnosis = state.get("vision_diagnosis", "Foliar Condition")
@@ -159,10 +159,12 @@ async def voice_node(state: AgriNexusState) -> dict:
     safety_warning = state.get("safety_warning", "")
     language_code = state.get("language_code", "hi")
     
-    # Weather metrics
+    # Weather metrics & Offline Location Source Check
     temperature = state.get("current_temperature", 28.0)
     humidity = state.get("current_humidity", 75.0)
     rain_risk = int(state.get("rain_risk_6h_percent", 0.0))
+    location_source = state.get("location_source", "regional_baseline")
+    is_live_weather = (location_source in ["exif_gps", "device_gps"])
 
     lang_meta = LANGUAGE_INFO.get(language_code, LANGUAGE_INFO["hi"])
     target_language = lang_meta["name"]
@@ -176,7 +178,9 @@ async def voice_node(state: AgriNexusState) -> dict:
     unit = state.get("dosage_unit", "ml" if "SC" in proposed_chemical or "EC" in proposed_chemical else "g")
 
     # Weather condition string in English
-    if rain_risk >= 40:
+    if not is_live_weather:
+        weather_note = "Caution: Live field weather could not be fetched due to lack of internet connection. Please verify there is no immediate rain before spraying to prevent chemical wash-off."
+    elif rain_risk >= 40:
         weather_note = f"Warning: {rain_risk}% rain risk detected in your area. Delay spraying until weather clears."
     else:
         weather_note = f"Current field weather is optimal ({temperature}°C, {humidity}% humidity). Safe to spray."
@@ -205,7 +209,7 @@ async def voice_node(state: AgriNexusState) -> dict:
             
             Structure of response:
             1. Respectful Greeting (e.g. '{lang_meta["greeting"]}').
-            2. Field Weather & Diagnosis: State current temperature ({temperature}°C), humidity ({humidity}%), and diagnosed condition ('{localized_disease}').
+            2. Field Weather & Diagnosis: State current weather situation (mentioning if live weather was not fetched due to offline status) and diagnosed condition ('{localized_disease}').
             3. Treatment advisory: Chemical ({proposed_chemical}), exact certified dosage ({safe_dosage} {unit} per acre), and water dilution (200 Liters).
             4. Practical field instructions (spray in cool hours, check rain forecast, or direct to nearest KVK: {kvk_name_str} {kvk_dist_str}).
             
@@ -242,50 +246,61 @@ async def voice_node(state: AgriNexusState) -> dict:
                     # Default Hindi
                     translated_text = f"किसान भाई, आपकी फसल में {localized_disease} के लक्षण दिखे हैं। फसल सुरक्षा हेतु किसी रसायन का छिड़काव न करें। कृपया अपने नजदीकी कृषि विज्ञान केंद्र '{kvk_name_str}' ({kvk_dist_str} दूर) से संपर्क करें।"
             else:
-                # Safe Case: Prescribe verified ICAR treatment with weather context
+                # Safe Case: Prescribe verified ICAR treatment with weather context (and offline weather caution if applicable)
+                weather_prefix_hi = "सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका, छिड़काव से पहले बारिश न होने की पुष्टि करें।" if not is_live_weather else f"आपके खेत में तापमान {temperature}°C और आर्द्रता {humidity}% है।"
+                weather_prefix_pa = "ਸਾਵਧਾਨੀ: ਇੰਟਰਨੈੱਟ ਨਾ ਹੋਣ ਕਰਕੇ ਲਾਈਵ ਮੌਸਮ ਨਹੀਂ ਮਿਲ ਸਕਿਆ, ਛਿੜਕਾਅ ਤੋਂ ਪਹਿਲਾਂ ਮੀਂਹ ਨਾ ਹੋਣ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ।" if not is_live_weather else f"ਤੁਹਾਡੇ ਖੇਤ ਵਿੱਚ ਤਾਪਮਾਨ {temperature}°C ਅਤੇ ਨਮੀ {humidity}% ਹੈ।"
+                weather_prefix_te = "హెచ్చరిక: ఇంటర్నెట్ లేకపోవడం వల్ల ప్రత్యక్ష వాతావరణం పొందలేకపోయాము, వర్షం లేదని నిర్ధారించుకోండి." if not is_live_weather else f"మీ ప్రాంతంలో ఉష్ణోగ్రత {temperature}°C మరియు తేమ {humidity}% గా ఉంది."
+                weather_prefix_ta = "எச்சரிக்கை: இணையம் இல்லாததால் நேரடி வானிலை பெற முடியவில்லை, மழை இல்லை என்பதை உறுதிப்படுத்தவும்." if not is_live_weather else f"உங்கள் பகுதியில் வெப்பநிலை {temperature}°C மற்றும் ஈரப்பதம் {humidity}%."
+                weather_prefix_ml = "മുന്നറിയിപ്പ്: ഇന്റർനെറ്റ് ലഭ്യമല്ലാത്തതിനാൽ തത്സമയ കാലാവസ്ഥ ലഭിച്ചില്ല, മഴയില്ലെന്ന് ഉറപ്പാക്കുക." if not is_live_weather else f"നിങ്ങളുടെ പ്രദേശത്തെ താപനില {temperature}°C, ഈർപ്പം {humidity}% ആണ്."
+                weather_prefix_mr = "सावधानता: इंटरनेट नसल्यामुळे थेट हवामान माहिती मिळू शकली नाही, फवारणीपूर्वी पाऊस नाही याची खात्री करा." if not is_live_weather else f"तुमच्या शेतात तापमान {temperature}°C आणि आर्द्रता {humidity}% आहे."
+                weather_prefix_bn = "সতর্কতা: ইন্টারনেট না থাকার কারণে সরাসরি আবহাওয়া পাওয়া যায়নি, স্প্রে করার আগে বৃষ্টি নেই নিশ্চিত করুন।" if not is_live_weather else f"আপনার জমিতে তাপমাত্রা {temperature}°C এবং আর্দ্রতা {humidity}%।"
+                weather_prefix_gu = "સાવધાની: ઇન્ટરનેટ ન હોવાને કારણે લાઇવ હવામાન મળ્યું નથી, છંટકાવ પહેલાં વરસાદ નથી તેની ખાતરી કરો." if not is_live_weather else f"તમારા ખેતરમાં તાપમાન {temperature}°C અને ભેજ {humidity}% છે."
+                weather_prefix_kn = "ಎಚ್ಚರಿಕೆ: ಇಂಟರ್ನೆಟ್ ಇಲ್ಲದ ಕಾರಣ ಲೈವ್ ಹವಾಮಾನ ಲಭ್ಯವಿಲ್ಲ, ಸಿಂಪಡಿಸುವ ಮೊದಲು ಮಳೆ ಇಲ್ಲ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ." if not is_live_weather else f"ನಿಮ್ಮ ಹೊಲದಲ್ಲಿ ತಾಪಮಾನ {temperature}°C ಮತ್ತು ತೇವಾಂಶ {humidity}% ಇದೆ."
+                weather_prefix_od = "ସତର୍କତା: ଇଣ୍ଟରନେଟ୍ ନଥିବାରୁ ଲାଇଭ୍ ପାଣିପାଗ ମିଳିନାହିଁ, ସ୍ପ୍ରେ ପୂର୍ବରୁ ବର୍ଷା ନାହିଁ ନିଶ୍ଚିତ କରନ୍ତୁ।" if not is_live_weather else f"ଆପଣଙ୍କ ଜମିରେ ତାପମାତ୍ରା {temperature}°C ଏବଂ ଆର୍ଦ୍ରତା {humidity}% ଅଛି।"
+
                 if language_code == "pa":
                     translated_text = (
-                        f"ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੇ ਖੇਤ ਵਿੱਚ ਤਾਪਮਾਨ {temperature}°C ਅਤੇ ਨਮੀ {humidity}% ਹੈ। ਫਸਲ ਵਿੱਚ {localized_disease} ਦੇ ਪੱਕੇ ਇਲਾਜ ਲਈ "
+                        f"ਕਿਸਾਨ ਵੀਰੋ, {weather_prefix_pa} ਫਸਲ ਵਿੱਚ {localized_disease} ਦੇ ਪੱਕੇ ਇਲਾਜ ਲਈ "
                         f"{proposed_chemical} ਦਾ {safe_dosage} {unit} ਪ੍ਰਤੀ ਏਕੜ 200 ਲੀਟਰ ਸਾਫ਼ ਪਾਣੀ ਵਿੱਚ ਘੋਲ ਕੇ ਛਿੜਕਾਅ ਕਰੋ। ਛਿੜਕਾਅ ਸਵੇਰੇ ਜਾਂ ਸ਼ਾਮ ਦੇ ਸਮੇਂ ਸੁੱਕੇ ਪੱਤਿਆਂ 'ਤੇ ਕਰੋ।"
                     )
                 elif language_code == "te":
                     translated_text = (
-                        f"రైతు సోదరులారా, మీ ప్రాంతంలో ఉష్ణోగ్రత {temperature}°C మరియు తేమ {humidity}% గా ఉంది. పంటలో {localized_disease} నివారణకు "
+                        f"రైతు సోదరులారా, {weather_prefix_te} పంటలో {localized_disease} నివారణకు "
                         f"ఎకరానికి {safe_dosage} {unit} మోతాదులో {proposed_chemical} మందును 200 లీటర్ల నీటిలో కలిపి పిచికారీ చేయండి."
                     )
                 elif language_code == "ta":
                     translated_text = (
-                        f"விவசாய சகோதரர்களே, உங்கள் பகுதியில் வெப்பநிலை {temperature}°C மற்றும் ஈரப்பதம் {humidity}%. {localized_disease} நோயைக் கட்டுப்படுத்த "
+                        f"விவசாய சகோதரர்களே, {weather_prefix_ta} {localized_disease} நோயைக் கட்டுப்படுத்த "
                         f"ஒரு ஏக்கருக்கு {safe_dosage} {unit} அளவில் {proposed_chemical} மருந்தை 200 லிட்டர் தண்ணீரில் கலந்து தெளிக்கவும்."
                     )
                 elif language_code == "ml":
                     translated_text = (
-                        f"കർഷക സുഹൃത്തുക്കളെ, നിങ്ങളുടെ പ്രദേശത്തെ താപനില {temperature}°C, ഈർപ്പം {humidity}% ആണ്. {localized_disease} നിയന്ത്രണത്തിനായി "
+                        f"കർഷക സുഹൃത്തുക്കളെ, {weather_prefix_ml} {localized_disease} നിയന്ത്രണത്തിനായി "
                         f"ഏക്കറിന് {safe_dosage} {unit} തോതിൽ {proposed_chemical} 200 ലിറ്റർ വെള്ളത്തിൽ കലക്കി തളിക്കുക."
                     )
                 elif language_code == "mr":
                     translated_text = (
-                        f"शेतकरी मित्रांनो, तुमच्या शेतात तापमान {temperature}°C आणि आर्द्रता {humidity}% आहे. पिकातील {localized_disease} च्या नियंत्रणासाठी "
+                        f"शेतकरी मित्रांनो, {weather_prefix_mr} पिकातील {localized_disease} च्या नियंत्रणासाठी "
                         f"{proposed_chemical} हे औषध {safe_dosage} {unit} प्रति एकर २०० लिटर पाण्यात मिसळून फवारा."
                     )
                 elif language_code == "bn":
                     translated_text = (
-                        f"কৃষক ভাইয়েরা, আপনার জমিতে তাপমাত্রা {temperature}°C এবং আর্দ্রতা {humidity}%। {localized_disease} নিরাময়ের জন্য "
+                        f"কৃষক ভাইয়েরা, {weather_prefix_bn} {localized_disease} নিরাময়ের জন্য "
                         f"প্রতি একরে {safe_dosage} {unit} হারে {proposed_chemical} ২০০ লিটার পরিষ্কার জলে মিশিয়ে স্প্রে করুন।"
                     )
                 elif language_code == "gu":
                     translated_text = (
-                        f"ખેડૂત મિત્રો, તમારા ખેતરમાં તાપમાન {temperature}°C અને ભેજ {humidity}% છે. {localized_disease} ના નિયંત્રણ માટે "
+                        f"ખેડૂત મિત્રો, {weather_prefix_gu} {localized_disease} ના નિયંત્રણ માટે "
                         f"એકર દીઠ {safe_dosage} {unit} {proposed_chemical} દવા ૨૦૦ લિટર પાણીમાં ભેળવીને છંટકાવ કરો."
                     )
                 elif language_code == "kn":
                     translated_text = (
-                        f"ರೈತ ಮಿತ್ರರೇ, ನಿಮ್ಮ ಹೊಲದಲ್ಲಿ ತಾಪಮಾನ {temperature}°C ಮತ್ತು ತೇವಾಂಶ {humidity}% ಇದೆ. {localized_disease} ನಿಯಂತ್ರಣಕ್ಕಾಗಿ "
+                        f"ರೈತ ಮಿತ್ರರೇ, {weather_prefix_kn} {localized_disease} ನಿಯಂತ್ರಣಕ್ಕಾಗಿ "
                         f"ಪ್ರತಿ ಎಕರೆಗೆ {safe_dosage} {unit} {proposed_chemical} ಅನ್ನು 200 ಲೀಟರ್ ನೀರಿನಲ್ಲಿ ಬೆರೆಸಿ ಸಿಂಪಡಿಸಿ."
                     )
                 elif language_code == "od":
                     translated_text = (
-                        f"କୃଷକ ଭାଇମାନେ, ଆପଣଙ୍କ ଜମିରେ ତାପମାତ୍ରା {temperature}°C ଏବଂ ଆର୍ଦ୍ରତା {humidity}% ଅଛି। {localized_disease} ର ନିରାକରଣ ପାଇଁ "
+                        f"କୃଷକ ଭାଇମାନେ, {weather_prefix_od} {localized_disease} ର ନିରାକରଣ ପାଇଁ "
                         f"ଏକର ପ୍ରତି {safe_dosage} {unit} {proposed_chemical} କୁ ୨୦୦ ଲିଟର ପାଣିରେ ମିଶାଇ ସ୍ପ୍ରେ କରନ୍ତୁ।"
                     )
                 elif language_code == "en":
@@ -293,7 +308,7 @@ async def voice_node(state: AgriNexusState) -> dict:
                 else:
                     # Default Hindi
                     translated_text = (
-                        f"किसान भाई, आपके खेत में तापमान {temperature}°C और आर्द्रता {humidity}% है। फसल में {localized_disease} के उपचार हेतु "
+                        f"किसान भाई, {weather_prefix_hi} फसल में {localized_disease} के उपचार हेतु "
                         f"{proposed_chemical} की {safe_dosage} {unit} प्रति एकड़ २०० लीटर पानी में घोलकर छिड़काव करें। छिड़काव सुबह या शाम को करें।"
                     )
 
