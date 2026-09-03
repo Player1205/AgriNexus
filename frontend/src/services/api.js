@@ -1,3 +1,7 @@
+export const getBaseApiUrl = () => {
+    return import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : '';
+};
+
 const getClientLocation = () => {
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
@@ -37,7 +41,10 @@ export const uploadImage = async (file, language = 'hi') => {
         // Continue smoothly on fallback
     }
 
-    const response = await fetch('/api/v1/analyze', {
+    const baseUrl = getBaseApiUrl();
+    const endpoint = baseUrl ? `${baseUrl}/api/v1/analyze` : '/api/v1/analyze';
+
+    const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
     });
@@ -50,8 +57,19 @@ export const uploadImage = async (file, language = 'hi') => {
 };
 
 export const createTelemetrySocket = (onMessage) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/telemetry`);
+    let wsUrl;
+    const apiUrl = getBaseApiUrl();
+
+    if (apiUrl) {
+        const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
+        const host = apiUrl.replace(/^https?:\/\//, '');
+        wsUrl = `${wsProtocol}//${host}/ws/telemetry`;
+    } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/ws/telemetry`;
+    }
+
+    const ws = new WebSocket(wsUrl);
     
     ws.onmessage = (event) => {
         try {

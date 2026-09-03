@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { uploadImage, createTelemetrySocket } from '../services/api';
+import { uploadImage, createTelemetrySocket, getBaseApiUrl } from '../services/api';
 import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw } from 'lucide-react';
 
 const LANGUAGES = [
@@ -151,7 +151,11 @@ export default function FarmerView({ onAnalysisComplete }) {
             }
 
             if (result.vernacular_audio_url) {
-                setAudioUrl(result.vernacular_audio_url);
+                const baseUrl = getBaseApiUrl();
+                const resolvedAudio = (result.vernacular_audio_url.startsWith('http') || !baseUrl)
+                    ? result.vernacular_audio_url
+                    : `${baseUrl}${result.vernacular_audio_url}`;
+                setAudioUrl(resolvedAudio);
             } else if (result.translated_text && !navigator.onLine) {
                 speakOnDeviceFallback(result.translated_text, selectedLang);
             }

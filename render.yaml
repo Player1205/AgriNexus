@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: agrinexus-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: BASE_SEPOLIA_RPC_URL
+        value: https://sepolia.base.org
+      - key: CROP_PASSPORT_CONTRACT_ADDRESS
+        value: "0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7"
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: DEVELOPER_PRIVATE_KEY
+        sync: false

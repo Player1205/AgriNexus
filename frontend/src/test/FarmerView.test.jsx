@@ -5,6 +5,7 @@ import FarmerView from '../components/FarmerView';
 // Mock the API module
 vi.mock('../services/api', () => ({
     uploadImage: vi.fn(),
+    getBaseApiUrl: vi.fn(() => ''),
     createTelemetrySocket: vi.fn(() => ({
         close: vi.fn()
     }))
