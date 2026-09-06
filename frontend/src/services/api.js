@@ -2,8 +2,29 @@ export const getBaseApiUrl = () => {
     return import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : '';
 };
 
+let cachedCoordinates = null;
+
+// Pre-warm location cache immediately on load
+if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            cachedCoordinates = {
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+            };
+        },
+        () => {},
+        { timeout: 6000, maximumAge: 300000, enableHighAccuracy: false }
+    );
+}
+
 const getClientLocation = () => {
     return new Promise((resolve) => {
+        if (cachedCoordinates) {
+            resolve(cachedCoordinates);
+            return;
+        }
+
         if (!navigator.geolocation) {
             resolve(null);
             return;
@@ -11,16 +32,17 @@ const getClientLocation = () => {
 
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                resolve({
+                cachedCoordinates = {
                     latitude: pos.coords.latitude,
                     longitude: pos.coords.longitude,
-                });
+                };
+                resolve(cachedCoordinates);
             },
             () => {
                 // Denied or unavailable, resolve null without error
                 resolve(null);
             },
-            { timeout: 1500, maximumAge: 60000 }
+            { timeout: 6000, maximumAge: 300000, enableHighAccuracy: false }
         );
     });
 };

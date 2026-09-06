@@ -163,8 +163,8 @@ async def voice_node(state: AgriNexusState) -> dict:
     temperature = state.get("current_temperature", 28.0)
     humidity = state.get("current_humidity", 75.0)
     rain_risk = int(state.get("rain_risk_6h_percent", 0.0))
-    location_source = state.get("location_source", "regional_baseline")
-    is_live_weather = (location_source in ["exif_gps", "device_gps"])
+    location_source = str(state.get("location_source", "regional_baseline")).upper()
+    is_live_weather = ("GPS" in location_source or "LIVE" in location_source or "EXIF" in location_source or "DEVICE" in location_source)
 
     lang_meta = LANGUAGE_INFO.get(language_code, LANGUAGE_INFO["hi"])
     target_language = lang_meta["name"]

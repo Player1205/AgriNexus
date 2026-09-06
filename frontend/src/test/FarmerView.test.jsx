@@ -14,12 +14,13 @@ vi.mock('../services/api', () => ({
 import { uploadImage } from '../services/api';
 
 describe('FarmerView UI Component Suite', () => {
-    it('Renders the AgriNexus branding, subtitle, and photo capture area cleanly', () => {
+    it('Renders the AgriNexus branding, subtitle, and dual photo capture options (Camera and Gallery) cleanly', () => {
         render(<FarmerView />);
         
         expect(screen.getByText('AgriNexus')).toBeInTheDocument();
         expect(screen.getByText(/Autonomous Agricultural Swarm/i)).toBeInTheDocument();
-        expect(screen.getByText(/फोटो खींचें \/ Upload/i)).toBeInTheDocument();
+        expect(screen.getByText('फोटो खींचें')).toBeInTheDocument();
+        expect(screen.getByText('गैलरी से चुनें')).toBeInTheDocument();
     });
 
     it('Renders all 11 Indian Regional Languages for farmer selection', () => {

@@ -941,6 +941,35 @@ Each record explains:
 > </details>
 </details>
 
+### ADR-057: Mobile Live GPS Resolution & Dual Camera/Gallery Capture Subsystem
+
+* **Context & Problem:**
+  1. *GPS Warning False Positive:* On mobile phones granting geolocation access, the voice advisory erroneously spoke *"सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका..."* because `weather_service.py` emitted uppercase source identifiers (`DEVICE_LIVE_GPS`), whereas `voice_agent.py` evaluated `location_source in ["exif_gps", "device_gps"]`. Additionally, a short 1.5s geolocation timeout caused cold mobile GPS hardware lookups to occasionally resolve to `null`.
+  2. *Single File Capture Constraint:* The farmer capture button was hardcoded with `capture="environment"`, forcing modern mobile browsers directly into the rear camera view without allowing farmers to select existing crop photos from their gallery or WhatsApp albums.
+* **What Was Changed & How:**
+  1. *Sub-string Subsystem Matching (`backend/app/agents/voice_agent.py`):* Updated `is_live_weather` checking to inspect case-insensitive patterns (`"GPS" in location_source or "LIVE" in location_source or "EXIF" in location_source or "DEVICE" in location_source`), properly recognizing live satellite coordinates across all client tiers.
+  2. *Location Cache Pre-Warming (`frontend/src/services/api.js`):* Added immediate pre-warming on load and increased geolocation timeout to 6000ms with a 5-minute cache (`maximumAge: 300000`), ensuring 0ms coordinate attachment upon submission.
+  3. *Dual Camera / Gallery UI (`frontend/src/components/FarmerView.jsx`):* Replaced the single upload card with a 2-column action grid featuring distinct **📸 फोटो खींचें (Camera with `capture="environment"`)** and **🖼️ गैलरी से चुनें (Gallery standard file picker)** inputs.
+* **Architectural Rationale:** Eliminates false offline voice cautions and provides mobile accessibility tailored to rural Indian smartphone usage patterns.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-057</strong></summary>
+
+> **Question:** How does AgriNexus eliminate mobile GPS cold-start delays when a farmer submits a leaf photo?
+>
+> 1. It forces the phone to restart.
+> 2. It pre-warms the browser geolocation cache upon application mount with a 5-minute `maximumAge`, enabling instantaneous retrieval without hitting mobile GPS hardware timeouts.
+> 3. It guesses the user's city based on their IP address only.
+> 4. It disables weather checking entirely on mobile.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Pre-warming the location cache allows the browser to return cached high-accuracy cellular/Wi-Fi coordinates in 0ms, preventing timeout drops and ensuring live satellite weather fetching.
+> </details>
+</details>
+
 ---
 
 ## 🏆 Summary Checklist for Developers & Auditors
@@ -955,6 +984,8 @@ Each record explains:
 * [x] **Transparent Offline Voice Caution:** Native dialect voice warnings when live satellite weather is unreachable.
 * [x] **Resilient Acoustic Pipeline:** Polymorphic TTS client with seamless on-device voice fallback.
 * [x] **Split Production Deployment:** Global Vercel Edge CDN + Render Cloud Web Service.
+* [x] **Mobile Live GPS & Dual Capture:** Pre-warmed location cache with dedicated Camera & Gallery inputs.
+
 
 
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadImage, createTelemetrySocket, getBaseApiUrl } from '../services/api';
-import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw } from 'lucide-react';
+import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon } from 'lucide-react';
 
 const LANGUAGES = [
     { code: 'hi', name: 'हिन्दी', label: 'Hindi' },
@@ -47,7 +47,8 @@ export default function FarmerView({ onAnalysisComplete }) {
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [offlineSyncCount, setOfflineSyncCount] = useState(0);
 
-    const fileInputRef = useRef(null);
+    const cameraInputRef = useRef(null);
+    const galleryInputRef = useRef(null);
     const audioRef = useRef(null);
 
     // Online / Offline Network State Monitoring & Store-and-Forward Sync
@@ -174,10 +175,17 @@ export default function FarmerView({ onAnalysisComplete }) {
         }
     }, [selectedLang, onAnalysisComplete]);
 
-    const triggerFileInput = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-            fileInputRef.current.click();
+    const triggerCamera = () => {
+        if (cameraInputRef.current) {
+            cameraInputRef.current.value = '';
+            cameraInputRef.current.click();
+        }
+    };
+
+    const triggerGallery = () => {
+        if (galleryInputRef.current) {
+            galleryInputRef.current.value = '';
+            galleryInputRef.current.click();
         }
     };
 
@@ -254,26 +262,57 @@ export default function FarmerView({ onAnalysisComplete }) {
                     </div>
                 </div>
 
-                {/* 3. Photo Capture Button */}
-                <div className="w-full flex flex-col items-center">
+                {/* 3. Dual Photo Capture Options (Camera & Gallery) */}
+                <div className="w-full grid grid-cols-2 gap-3">
+                    {/* 📸 Take Photo (Direct Camera) */}
                     <button
                         type="button"
-                        onClick={triggerFileInput}
+                        onClick={triggerCamera}
                         disabled={status === STATUS.PROCESSING || status === STATUS.UPLOADING}
-                        className="w-full h-24 sm:h-28 border-2 border-dashed border-green-500/80 rounded-2xl bg-white/90 hover:bg-green-50/50 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] disabled:opacity-50"
+                        className="h-24 sm:h-28 border-2 border-dashed border-green-500/80 rounded-2xl bg-white/90 hover:bg-green-50/60 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer shadow-sm active:scale-[0.98] disabled:opacity-50"
                     >
-                        <div className="p-2.5 bg-green-100 rounded-full text-green-700 shadow-inner">
-                            <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
+                        <div className="p-2 bg-green-100 rounded-full text-green-700 shadow-inner">
+                            <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <span className="text-green-800 font-bold text-xs sm:text-sm tracking-wide">
-                            फोटो खींचें / Upload
+                        <span className="text-green-900 font-bold text-xs sm:text-sm tracking-wide">
+                            फोटो खींचें
+                        </span>
+                        <span className="text-[10px] text-green-700 font-medium">
+                            (Camera)
                         </span>
                     </button>
+
+                    {/* 🖼️ Upload from Gallery / Files */}
+                    <button
+                        type="button"
+                        onClick={triggerGallery}
+                        disabled={status === STATUS.PROCESSING || status === STATUS.UPLOADING}
+                        className="h-24 sm:h-28 border-2 border-dashed border-emerald-500/80 rounded-2xl bg-white/90 hover:bg-emerald-50/60 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    >
+                        <div className="p-2 bg-emerald-100 rounded-full text-emerald-700 shadow-inner">
+                            <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </div>
+                        <span className="text-emerald-900 font-bold text-xs sm:text-sm tracking-wide">
+                            गैलरी से चुनें
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-medium">
+                            (Gallery)
+                        </span>
+                    </button>
+
+                    {/* Hidden Native File Inputs */}
                     <input
-                        ref={fileInputRef}
+                        ref={cameraInputRef}
                         type="file"
                         accept="image/*"
                         capture="environment"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                    />
+                    <input
+                        ref={galleryInputRef}
+                        type="file"
+                        accept="image/*"
                         onChange={handleFileSelect}
                         className="hidden"
                     />
