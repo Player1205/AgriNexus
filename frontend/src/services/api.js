@@ -1,3 +1,5 @@
+import { runOfflineSwarmPipeline } from './swarmOrchestrator';
+
 export const getBaseApiUrl = () => {
     return import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : '';
 };
@@ -18,14 +20,14 @@ if (typeof window !== 'undefined' && 'geolocation' in navigator) {
     );
 }
 
-const getClientLocation = () => {
+export const getClientLocation = () => {
     return new Promise((resolve) => {
         if (cachedCoordinates) {
             resolve(cachedCoordinates);
             return;
         }
 
-        if (!navigator.geolocation) {
+        if (typeof navigator === 'undefined' || !navigator.geolocation) {
             resolve(null);
             return;
         }
@@ -47,38 +49,71 @@ const getClientLocation = () => {
     });
 };
 
+/**
+ * Unified Edge-to-Cloud Analysis Dispatcher.
+ * Automatically runs 100% On-Device when offline or if server is unreachable.
+ */
 export const uploadImage = async (file, language = 'hi') => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('language', language);
-
-    // Capture live device coordinates if permitted
+    let loc = null;
     try {
-        const loc = await getClientLocation();
+        loc = await getClientLocation();
+    } catch {
+        // Fallback safely
+    }
+
+    // 1. If device is explicitly offline, immediately run On-Device Swarm
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.log("[AGRINEXUS OFFLINE] Network is disconnected. Executing 100% On-Device Multi-Agent Swarm...");
+        return await runOfflineSwarmPipeline(file, language, loc);
+    }
+
+    // 2. Online Mode: Attempt Cloud Swarm with automated On-Device Fallback
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('language', language);
+
         if (loc) {
             formData.append('latitude', loc.latitude.toString());
             formData.append('longitude', loc.longitude.toString());
         }
-    } catch {
-        // Continue smoothly on fallback
+
+        const baseUrl = getBaseApiUrl();
+        const endpoint = baseUrl ? `${baseUrl}/api/v1/analyze` : '/api/v1/analyze';
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout for cloud
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`Server returned status ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.warn(`[AGRINEXUS HYBRID] Cloud server unreachable (${err.message}). Seamlessly engaging On-Device Multi-Agent Swarm...`);
+        // Seamlessly fallback to 100% On-Device Swarm
+        return await runOfflineSwarmPipeline(file, language, loc);
     }
-
-    const baseUrl = getBaseApiUrl();
-    const endpoint = baseUrl ? `${baseUrl}/api/v1/analyze` : '/api/v1/analyze';
-
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-    });
-
-    if (!response.ok) {
-        throw new Error('Analysis failed');
-    }
-
-    return await response.json();
 };
 
 export const createTelemetrySocket = (onMessage) => {
+    // Register local telemetry callback for on-device swarm
+    if (typeof window !== 'undefined') {
+        window.__agrinexus_telemetry_listener = onMessage;
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return { close: () => {} };
+    }
+
     let wsUrl;
     const apiUrl = getBaseApiUrl();
 
@@ -87,24 +122,29 @@ export const createTelemetrySocket = (onMessage) => {
         const host = apiUrl.replace(/^https?:\/\//, '');
         wsUrl = `${wsProtocol}//${host}/ws/telemetry`;
     } else {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${protocol}//${window.location.host}/ws/telemetry`;
+        const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
+        wsUrl = `${protocol}//${host}/ws/telemetry`;
     }
 
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            onMessage(data);
-        } catch (err) {
-            console.error("Telemetry WebSocket message parse error:", err);
-        }
-    };
+    try {
+        const ws = new WebSocket(wsUrl);
+        
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                onMessage(data);
+            } catch (err) {
+                console.error("Telemetry WebSocket message parse error:", err);
+            }
+        };
 
-    ws.onerror = (err) => {
-        console.warn("Telemetry WebSocket error:", err);
-    };
+        ws.onerror = (err) => {
+            console.warn("Telemetry WebSocket offline/unreachable:", err);
+        };
 
-    return ws;
+        return ws;
+    } catch {
+        return { close: () => {} };
+    }
 };

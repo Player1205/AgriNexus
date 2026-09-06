@@ -1,0 +1,119 @@
+/**
+ * In-Browser Vernacular Acoustic & Speech Synthesis Agent (Agent 5 - On-Device).
+ * Speaks in native Indian languages completely offline via Web Speech API.
+ */
+
+const LOCALIZED_PATHOLOGY = {
+    "Tomato Late blight": { hi: "टमाटर का पछेती झुलसा रोग (Tomato Late Blight)", pa: "ਟਮਾਟਰ ਦਾ ਪਛੇਤਾ ਝੁਲਸਾ ਰੋਗ", te: "టమాటా లేట్ బ్లైట్ తెగులు" },
+    "Tomato Early blight": { hi: "टमाटर का अगेती झुलसा रोग (Tomato Early Blight)", pa: "ਟਮਾਟਰ ਦਾ ਅਗੇਤਾ ਝੁਲਸਾ ਰੋਗ", te: "టమాటా ఎర్లీ బ్లైట్ తెగులు" },
+    "Apple Scab": { hi: "सेब का स्कैब रोग (Apple Scab)", pa: "ਸੇਬ ਦਾ ਸਕੈਬ ਰੋਗ", te: "ఆపిల్ స్కాబ్ తెగులు" },
+    "Corn Common rust": { hi: "मक्का का रतुआ रोग (Corn Common Rust)", pa: "ਮੱਕੀ ਦਾ ਕੁੰਗੀ ਰੋਗ", te: "మొక్కజొన్న తుప్పు తెగులు" },
+    "Potato Late blight": { hi: "आलू का पछेती झुलसा रोग (Potato Late Blight)", pa: "ਆਲੂ ਦਾ ਪਛੇਤਾ ਝੁਲਸਾ ਰੋਗ", te: "బంగాళాదుంప లేట్ బ్లైట్" }
+};
+
+export const generateLocalizedSpeechText = (state, languageCode = 'hi') => {
+    const isSafe = state.is_safe === true;
+    const isCropSupported = state.is_crop_supported !== false;
+    const detectedSubject = state.detected_subject || 'Non-Agricultural Subject';
+    const diagnosis = state.vision_diagnosis || 'Crop Anomaly';
+    const chemical = state.proposed_chemical || 'Prescribed Chemical';
+    const dosage = state.safe_dosage_ml_per_acre || 0.0;
+    const unit = state.dosage_unit || 'g';
+    const nearestKvk = state.nearest_kvk;
+    const kvkName = nearestKvk ? nearestKvk.name : 'ICAR Krishi Vigyan Kendra';
+    const kvkDist = nearestKvk ? `${nearestKvk.distance_km} km` : '';
+
+    const pathObj = LOCALIZED_PATHOLOGY[diagnosis];
+    const localizedDisease = pathObj && pathObj[languageCode] ? pathObj[languageCode] : diagnosis;
+
+    // Case A: Non-Agricultural / Non-Target Subject
+    if (!isCropSupported) {
+        if (languageCode === 'hi') {
+            return `किसान भाई, यह फोटो ${detectedSubject} की प्रतीत होती है, जो AgriNexus की 14 समर्थित मुख्य कृषि फसलों (जैसे टमाटर, आलू, मक्का, सेब, स्ट्रॉबेरी आदि) में से नहीं है। गैर-लक्षित पौधों पर रासायनिक कीटनाशकों का छिड़काव प्रतिबंधित है। कृपया समर्थित कृषि फसल की पत्ती का स्पष्ट फोटो अपलोड करें।`;
+        }
+        if (languageCode === 'pa') {
+            return `ਕਿਸਾਨ ਵੀਰੋ, ਇਹ ਫੋਟੋ ${detectedSubject} ਦੀ ਜਾਪਦੀ ਹੈ, ਜੋ AgriNexus ਦੀਆਂ 14 ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਫਸਲਾਂ ਵਿੱਚੋਂ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕਿਸੇ ਵੀ ਰਸਾਇਣ ਦਾ ਛਿੜਕਾਅ ਨਾ ਕਰੋ ਅਤੇ ਪ੍ਰਮਾਣਿਤ ਫਸਲ ਦੇ ਪੱਤੇ ਦੀ ਫੋਟੋ ਅਪਲੋਡ ਕਰੋ।`;
+        }
+        if (languageCode === 'te') {
+            return `రైతు సోదరులారా, ఈ ఫోటో ${detectedSubject} గా గుర్తించబడింది, ఇది AgriNexus ధృవీకరించిన 14 ప్రధాన పంటలలో భాగం కాదు. రసాయనాలు పిచికారీ చేయవద్దు. దయచేసి పంట ఆకు ఫోటోను అప్‌లోడ్ చేయండి.`;
+        }
+        return `Dear Farmer, this image appears to be ${detectedSubject}, which is not among AgriNexus's 14 supported commercial agricultural food crops. Chemical pesticide application is strictly prohibited on non-target plants. Please upload a clear photo of a supported crop leaf.`;
+    }
+
+    // Case B: Low Confidence / Unsafe -> KVK Referral
+    if (!isSafe) {
+        if (languageCode === 'hi') {
+            return `किसान भाई, आपकी फसल में ${localizedDisease} के लक्षण मिले हैं, परंतु सुरक्षा कारणों से रासायनिक छिड़काव की अनुमति नहीं दी जा सकती। कृपया अपने नजदीकी कृषि विज्ञान केंद्र '${kvkName}' (${kvkDist} दूर) के कृषि वैज्ञानिकों से प्रत्यक्ष सलाह लें।`;
+        }
+        if (languageCode === 'pa') {
+            return `ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ ${localizedDisease} ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ। ਫਸਲ ਦੀ ਸੁਰੱਖਿਆ ਲਈ ਦਵਾਈ ਦਾ ਛਿੜਕਾਅ ਨਾ ਕਰੋ। ਆਪਣੇ ਨਜ਼ਦੀਕੀ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ '${kvkName}' (${kvkDist} ਦੂਰ) ਵਿਖੇ ਮਾਹਿਰਾਂ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।`;
+        }
+        if (languageCode === 'te') {
+            return `రైతు సోదరులారా, మీ పంటలో ${localizedDisease} లక్షణాలు ఉన్నాయి. రక్షణ దృష్ట్యా ఎటువంటి రసాయనాన్ని పిచికారీ చేయవద్దు. సమీపంలోని కృషి విజ్ఞాన కేంద్రం '${kvkName}' (${kvkDist} దూరం) ను సంప్రదించండి.`;
+        }
+        return `Dear Farmer, your crop shows symptoms of ${diagnosis}. Chemical application cannot be verified safely. Please consult your nearest agricultural research center: ${kvkName} (${kvkDist} away).`;
+    }
+
+    // Case C: Verified Safe Treatment with Weather Caution
+    if (languageCode === 'hi') {
+        return `किसान भाई, सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका, छिड़काव से पहले बारिश न होने की पुष्टि करें। ICAR मानकों के अनुसार आपकी फसल में ${localizedDisease} के उपचार हेतु ${chemical} की ${dosage} ${unit} प्रति एकड़ २०० लीटर पानी में घोलकर छिड़काव करें। छिड़काव सुबह या शाम को करें।`;
+    }
+    if (languageCode === 'pa') {
+        return `ਕਿਸਾਨ ਵੀਰੋ, ਸਾਵਧਾਨੀ: ਇੰਟਰਨੈੱਟ ਨਾ ਹੋਣ ਕਰਕੇ ਲਾਈਵ ਮੌਸਮ ਨਹੀਂ ਮਿਲ ਸਕਿਆ, ਛਿੜਕਾਅ ਤੋਂ ਪਹਿਲਾਂ ਮੀਂਹ ਨਾ ਹੋਣ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ। ਪ੍ਰਮਾਣਿਤ ICAR ਨਿਯਮਾਂ ਅਨੁਸਾਰ ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ ${localizedDisease} ਲਈ ${chemical} ਦੀ ${dosage} ${unit} ਪ੍ਰਤੀ ਏਕੜ 200 ਲੀਟਰ ਪਾਣੀ ਵਿੱਚ ਮਿਲਾ ਕੇ ਛਿੜਕਾਅ ਕਰੋ।`;
+    }
+    if (languageCode === 'te') {
+        return `రైతు సోదరులారా, హెచ్చరిక: ఇంటర్నెట్ లేకపోవడం వల్ల ప్రత్యక్ష వాతావరణం పొందలేకపోయాము. వర్షం లేదని నిర్ధారించుకోండి. ICAR ప్రమాణాల ప్రకారం ${localizedDisease} నివారణకు ${chemical} ను ఎకరాకు ${dosage} ${unit} చొప్పున 200 లీటర్ల నీటిలో కలిపి పిచికారీ చేయండి.`;
+    }
+    return `Dear Farmer, Caution: Live field weather could not be fetched due to lack of internet. Please verify there is no immediate rain before spraying. Based on certified ICAR protocols, your crop is affected by ${diagnosis}. Spray ${chemical} at an exact dosage of ${dosage} ${unit} per acre in 200 liters of water during cool morning or evening hours.`;
+};
+
+export const speakVernacularOffline = (text, languageCode = 'hi') => {
+    if (!('speechSynthesis' in window) || !text) return;
+
+    try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        const langVoiceMap = {
+            hi: 'hi-IN',
+            pa: 'pa-IN',
+            te: 'te-IN',
+            ta: 'ta-IN',
+            ml: 'ml-IN',
+            kn: 'kn-IN',
+            bn: 'bn-IN',
+            mr: 'mr-IN',
+            gu: 'gu-IN',
+            od: 'hi-IN',
+            en: 'en-IN'
+        };
+
+        utterance.lang = langVoiceMap[languageCode] || 'hi-IN';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const matchedVoice = voices.find(v => v.lang.startsWith(languageCode) || v.lang === utterance.lang);
+        if (matchedVoice) {
+            utterance.voice = matchedVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+    } catch (e) {
+        console.warn("[OFFLINE TTS] Native speech synthesis warning:", e);
+    }
+};
+
+export const runEdgeVoiceAgent = async (state) => {
+    const lang = state.language_code || 'hi';
+    const translatedText = generateLocalizedSpeechText(state, lang);
+
+    // Speak automatically on-device
+    speakVernacularOffline(translatedText, lang);
+
+    return {
+        language_code: lang,
+        translated_text: translatedText,
+        vernacular_audio_url: null // Triggers on-device Web Speech in UI
+    };
+};
