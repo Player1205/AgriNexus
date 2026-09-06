@@ -185,7 +185,17 @@ async def voice_node(state: AgriNexusState) -> dict:
     else:
         weather_note = f"Current field weather is optimal ({temperature}°C, {humidity}% humidity). Safe to spray."
 
-    if not is_safe:
+    is_crop_supported = state.get("is_crop_supported", True)
+    detected_subj = state.get("detected_subject", "Non-Agricultural Subject")
+
+    if not is_crop_supported:
+        english_text = (
+            f"Dear Farmer, the uploaded image appears to be {detected_subj}. "
+            f"AgriNexus is certified specifically for 14 commercial agricultural food crops (Tomato, Potato, Corn, Apple, Grape, Strawberry, Pepper, Soybean, etc.). "
+            f"Chemical application is strictly prohibited on non-target plants. "
+            f"Please upload a clear close-up photo of a supported crop leaf."
+        )
+    elif not is_safe:
         english_text = (
             f"Dear Farmer, your crop shows foliar symptoms of {vision_diagnosis}. "
             f"However, chemical application cannot be approved safely. {safety_warning} "
@@ -209,9 +219,9 @@ async def voice_node(state: AgriNexusState) -> dict:
             
             Structure of response:
             1. Respectful Greeting (e.g. '{lang_meta["greeting"]}').
-            2. Field Weather & Diagnosis: State current weather situation (mentioning if live weather was not fetched due to offline status) and diagnosed condition ('{localized_disease}').
-            3. Treatment advisory: Chemical ({proposed_chemical}), exact certified dosage ({safe_dosage} {unit} per acre), and water dilution (200 Liters).
-            4. Practical field instructions (spray in cool hours, check rain forecast, or direct to nearest KVK: {kvk_name_str} {kvk_dist_str}).
+            2. Clear Explanation: If non-target plant, explain that the photo is '{detected_subj}' and not among 14 certified crops. Otherwise state field weather and diagnosed condition ('{localized_disease}').
+            3. Actionable guidance: Chemical prescription ({proposed_chemical}) if safe, or clear safety warning against unverified spraying.
+            4. Clear next step for farmer.
             
             Advisory text: '{english_text}'
             
@@ -221,7 +231,14 @@ async def voice_node(state: AgriNexusState) -> dict:
             translated_text = response.content.strip()
         else:
             # Dynamic high-depth, fully localized agronomic fallback templates with live weather and KVK
-            if not is_safe:
+            if not is_crop_supported:
+                if language_code == "hi":
+                    translated_text = f"किसान भाई, यह फोटो {detected_subj} की प्रतीत होती है, जो AgriNexus की 14 समर्थित मुख्य कृषि फसलों (जैसे टमाटर, आलू, मक्का, सेब, स्ट्रॉबेरी) में से नहीं है। गैर-लक्षित पौधों पर रासायनिक दवाइयों का छिड़काव वर्जित है। कृपया समर्थित फसल की पत्ती का स्पष्ट फोटो अपलोड करें।"
+                elif language_code == "pa":
+                    translated_text = f"ਕਿਸਾਨ ਵੀਰੋ, ਇਹ ਫੋਟੋ {detected_subj} ਦੀ ਜਾਪਦੀ ਹੈ, ਜੋ AgriNexus ਦੀਆਂ 14 ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਫਸਲਾਂ ਵਿੱਚੋਂ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕਿਸੇ ਵੀ ਰਸਾਇਣ ਦਾ ਛਿੜਕਾਅ ਨਾ ਕਰੋ ਅਤੇ ਪ੍ਰਮਾਣਿਤ ਫਸਲ ਦੇ ਪੱਤੇ ਦੀ ਫੋਟੋ ਅਪਲੋਡ ਕਰੋ।"
+                else:
+                    translated_text = f"Dear Farmer, this image appears to be {detected_subj}, which is not among AgriNexus's 14 supported agricultural food crops. Chemical application is prohibited on non-target plants. Please upload a clear photo of a supported crop leaf."
+            elif not is_safe:
                 if language_code == "pa":
                     translated_text = f"ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ {localized_disease} ਦੇ ਲੱਛਣ ਮਿਲੇ ਹਨ। ਫਸਲ ਦੀ ਸੁਰੱਖਿਆ ਲਈ ਕਿਸੇ ਵੀ ਦਵਾਈ ਦਾ ਛਿੜਕਾਅ ਨਾ ਕਰੋ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਨਜ਼ਦੀਕੀ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ '{kvk_name_str}' ({kvk_dist_str} ਦੂਰ) ਵਿਖੇ ਮਾਹਿਰਾਂ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
                 elif language_code == "te":

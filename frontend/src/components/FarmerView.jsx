@@ -44,6 +44,8 @@ export default function FarmerView({ onAnalysisComplete }) {
     const [nearestKvk, setNearestKvk] = useState(null);
     const [dosageUnit, setDosageUnit] = useState('g');
     const [isMicProtected, setIsMicProtected] = useState(false);
+    const [isCropSupported, setIsCropSupported] = useState(true);
+    const [detectedSubject, setDetectedSubject] = useState('');
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [offlineSyncCount, setOfflineSyncCount] = useState(0);
 
@@ -159,6 +161,15 @@ export default function FarmerView({ onAnalysisComplete }) {
                 setAudioUrl(resolvedAudio);
             } else if (result.translated_text && !navigator.onLine) {
                 speakOnDeviceFallback(result.translated_text, selectedLang);
+            }
+
+            if (result.is_crop_supported !== undefined) {
+                setIsCropSupported(result.is_crop_supported);
+            } else {
+                setIsCropSupported(true);
+            }
+            if (result.detected_subject) {
+                setDetectedSubject(result.detected_subject);
             }
 
             setStatus(result.is_safe ? STATUS.SUCCESS : STATUS.ERROR);
@@ -358,63 +369,101 @@ export default function FarmerView({ onAnalysisComplete }) {
                     </div>
                 )}
 
-                {/* 6. Non-Actionable / Statutory KVK Referral Card */}
+                {/* 6. Non-Actionable / Statutory KVK Referral or Non-Agricultural Card */}
                 {status === STATUS.ERROR && (
-                    <div className="w-full bg-red-50 p-4 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-300">
-                        <div className="flex items-center gap-1.5 text-red-700 font-extrabold text-sm">
-                            <AlertTriangle className="w-5 h-5 text-red-600 animate-bounce" />
-                            <span>NON-ACTIONABLE: KVK Verification Required</span>
-                        </div>
-                        
-                        {diagnosis && (
-                            <div className="bg-red-100/70 px-3 py-1 rounded-lg">
-                                <p className="text-red-950 font-bold text-xs">{diagnosis}</p>
+                    !isCropSupported ? (
+                        /* 🌿 Non-Agricultural Subject Intercept Card (Amber) */
+                        <div className="w-full bg-amber-50/95 p-4 rounded-2xl border-2 border-amber-300 shadow-md flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-sm">
+                                <AlertTriangle className="w-5 h-5 text-amber-600 animate-pulse" />
+                                <span>गैर-लक्षित / अनधिकृत विषय (Non-Target Subject)</span>
                             </div>
-                        )}
-                        <p className="text-red-800 text-center text-xs font-medium leading-relaxed">{errorMessage}</p>
-
-                        {/* Nearest KVK Center Card */}
-                        {nearestKvk && (
-                            <div className="w-full bg-white p-3 rounded-xl border border-red-200 flex flex-col gap-2 mt-1">
-                                <div className="flex items-center justify-between border-b pb-1.5 border-gray-100">
-                                    <span className="flex items-center gap-1 text-[11px] font-bold text-red-900">
-                                        <MapPin className="w-3.5 h-3.5 text-red-600" />
-                                        {nearestKvk.name}
-                                    </span>
-                                    <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                        {nearestKvk.distance_km} km away
-                                    </span>
-                                </div>
-                                <p className="text-[11px] text-gray-600 font-medium leading-tight">
-                                    {nearestKvk.address}
-                                </p>
-                                <div className="flex items-center gap-2 pt-1">
-                                    <a
-                                        href={`tel:${nearestKvk.phone}`}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
-                                    >
-                                        <Phone className="w-3.5 h-3.5" />
-                                        Call Agronomist ({nearestKvk.phone})
-                                    </a>
-                                    <a
-                                        href={nearestKvk.maps_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                                        title="Open in Google Maps"
-                                    >
-                                        <ExternalLink className="w-4 h-4" />
-                                    </a>
-                                </div>
+                            
+                            <div className="bg-amber-100/90 px-3 py-1.5 rounded-xl text-center w-full">
+                                <p className="text-[10px] text-amber-800 font-semibold uppercase tracking-wider">पहचाना गया विषय (Detected Subject)</p>
+                                <p className="text-amber-950 font-extrabold text-xs sm:text-sm">{detectedSubject || diagnosis || 'Non-Agricultural Subject'}</p>
                             </div>
-                        )}
-
-                        {translatedText && (
-                            <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-red-100 w-full leading-relaxed mt-1">
-                                "{translatedText}"
+                            
+                            <p className="text-amber-900 text-center text-xs font-medium leading-relaxed">
+                                {errorMessage || 'AgriNexus 14 मुख्य कृषि फसलों के लिए प्रमाणित है। कृपया समर्थित फसल की पत्ती का फोटो अपलोड करें।'}
                             </p>
-                        )}
-                    </div>
+
+                            {/* Supported 14 Crops Pill Grid */}
+                            <div className="w-full bg-white/90 p-2.5 rounded-xl border border-amber-200">
+                                <p className="text-[10px] font-bold text-gray-500 mb-1.5 text-center">🌿 समर्थित 14 मुख्य कृषि फसलें (Certified Crops):</p>
+                                <div className="flex flex-wrap gap-1 justify-center">
+                                    {['Tomato', 'Potato', 'Corn', 'Apple', 'Grape', 'Strawberry', 'Pepper', 'Orange', 'Soybean', 'Peach', 'Cherry', 'Squash', 'Raspberry', 'Blueberry'].map((c) => (
+                                        <span key={c} className="text-[10px] bg-green-50 text-green-800 font-semibold px-2 py-0.5 rounded-md border border-green-200">
+                                            {c}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {translatedText && (
+                                <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-amber-200 w-full leading-relaxed mt-1">
+                                    "{translatedText}"
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        /* ⚠️ Low-Confidence / KVK Verification Card (Red) */
+                        <div className="w-full bg-red-50 p-4 rounded-2xl border border-red-200 shadow-md flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="flex items-center gap-1.5 text-red-700 font-extrabold text-sm">
+                                <AlertTriangle className="w-5 h-5 text-red-600 animate-bounce" />
+                                <span>NON-ACTIONABLE: KVK Verification Required</span>
+                            </div>
+                            
+                            {diagnosis && (
+                                <div className="bg-red-100/70 px-3 py-1 rounded-lg">
+                                    <p className="text-red-950 font-bold text-xs">{diagnosis}</p>
+                                </div>
+                            )}
+                            <p className="text-red-800 text-center text-xs font-medium leading-relaxed">{errorMessage}</p>
+
+                            {/* Nearest KVK Center Card */}
+                            {nearestKvk && (
+                                <div className="w-full bg-white p-3 rounded-xl border border-red-200 flex flex-col gap-2 mt-1">
+                                    <div className="flex items-center justify-between border-b pb-1.5 border-gray-100">
+                                        <span className="flex items-center gap-1 text-[11px] font-bold text-red-900">
+                                            <MapPin className="w-3.5 h-3.5 text-red-600" />
+                                            {nearestKvk.name}
+                                        </span>
+                                        <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                            {nearestKvk.distance_km} km away
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-600 font-medium leading-tight">
+                                        {nearestKvk.address}
+                                    </p>
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <a
+                                            href={`tel:${nearestKvk.phone}`}
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                                        >
+                                            <Phone className="w-3.5 h-3.5" />
+                                            Call Agronomist ({nearestKvk.phone})
+                                        </a>
+                                        <a
+                                            href={nearestKvk.maps_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                            title="Open in Google Maps"
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {translatedText && (
+                                <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-red-100 w-full leading-relaxed mt-1">
+                                    "{translatedText}"
+                                </p>
+                            )}
+                        </div>
+                    )
                 )}
 
                 {/* 7. Live Farm Meteorological Telemetry HUD */}

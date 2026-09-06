@@ -44,14 +44,23 @@ async def safety_node(state: AgriNexusState) -> dict:
     lat = state.get("client_latitude")
     lon = state.get("client_longitude")
 
-    # Case 1: Low Confidence (<60%) or Unrecognized Anomaly -> Statutory KVK Extension Referral
-    if confidence < 0.60 or not chemical or "None" in chemical or "Unrecognized" in diagnosis:
+    # Case 1: Unsupported Crop, Low Confidence (<60%), or Unrecognized Anomaly -> Statutory Intercept / KVK Referral
+    is_supported = state.get("is_crop_supported", True)
+    if not is_supported or confidence < 0.60 or not chemical or "None" in chemical or "Unrecognized" in diagnosis:
         nearest_kvk = kvk_service.find_nearest_kvk(lat, lon)
-        warning_msg = (
-            "NON-ACTIONABLE: Mandatory Physical Verification by Local KVK Extension Officer Required. "
-            f"Foliar diagnostic confidence ({round(confidence*100, 1)}%) is below statutory 60% threshold. "
-            f"Nearest Center: {nearest_kvk['name']} ({nearest_kvk['distance_km']} km away, Tel: {nearest_kvk['phone']})."
-        )
+        detected_subj = state.get("detected_subject", "Non-Agricultural Subject")
+        if not is_supported:
+            warning_msg = (
+                f"NON-AGRICULTURAL SUBJECT DETECTED: Image identified as '{detected_subj}', which is not among AgriNexus's 14 certified agricultural food crops. "
+                "Chemical pesticide prescription is strictly blocked for biological safety. "
+                f"For diagnostic assistance, visit nearest center: {nearest_kvk['name']} ({nearest_kvk['distance_km']} km away)."
+            )
+        else:
+            warning_msg = (
+                "NON-ACTIONABLE: Mandatory Physical Verification by Local KVK Extension Officer Required. "
+                f"Foliar diagnostic confidence ({round(confidence*100, 1)}%) is below statutory 60% threshold. "
+                f"Nearest Center: {nearest_kvk['name']} ({nearest_kvk['distance_km']} km away, Tel: {nearest_kvk['phone']})."
+            )
         return {
             "is_safe": False,
             "safe_dosage_ml_per_acre": 0.0,

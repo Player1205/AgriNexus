@@ -13,22 +13,24 @@ async def rag_node(state: AgriNexusState) -> dict:
     diagnosis = state.get("vision_diagnosis")
     confidence = float(state.get("vision_confidence", 0.0))
 
-    # Strict Gate: If vision diagnosis is missing, unrecognized, or low-confidence (<60%)
-    if not diagnosis or "Unrecognized" in diagnosis or confidence < 0.60:
+    # Strict Gate: If crop is unsupported, or diagnosis is missing/unrecognized, or confidence is low (<60%)
+    is_supported = state.get("is_crop_supported", True)
+    if not is_supported or not diagnosis or "Unrecognized" in diagnosis or confidence < 0.60:
+        detected_subj = state.get("detected_subject", "Non-Agricultural Subject")
         return {
-            "proposed_chemical": "None - Field Inspection Required",
+            "proposed_chemical": "None - Non-Target / Inspection Required",
             "safe_dosage_ml_per_acre": 0.0,
             "dosage_unit": "g",
             "formulation_type": "NONE",
             "min_mic_dosage": 0.0,
             "max_statutory_dosage": 0.0,
             "rag_treatment_plan": (
-                "NON-ACTIONABLE: Diagnostic confidence is below the statutory 60% threshold. "
-                "Chemical application is strictly prohibited without physical verification. "
-                "Farmer is referred to the nearest ICAR Krishi Vigyan Kendra (KVK) extension center."
+                f"NON-ACTIONABLE: Image identified as '{detected_subj}', which is not among AgriNexus's 14 certified commercial agricultural crops. "
+                "Chemical pesticide application is strictly prohibited on non-target plants without physical inspection. "
+                "Farmer is referred to the nearest ICAR Krishi Vigyan Kendra (KVK) extension center for on-field verification."
             ),
             "current_humidity": 75.0,
-            "errors": ["Diagnostic confidence below certified safety threshold (60%). Chemical prescription blocked."]
+            "errors": [f"Non-target or low confidence subject '{detected_subj}'. Chemical prescription blocked for safety."]
         }
 
     updates = {}

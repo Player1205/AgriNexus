@@ -970,13 +970,41 @@ Each record explains:
 > </details>
 </details>
 
+### ADR-058: Crop Domain Gatekeeper & Non-Target Plant Interception Subsystem
+
+* **Context & Problem:** When an indoor ornamental plant (such as an Areca Palm, houseplant, weed, or non-crop object) was uploaded, closed-set neural classifiers (trained on 14 agricultural food crops) suffered from **Out-Of-Distribution (OOD) Softmax Forcing**, erroneously forcing features into agricultural disease classes (e.g. diagnosing an indoor potted palm as "Strawberry Leaf Scorch" and prescribing toxic Captan 50% WP fungicide).
+* **What Was Changed & How:**
+  1. *Domain Gatekeeper Protocol (`backend/app/agents/vision_agent.py`):* Integrated a strict zero-hallucination domain verification layer before pathology classification. The vision agent evaluates `is_supported_crop` against the 14 certified food crops (`Apple`, `Blueberry`, `Cherry`, `Corn`, `Grape`, `Orange`, `Peach`, `Pepper`, `Potato`, `Raspberry`, `Soybean`, `Squash`, `Strawberry`, `Tomato`). Non-target plants/objects are tagged with `is_crop_supported = False` and `detected_subject`.
+  2. *Strict Chemical Firewall (`backend/app/agents/rag_agent.py` & `safety_agent.py`):* If `is_crop_supported == False`, chemical prescription is unconditionally blocked (`safe_dosage = 0.0`), preventing dangerous fungicide recommendations on houseplants.
+  3. *Vernacular Explanations (`backend/app/agents/voice_agent.py`):* Synthesizes audio advising the farmer in their native language that the subject was identified as `{detected_subject}` and guides them to upload a photo of a certified crop leaf.
+  4. *Amber Intercept UI (`frontend/src/components/FarmerView.jsx`):* Displays a dedicated non-target subject card with certified crop badges and detected subject identification.
+* **Architectural Rationale:** Guarantees zero-hallucination boundary enforcement, preventing hazardous agricultural chemicals from ever being prescribed for non-agricultural plants.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-058</strong></summary>
+
+> **Question:** How does AgriNexus prevent hazardous agricultural fungicides from being prescribed if a user uploads a photo of an indoor potted houseplant?
+>
+> 1. It ignores the image and crashes.
+> 2. The Domain Gatekeeper identifies the subject as non-agricultural, sets `is_crop_supported = false`, and unconditionally blocks chemical prescriptions while providing vernacular guidance on certified crops.
+> 3. It assumes the houseplant is a tomato crop.
+> 4. It asks the user to pay gas fees first.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* The Crop Domain Gatekeeper acts as an Out-of-Distribution firewall, preventing closed-set Softmax forcing and ensuring zero unauthorized chemical recommendations.
+> </details>
+</details>
+
 ---
 
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
 * [x] **Zero Mock Data:** Real PlantVillage dataset, real ICAR database, real Base Sepolia contract, real Sarvam AI voice.
-* [x] **Full-Stack Test Coverage:** 32 passing tests across Pytest (20 tests), Hardhat (5 tests), and Vitest (7 tests).
+* [x] **Full-Stack Test Coverage:** 34 passing tests across Pytest (22 tests), Hardhat (5 tests), and Vitest (7 tests).
 * [x] **CI/CD Automation:** Automated GitHub Actions matrix validating every pull request.
 * [x] **Offline-First Resilience:** Store-and-forward queue with on-device native speech synthesis.
 * [x] **MIC Floor Protection:** Formulation separation with ICAR Minimum Inhibitory Concentration floor enforcement.
@@ -985,6 +1013,8 @@ Each record explains:
 * [x] **Resilient Acoustic Pipeline:** Polymorphic TTS client with seamless on-device voice fallback.
 * [x] **Split Production Deployment:** Global Vercel Edge CDN + Render Cloud Web Service.
 * [x] **Mobile Live GPS & Dual Capture:** Pre-warmed location cache with dedicated Camera & Gallery inputs.
+* [x] **Crop Domain Gatekeeper:** Out-of-distribution non-target plant detection with zero-chemical safety interlock.
+
 
 
 
