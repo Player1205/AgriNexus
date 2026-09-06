@@ -1125,6 +1125,39 @@ Each record explains:
 
 ---
 
+### ADR-063: Network-First PWA Navigation Cache & Verified 192/512px Installability Specification
+
+* **Context & Problem:** Following recent frontend production deployments, two critical user-facing issues emerged on mobile devices:
+  1. *Black Screen on Load:* Single-Page Applications bundled with Vite produce content-hashed JavaScript and CSS assets (e.g., `index-Bou-qTfE.js`). Because `sw.js` previously used a Cache-First strategy for `index.html`, returning users received an obsolete cached HTML document requesting outdated JS bundle hashes that had been purged from the server during deployment. This caused unhandled module fetch exceptions, rendering a blank/black screen (`#020612`).
+  2. *Missing "Add to Home Screen" Trigger:* Google Chrome and Chromium-based mobile browsers enforce strict Progressive Web App installability criteria requiring at least `192x192` and `512x512` PNG icons with `purpose: "any maskable"` defined in `manifest.json`. The manifest previously specified only `.ico` files, which caused Chromium engines to suppress the `beforeinstallprompt` event entirely. Additionally, `PwaInstallBanner.jsx` hid itself unless `beforeinstallprompt` had already fired, leaving users without any installation options.
+* **What Was Changed & How:**
+  1. *Network-First Navigation Strategy (`frontend/public/sw.js`):* Upgraded cache namespace to `agrinexus-offline-v2`. Re-architected fetch handling to enforce strict **Network-First** resolution for all navigation requests (`mode === 'navigate'` and `accept: text/html`), serving fresh HTML on every online visit while transparently falling back to the cached shell only when offline (`!navigator.onLine`). Retained Cache-First caching for versioned static assets.
+  2. *Automated Service Worker Lifecycle Updates (`frontend/src/main.jsx` & `frontend/public/sw.js`):* Configured `self.skipWaiting()` on install, `self.clients.claim()` and obsolete cache purging on activate, and an automated reload trigger in `main.jsx` when a new production service worker takes control.
+  3. *Full-Spec PWA Manifest & Standard Icons (`frontend/public/manifest.json`):* Generated and linked high-resolution `icon-192.png` (192x192) and `icon-512.png` (512x512) maskable PNG icons, `apple-touch-icon.png`, and defined start scope `/` and agricultural categories.
+  4. *Proactive Install Banner & Manual Guidance (`frontend/src/components/PwaInstallBanner.jsx`):* The installation prompt now displays proactively whenever the app is accessed in a web browser (`!isStandalone`), supporting 1-tap native installation when `beforeinstallprompt` is available and interactive browser menu guidance ("Tap ⋮ -> Install app") when the browser event is deferred.
+  5. *Header Install Action (`frontend/src/App.jsx`):* Added a prominent, dedicated `[ 📲 Install ]` action button in the top navigation bar for browser visitors.
+* **Architectural Rationale:** Eliminates stale cache deadlocks on CDNs while strictly meeting W3C and Chromium Progressive Web App installability requirements, guaranteeing seamless offline resilience for agrarian dead zones.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-063</strong></summary>
+
+> **Question:** Why is a **Network-First** strategy mandatory for `index.html` in Vite/React Progressive Web Apps, while static assets (JS/CSS) should remain **Cache-First**?
+>
+> 1. Because `index.html` is larger in file size than JavaScript bundles.
+> 2. Because Vite generates immutable, content-hashed filenames for JS/CSS (making cached versions safe forever), but `index.html` must remain fresh to reference the latest deployment's hashes; otherwise, stale HTML requests deleted JS bundles, causing a black screen.
+> 3. Because browsers forbid caching HTML files altogether.
+> 4. To disable offline caching completely.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Vite compiles bundles with unique content hashes (`index-[hash].js`). Once cached, a hashed bundle is immutable and safe to serve Cache-First. However, `index.html` acts as the entry pointer. If `index.html` is served Cache-First from an old build, it will attempt to fetch deleted bundles that return 404, causing an unhandled script failure and a blank screen. Network-First for HTML ensures fresh entry points online while providing offline fallback.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
@@ -1143,6 +1176,8 @@ Each record explains:
 * [x] **Trained Model Tier-1 Priority:** `agrinexus_vision.onnx` runs as primary engine with Gemini Vision as Tier-2 secondary fallback.
 * [x] **Silent Standalone PWA:** Automatic "Add to Home Screen" prompt for browser visitors; silent native UX when launched from home screen.
 * [x] **Live Meteorological State Invariance:** Zero false offline voice warnings when mobile device is connected to the internet.
+* [x] **PWA Installability & Network-First Invariance:** W3C 192/512px icon compliance and network-first navigation cache preventing deployment black screens.
+
 
 
 

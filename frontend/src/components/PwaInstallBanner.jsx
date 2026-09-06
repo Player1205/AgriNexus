@@ -6,10 +6,12 @@ export default function PwaInstallBanner() {
     const [showBanner, setShowBanner] = useState(false);
     const [isIos, setIsIos] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
 
     useEffect(() => {
         // 1. Check if already running in standalone mode (already added to home screen)
         const checkStandalone = () => {
+            if (typeof window === 'undefined') return false;
             const isStandaloneMode = 
                 window.matchMedia('(display-mode: standalone)').matches || 
                 window.navigator.standalone === true ||
@@ -22,28 +24,29 @@ export default function PwaInstallBanner() {
             return; // Silent mode: User already added to home screen, show nothing!
         }
 
-        // Check if user dismissed the prompt in this session
-        const isDismissed = sessionStorage.getItem('agrinexus_pwa_dismissed');
-        if (isDismissed) return;
+        // Detect iOS
+        const ua = window.navigator.userAgent.toLowerCase();
+        const isIosDevice = /iphone|ipad|ipod/.test(ua) && !window.MSStream;
+        if (isIosDevice) {
+            setIsIos(true);
+        }
 
-        // 2. Android / Chromium browser PWA installation trigger
+        // Show banner by default if not standalone and not dismissed
+        const isDismissed = sessionStorage.getItem('agrinexus_pwa_dismissed');
+        if (!isDismissed) {
+            setShowBanner(true);
+        }
+
+        // 2. Catch Android / Chromium browser PWA installation trigger
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
-            setShowBanner(true);
+            if (!isDismissed) {
+                setShowBanner(true);
+            }
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        // 3. Detect iOS Safari (which doesn't fire beforeinstallprompt)
-        const ua = window.navigator.userAgent.toLowerCase();
-        const isIosDevice = /iphone|ipad|ipod/.test(ua) && !window.MSStream;
-        const isSafari = /safari/.test(ua) && !/chrome|crios|fxios/.test(ua);
-
-        if (isIosDevice && isSafari && !checkStandalone()) {
-            setIsIos(true);
-            setShowBanner(true);
-        }
 
         // Listen for appinstalled event to auto-hide
         const handleAppInstalled = () => {
@@ -54,24 +57,38 @@ export default function PwaInstallBanner() {
 
         window.addEventListener('appinstalled', handleAppInstalled);
 
+        // Custom trigger from navbar button
+        const handleCustomTrigger = () => {
+            setShowBanner(true);
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+            } else {
+                setShowInstructions(true);
+            }
+        };
+
+        window.addEventListener('trigger-pwa-install', handleCustomTrigger);
+
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
             window.removeEventListener('appinstalled', handleAppInstalled);
+            window.removeEventListener('trigger-pwa-install', handleCustomTrigger);
         };
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-
-        deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
-        if (choiceResult.outcome === 'accepted') {
-            console.log('[PWA] User accepted the installation');
-            setShowBanner(false);
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const choiceResult = await deferredPrompt.userChoice;
+            if (choiceResult && choiceResult.outcome === 'accepted') {
+                console.log('[PWA] User accepted installation');
+                setShowBanner(false);
+            }
+            setDeferredPrompt(null);
         } else {
-            console.log('[PWA] User dismissed the installation');
+            // Show helpful instructions if browser hasn't fired beforeinstallprompt
+            setShowInstructions(true);
         }
-        setDeferredPrompt(null);
     };
 
     const handleDismiss = () => {
@@ -115,6 +132,15 @@ export default function PwaInstallBanner() {
                     <X className="w-4 h-4" />
                 </button>
             </div>
+
+            {showInstructions && !isIos && (
+                <div className="mt-2.5 p-2.5 bg-emerald-950/70 border border-emerald-500/30 rounded-xl text-xs text-emerald-200 animate-fade-in">
+                    <p className="font-semibold text-emerald-300">To add to your phone's Home Screen:</p>
+                    <p className="mt-1 text-[11px] text-gray-300">
+                        Tap your browser menu (<span className="font-bold text-white">⋮</span> in top-right) and select <span className="font-bold text-white">"Install app"</span> or <span className="font-bold text-white">"Add to Home screen"</span>.
+                    </p>
+                </div>
+            )}
 
             <div className="mt-3.5 pt-3 border-t border-emerald-500/20 flex items-center justify-between gap-2">
                 {isIos ? (

@@ -7,7 +7,23 @@ import './index.css'
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('[PWA] Service Worker active, offline caching enabled:', reg.scope))
+      .then((reg) => {
+        console.log('[PWA] Service Worker registered:', reg.scope);
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        reg.addEventListener('updatefound', () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] Fresh build deployed. Updating application cache...');
+                window.location.reload();
+              }
+            });
+          }
+        });
+      })
       .catch((err) => console.warn('[PWA] Service Worker registration failed:', err));
   });
 }

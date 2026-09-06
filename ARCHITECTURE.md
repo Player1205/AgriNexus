@@ -150,11 +150,16 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
 
 * **Edge Resilience & Offline Autonomy:**
   1. *In-Browser 5-Agent Swarm:* Executes foliar analysis, ICAR RAG lookup, CIB&RC safety validation, SHA-256 Web Crypto hashing, and native Web Speech synthesis directly in browser memory with zero network dependencies.
-  2. *Service Worker Cache-First Engine (`sw.js`):* Pre-caches static assets and application shell, allowing instantaneous cold starts in Airplane Mode.
-  3. *Silent Standalone Detection & Home-Screen Install Dispatcher (`PwaInstallBanner.jsx`):*
+  2. *Hybrid Service Worker Strategy (`sw.js` - Cache `agrinexus-offline-v2`):*
+     - **Network-First for HTML/Navigation:** Always queries the edge CDN first for `index.html` during online sessions, guaranteeing immediate ingestion of new Vite hashed asset bundles (`index-[hash].js`) and completely eliminating the "stale HTML 404 black screen" deadlock. Falls back to pre-cached shell only when offline (`!navigator.onLine`).
+     - **Cache-First for Static Assets:** Sub-millisecond instant hydration for immutable hashed bundles (`.js`, `.css`), maskable PNG icons, and web fonts.
+     - **Lifecycle Automation (`main.jsx`):** Employs `self.skipWaiting()` on install, `clients.claim()` and obsolete cache eviction on activate, and automatic window reload upon background service worker updates.
+  3. *W3C Compliant Manifest & 192/512px Maskable Icon Assets (`manifest.json`):*
+     - Incorporates compliant `192x192` and `512x512` maskable PNG icons, `apple-touch-icon.png`, and defined start scope `/` fulfilling Chromium and Safari PWA installability requirements.
+  4. *Silent Standalone Detection & Home-Screen Install Dispatcher (`PwaInstallBanner.jsx` & Header Action):*
      - If launched as an installed PWA (`display-mode: standalone`), operates in 100% silent native mode with zero install prompts.
-     - If accessed via mobile browser, catches `beforeinstallprompt` (Android/Chrome) or displays iOS Safari guidance to provide one-tap **[ Add to Home Screen ]** capability.
-  4. *Asynchronous Store-and-Forward Queue:* Enqueues diagnostic telemetry locally in `localStorage` and auto-syncs with Base Sepolia L2 upon cellular reconnection.
+     - If accessed via mobile/desktop web browser (`!isStandalone`), presents a 1-tap **[ Add to Home Screen ]** modal with `beforeinstallprompt` handling, manual browser menu guidance ("Tap ⋮ -> Install app"), and a persistent `[ 📲 Install ]` action button in the top navigation header.
+  5. *Asynchronous Store-and-Forward Queue:* Enqueues diagnostic telemetry locally in `localStorage` and auto-syncs with Base Sepolia L2 upon cellular reconnection.
 
 ---
 
