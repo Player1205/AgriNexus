@@ -28,6 +28,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 app.include_router(router)
 
 @app.get("/health")
+@app.get("/api/v1/health")
 def health_check():
     return {"status": "ok"}
 

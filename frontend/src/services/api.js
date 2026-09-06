@@ -27,6 +27,14 @@ if (typeof window !== 'undefined' && 'geolocation' in navigator) {
     );
 }
 
+// Pre-warm Render cloud server on page load to eliminate cold-start latency
+if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.onLine) {
+    const serverUrl = getBaseApiUrl();
+    if (serverUrl) {
+        fetch(`${serverUrl}/health`, { mode: 'cors' }).catch(() => {});
+    }
+}
+
 export const getClientLocation = () => {
     return new Promise((resolve) => {
         if (cachedCoordinates) {
@@ -89,7 +97,7 @@ export const uploadImage = async (file, language = 'hi') => {
         const endpoint = baseUrl ? `${baseUrl}/api/v1/analyze` : '/api/v1/analyze';
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout for cloud
+        const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout to handle Render cold-start wakeups
 
         const response = await fetch(endpoint, {
             method: 'POST',
