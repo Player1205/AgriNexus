@@ -91,8 +91,13 @@ export default function FarmerView({ onAnalysisComplete }) {
         };
     }, [status]);
 
-    // Native On-Device Web Speech API Fallback for Offline Scenarios
+    // Native On-Device Web Speech API Fallback strictly for Offline Scenarios
     const speakOnDeviceFallback = (text, langCode) => {
+        // Strict Invariant: Built-in device TTS should ONLY occur when internet is not connected!
+        if (typeof navigator !== 'undefined' && navigator.onLine) {
+            console.log("[TTS INVARIANT] Device is connected to the internet; suppressing on-device speech synthesis to maintain Sarvam AI priority.");
+            return;
+        }
         if (!('speechSynthesis' in window)) return;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
@@ -100,6 +105,40 @@ export default function FarmerView({ onAnalysisComplete }) {
         utterance.rate = 0.95;
         window.speechSynthesis.speak(utterance);
     };
+
+    // Auto-trigger Sarvam AI audio element playback upon URL arrival
+    useEffect(() => {
+        if (audioUrl && audioRef.current) {
+            try {
+                audioRef.current.currentTime = 0;
+            } catch {}
+            try {
+                audioRef.current.play()?.catch((e) => {
+                    console.log('[SARVAM PLAYBACK] Autoplay deferred until user interaction:', e);
+                });
+            } catch {}
+        }
+    }, [audioUrl]);
+
+    const handleReplayVoice = useCallback(() => {
+        if (audioUrl) {
+            if (audioRef.current) {
+                try {
+                    audioRef.current.currentTime = 0;
+                } catch {}
+                try {
+                    audioRef.current.play()?.catch((e) => console.warn('[AUDIO] Playback error:', e));
+                } catch {}
+            } else {
+                try {
+                    const a = new Audio(audioUrl);
+                    a.play()?.catch((e) => console.warn('[AUDIO] Playback error:', e));
+                } catch {}
+            }
+        } else if (typeof navigator !== 'undefined' && !navigator.onLine && translatedText) {
+            speakOnDeviceFallback(translatedText, selectedLang);
+        }
+    }, [audioUrl, translatedText, selectedLang]);
 
     const handleFileSelect = useCallback(async (event) => {
         const file = event.target.files?.[0];
@@ -155,7 +194,12 @@ export default function FarmerView({ onAnalysisComplete }) {
 
             if (result.vernacular_audio_url) {
                 const baseUrl = getBaseApiUrl();
-                const resolvedAudio = (result.vernacular_audio_url.startsWith('http') || !baseUrl)
+                const resolvedAudio = (
+                    result.vernacular_audio_url.startsWith('http') ||
+                    result.vernacular_audio_url.startsWith('data:') ||
+                    result.vernacular_audio_url.startsWith('blob:') ||
+                    !baseUrl
+                )
                     ? result.vernacular_audio_url
                     : `${baseUrl}${result.vernacular_audio_url}`;
                 setAudioUrl(resolvedAudio);
@@ -180,7 +224,7 @@ export default function FarmerView({ onAnalysisComplete }) {
         } catch (err) {
             setStatus(STATUS.ERROR);
             setErrorMessage('Network connection lost. Diagnostic stored in offline queue and will auto-sync upon reconnection.');
-            if ('speechSynthesis' in window) {
+            if ('speechSynthesis' in window && !navigator.onLine) {
                 speakOnDeviceFallback("नेटवर्क उपलब्ध नहीं है। आपकी जांच सुरक्षित कर ली गई है।", 'hi');
             }
         }
@@ -362,9 +406,20 @@ export default function FarmerView({ onAnalysisComplete }) {
                             )}
                         </div>
                         {translatedText && (
-                            <p className="text-xs text-gray-700 text-center italic bg-gray-50 p-3 rounded-xl border border-gray-100 w-full leading-relaxed">
-                                "{translatedText}"
-                            </p>
+                            <div className="w-full flex flex-col items-center gap-2 mt-1">
+                                <p className="text-xs text-gray-700 text-center italic bg-gray-50 p-3 rounded-xl border border-gray-100 w-full leading-relaxed">
+                                    "{translatedText}"
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleReplayVoice}
+                                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-xl transition-all shadow-sm active:scale-95"
+                                    title="Listen to vernacular spoken advisory"
+                                >
+                                    <Volume2 className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                                    <span>{audioUrl ? "🔊 सुनो (Play Audio)" : "🔊 सुनो (Offline Audio)"}</span>
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
@@ -401,9 +456,20 @@ export default function FarmerView({ onAnalysisComplete }) {
                             </div>
 
                             {translatedText && (
-                                <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-amber-200 w-full leading-relaxed mt-1">
-                                    "{translatedText}"
-                                </p>
+                                <div className="w-full flex flex-col items-center gap-2 mt-1">
+                                    <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-amber-200 w-full leading-relaxed">
+                                        "{translatedText}"
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleReplayVoice}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-xl transition-all shadow-sm active:scale-95"
+                                        title="Listen to non-target subject advisory"
+                                    >
+                                        <Volume2 className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+                                        <span>{audioUrl ? "🔊 सुनो (Play Audio)" : "🔊 सुनो (Offline Audio)"}</span>
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ) : (
@@ -458,9 +524,20 @@ export default function FarmerView({ onAnalysisComplete }) {
                             )}
 
                             {translatedText && (
-                                <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-red-100 w-full leading-relaxed mt-1">
-                                    "{translatedText}"
-                                </p>
+                                <div className="w-full flex flex-col items-center gap-2 mt-1">
+                                    <p className="text-xs text-gray-800 text-center italic bg-white/90 p-3 rounded-xl border border-red-100 w-full leading-relaxed">
+                                        "{translatedText}"
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleReplayVoice}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-red-900 bg-red-100 hover:bg-red-200 border border-red-300 px-3 py-1.5 rounded-xl transition-all shadow-sm active:scale-95"
+                                        title="Listen to KVK referral advisory"
+                                    >
+                                        <Volume2 className="w-3.5 h-3.5 text-red-700 animate-pulse" />
+                                        <span>{audioUrl ? "🔊 सुनो (Play Audio)" : "🔊 सुनो (Offline Audio)"}</span>
+                                    </button>
+                                </div>
                             )}
                         </div>
                     )

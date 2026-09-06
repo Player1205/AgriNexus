@@ -115,14 +115,22 @@ describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
     });
 
     it('Full Swarm Pipeline: Executes complete 5-agent on-device pipeline with zero network', async () => {
-        const mockFile = new File(['tomato'], 'tomato_late_blight.jpg', { type: 'image/jpeg' });
-        const result = await runOfflineSwarmPipeline(mockFile, 'hi', { latitude: 30.9010, longitude: 75.8573 });
+        const origOnLine = navigator.onLine;
+        Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+        try {
+            const mockFile = new File(['tomato'], 'tomato_late_blight.jpg', { type: 'image/jpeg' });
+            const result = await runOfflineSwarmPipeline(mockFile, 'hi', { latitude: 30.9010, longitude: 75.8573 });
 
-        expect(result.vision_diagnosis).toBe('Tomato Late blight');
-        expect(result.is_safe).toBe(true);
-        expect(result.safe_dosage_ml_per_acre).toBeGreaterThan(0);
-        expect(result.tx_hash).toBeDefined();
-        expect(result.translated_text).toBeDefined();
-        expect(result.weather_data.temperature_c).toBeGreaterThan(0);
-    });
+            expect(result.vision_diagnosis).toBe('Tomato Late blight');
+            expect(result.is_safe).toBe(true);
+            expect(result.safe_dosage_ml_per_acre).toBeGreaterThan(0);
+            expect(result.tx_hash).toBeDefined();
+            expect(result.translated_text).toBeDefined();
+            expect(result.weather_data.temperature_c).toBeGreaterThan(0);
+            // With zero network, audio url is null so Web Speech takes over
+            expect(result.vernacular_audio_url).toBeNull();
+        } finally {
+            Object.defineProperty(navigator, 'onLine', { value: origOnLine, configurable: true });
+        }
+    }, 15000);
 });

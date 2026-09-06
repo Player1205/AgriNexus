@@ -1158,6 +1158,37 @@ Each record explains:
 
 ---
 
+### ADR-064: Deterministic Sarvam AI Bulbul:v3 Online Voice Invariant & Offline-Only Native Web Speech Guard
+
+* **Context & Problem:** When connected to the internet, mobile and desktop visitors received robotic on-screen text-to-speech output from the device's built-in `window.speechSynthesis` rather than natural human-like Indic dialect audio from Sarvam AI Bulbul:v3. This occurred because `edgeVoiceAgent.js` in the client-side swarm unconditionally called `speakVernacularOffline()` and returned `vernacular_audio_url: null`. The user required a strict architectural invariant: **when connected to the internet, Sarvam API Bulbul:v3 must be the higher priority, and the built-in device text-to-speech should ONLY occur when the device is disconnected from the internet.**
+* **What Was Changed & How:**
+  1. *Sarvam AI Bulbul:v3 Edge Synthesis Engine (`frontend/src/services/edgeVoiceAgent.js`):* Implemented `synthesizeSarvamSpeech(text, languageCode)` directly in the edge voice agent with CORS-compliant REST calls to `https://api.sarvam.ai/text-to-speech` utilizing `bulbul:v3`, speaker `shubh`, and full 11-language mapping (`hi-IN`, `pa-IN`, `te-IN`, `ta-IN`, `ml-IN`, `kn-IN`, `bn-IN`, `mr-IN`, `gu-IN`, `od-IN`, `en-IN`).
+  2. *Strict Priority Invariant in `runEdgeVoiceAgent`:* Evaluates `navigator.onLine`. If online, Sarvam AI Bulbul:v3 is invoked as Tier-1 priority, returning a self-contained `data:audio/wav;base64,...` URL and auto-playing the authentic acoustic stream. The built-in device speech synthesis is completely bypassed. Only when `!navigator.onLine` (or if Sarvam API fails) is on-device `speakVernacularOffline()` invoked.
+  3. *Zero-Leak Guard in UI (`frontend/src/components/FarmerView.jsx`):* Added a hard assertion in `speakOnDeviceFallback` ensuring that if `navigator.onLine` is true, built-in device TTS is immediately aborted. Upgraded audio resolution to natively handle `data:` and `blob:` schemes without prepending API hostnames, and added an automated playback synchronization hook.
+  4. *Dialect Audio Replay Controls (`frontend/src/components/FarmerView.jsx`):* Added responsive `🔊 सुनो (Play Audio)` triggers on all diagnostic cards allowing one-tap re-listening of Sarvam AI audio notes.
+  5. *Client Environment Configuration (`frontend/.env` & `frontend/.env.example`):* Configured `VITE_SARVAM_API_KEY` with seamless fallback to authenticated runtime keys.
+* **Architectural Rationale:** Enforces authentic vernacular acoustic grounding for literate and non-literate farmers alike during online sessions while preserving 100% on-device speech autonomy in remote rural dead zones.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-064</strong></summary>
+
+> **Question:** In the AgriNexus acoustic architecture, under what condition is the browser's built-in `window.speechSynthesis` (device TTS) allowed to speak?
+>
+> 1. On every analysis regardless of network status.
+> 2. Strictly when the client device is disconnected from the internet (`navigator.onLine === false`) or if cloud Sarvam API is unreachable.
+> 3. Only when the farmer selects English.
+> 4. Never; device TTS has been removed from the platform.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Sarvam AI Bulbul:v3 is strictly prioritized whenever the device has internet access. The on-device `window.speechSynthesis` operates purely as an offline fallback to ensure non-literate farmers in remote fields without cellular data still receive audible instructions.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
@@ -1177,6 +1208,8 @@ Each record explains:
 * [x] **Silent Standalone PWA:** Automatic "Add to Home Screen" prompt for browser visitors; silent native UX when launched from home screen.
 * [x] **Live Meteorological State Invariance:** Zero false offline voice warnings when mobile device is connected to the internet.
 * [x] **PWA Installability & Network-First Invariance:** W3C 192/512px icon compliance and network-first navigation cache preventing deployment black screens.
+* [x] **Sarvam AI Bulbul:v3 Online Voice Priority:** Authentic Indic voice synthesis prioritized online with offline-only on-device Web Speech fallback.
+
 
 
 

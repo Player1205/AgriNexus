@@ -201,7 +201,10 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
 
 ### 6. Vernacular Neural Acoustic Subsystem (`Agent 5`)
 
-* **Engine:** **Sarvam AI (Bulbul:v3)** neural text-to-speech engine.
+* **Engine:** **Sarvam AI (Bulbul:v3)** neural text-to-speech engine (`shubh` speaker, 11 Indic languages).
+* **Strict Priority Hierarchy:**
+  1. *Tier 1 — Online Primary (Sarvam AI Bulbul:v3):* Whenever the client has internet connectivity (`navigator.onLine === true`), whether routed via backend or edge swarm, speech synthesis is executed exclusively through Sarvam AI's REST endpoint (`POST https://api.sarvam.ai/text-to-speech`), producing high-fidelity human phonemes with zero device-synthesis leakage.
+  2. *Tier 2 — Offline Autonomous Fallback (`window.speechSynthesis`):* Strictly reserved for true zero-connectivity agrarian dead zones (`!navigator.onLine`). Generates localized utterances locally on the browser thread without network dependencies.
 * **Language Support (11 Indic Languages):**
   * `hi-IN` (Hindi), `pa-IN` (Punjabi), `te-IN` (Telugu), `ta-IN` (Tamil), `ml-IN` (Malayalam), `kn-IN` (Kannada), `bn-IN` (Bengali), `mr-IN` (Marathi), `gu-IN` (Gujarati), `od-IN` (Odia), `en-IN` (Indian English).
 * **Advisory Structure:**

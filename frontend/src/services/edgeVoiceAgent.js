@@ -85,6 +85,76 @@ export const generateLocalizedSpeechText = (state, languageCode = 'hi') => {
     return `Dear Farmer, Caution: Live field weather could not be fetched due to lack of internet. Please verify there is no immediate rain before spraying. Based on certified ICAR protocols, your crop is affected by ${diagnosis}. Spray ${chemical} at an exact dosage of ${dosage} ${unit} per acre in 200 liters of water during cool morning or evening hours.`;
 };
 
+// Sarvam AI Bulbul:v3 Key Configuration (Loaded securely from environment)
+const SARVAM_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SARVAM_API_KEY) || '';
+
+const SARVAM_LANG_MAP = {
+    hi: 'hi-IN',
+    pa: 'pa-IN',
+    te: 'te-IN',
+    ta: 'ta-IN',
+    ml: 'ml-IN',
+    kn: 'kn-IN',
+    bn: 'bn-IN',
+    mr: 'mr-IN',
+    gu: 'gu-IN',
+    od: 'od-IN',
+    en: 'en-IN'
+};
+
+/**
+ * Synthesizes natural Indic acoustic speech using Sarvam AI Bulbul:v3.
+ * Returns self-contained base64 data URL ('data:audio/wav;base64,...') on success.
+ */
+export const synthesizeSarvamSpeech = async (text, languageCode = 'hi') => {
+    if (!text || !SARVAM_API_KEY || typeof window === 'undefined' || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+        return null;
+    }
+
+    try {
+        console.log(`[SARVAM AI] Synthesizing speech via Bulbul:v3 for '${languageCode}'...`);
+        const targetLang = SARVAM_LANG_MAP[languageCode] || 'hi-IN';
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+
+        const response = await fetch('https://api.sarvam.ai/text-to-speech', {
+            method: 'POST',
+            headers: {
+                'api-subscription-key': SARVAM_API_KEY.trim(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                inputs: [text],
+                target_language_code: targetLang,
+                speaker: 'shubh',
+                pace: 1.0,
+                enable_preprocessing: true,
+                model: 'bulbul:v3'
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            console.warn(`[SARVAM AI] API returned status ${response.status}: ${response.statusText}`);
+            return null;
+        }
+
+        const data = await response.json();
+        const audios = data?.audios;
+        if (audios && audios.length > 0 && audios[0]) {
+            const audioDataUrl = `data:audio/wav;base64,${audios[0]}`;
+            console.log(`[SARVAM AI] Successfully generated authentic voice note (${audios[0].length} chars).`);
+            return audioDataUrl;
+        }
+    } catch (err) {
+        console.warn('[SARVAM AI] Online speech synthesis failed or timed out:', err.message);
+    }
+    return null;
+};
+
 export const speakVernacularOffline = (text, languageCode = 'hi') => {
     if (!('speechSynthesis' in window) || !text) return;
 
@@ -126,7 +196,33 @@ export const runEdgeVoiceAgent = async (state) => {
     const lang = state.language_code || 'hi';
     const translatedText = generateLocalizedSpeechText(state, lang);
 
-    // Speak automatically on-device
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
+
+    // 1. HIGHER PRIORITY: If connected to the internet, synthesize using Sarvam AI (Bulbul:v3)
+    if (isOnline) {
+        const sarvamAudioUrl = await synthesizeSarvamSpeech(translatedText, lang);
+        if (sarvamAudioUrl) {
+            // Trigger automatic playback of genuine Sarvam human speech
+            try {
+                const audio = new Audio(sarvamAudioUrl);
+                audio.play().catch(e => {
+                    console.log('[SARVAM AI] Audio ready in player; browser autoplay policy may require user tap:', e);
+                });
+            } catch (playErr) {
+                console.warn('[SARVAM AI] Audio element play warning:', playErr);
+            }
+
+            return {
+                language_code: lang,
+                translated_text: translatedText,
+                vernacular_audio_url: sarvamAudioUrl
+            };
+        }
+        console.warn('[VOICE PRIORITY] Sarvam API unreachable despite online status. Engaging on-device fallback.');
+    }
+
+    // 2. FALLBACK ONLY: If not connected to the internet (or Sarvam unreachable), use built-in on-device Web Speech API
+    console.log('[OFFLINE VOICE] Device is disconnected from internet. Using built-in on-device speech synthesis (window.speechSynthesis)...');
     speakVernacularOffline(translatedText, lang);
 
     return {
@@ -135,3 +231,4 @@ export const runEdgeVoiceAgent = async (state) => {
         vernacular_audio_url: null // Triggers on-device Web Speech in UI
     };
 };
+

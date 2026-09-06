@@ -4,3 +4,8 @@ import '@testing-library/jest-dom';
 window.HTMLMediaElement.prototype.load = () => {};
 window.HTMLMediaElement.prototype.play = () => Promise.resolve();
 window.HTMLMediaElement.prototype.pause = () => {};
+Object.defineProperty(window.HTMLMediaElement.prototype, 'currentTime', {
+  get() { return 0; },
+  set() {}
+});
+
