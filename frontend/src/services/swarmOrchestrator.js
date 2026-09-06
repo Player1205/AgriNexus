@@ -11,19 +11,54 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * Emits real-time telemetry updates to notify visual laser paths and telemetry ledgers.
  */
 export const runOfflineSwarmPipeline = async (file, language = 'hi', location = null, onTelemetryUpdate = null) => {
-    console.log("[OFFLINE SWARM] Initiating 100% On-Device Multi-Agent Swarm Execution...");
+    console.log("[OFFLINE SWARM] Initiating On-Device Multi-Agent Swarm Execution...");
+
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
+    let currentTemp = 28.0;
+    let currentHumidity = 75.0;
+    let rainRisk = 15.0;
+    let windSpeed = 5.0;
+    let isLiveWeather = isOnline;
+    let locationSource = location ? "DEVICE_LIVE_GPS" : "REGIONAL_BASELINE";
+    const lat = location ? location.latitude : 30.9010;
+    const lng = location ? location.longitude : 75.8573;
+
+    // Fetch live satellite weather if phone has internet
+    if (isOnline) {
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 2500);
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&hourly=precipitation_probability&forecast_hours=6`, { signal: controller.signal });
+            clearTimeout(timer);
+            if (res.ok) {
+                const wData = await res.json();
+                const curr = wData.current || {};
+                const hourly = wData.hourly || {};
+                const maxRain = hourly.precipitation_probability ? Math.max(...hourly.precipitation_probability) : 0;
+                currentTemp = Math.round((curr.temperature_2m ?? 28.0) * 10) / 10;
+                currentHumidity = Math.round((curr.relative_humidity_2m ?? 75.0) * 10) / 10;
+                rainRisk = Math.round(maxRain);
+                windSpeed = Math.round((curr.wind_speed_10m ?? 5.0) * 10) / 10;
+                isLiveWeather = true;
+                locationSource = location ? "DEVICE_LIVE_GPS" : "REGIONAL_LIVE_WEATHER";
+            }
+        } catch (e) {
+            console.warn("[SWARM WEATHER] Fallback to baseline weather:", e);
+        }
+    }
 
     const initialState = {
         image_path: file ? file.name : 'offline_capture.jpg',
         language_code: language,
-        current_temperature: 28.0,
-        current_humidity: 75.0,
-        rain_risk_6h_percent: 15.0,
-        wind_speed_kmh: 5.0,
-        is_spray_safe: true,
-        location_source: location ? "DEVICE_LIVE_GPS" : "REGIONAL_BASELINE",
-        client_latitude: location ? location.latitude : 30.9010,
-        client_longitude: location ? location.longitude : 75.8573,
+        current_temperature: currentTemp,
+        current_humidity: currentHumidity,
+        rain_risk_6h_percent: rainRisk,
+        wind_speed_kmh: windSpeed,
+        is_spray_safe: (windSpeed <= 15.0) && (rainRisk < 35.0) && (currentTemp <= 36.0),
+        location_source: locationSource,
+        is_live_weather: isLiveWeather,
+        client_latitude: lat,
+        client_longitude: lng,
         errors: []
     };
 

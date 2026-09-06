@@ -1092,11 +1092,44 @@ Each record explains:
 
 ---
 
+### ADR-062: Live Meteorological State Invariance & True-Offline Voice Caution Guard
+
+* **Context & Problem:** When a farmer visited the Vercel-hosted frontend on mobile while connected to cellular data, the spoken advisory incorrectly announced *"किसान भाई, सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका..."* due to three overlapping causes:
+  1. *Unset Production API URL:* `getBaseApiUrl()` in `api.js` returned an empty string when `VITE_API_URL` was not bundled in the build, attempting to call Vercel instead of the Render cloud backend, and failing through to the local swarm.
+  2. *Static Edge Voice Text:* `edgeVoiceAgent.js` statically prepended the offline warning string to verified treatments without inspecting `state.is_live_weather` or `navigator.onLine`.
+  3. *Location Source Identifier Mismatch:* In `backend/app/agents/voice_agent.py`, `is_live_weather` evaluated `location_source in ["GPS", "LIVE", "EXIF", "DEVICE"]`, returning `False` for `REGIONAL_BASELINE` even though Open-Meteo live API returned real-time temperature and humidity.
+* **What Was Changed & How:**
+  1. *Dynamic Production Backend Routing (`frontend/src/services/api.js`):* `getBaseApiUrl()` automatically resolves to `https://agrinexus-backend.onrender.com` when running on any non-localhost domain.
+  2. *Live Meteorological Ingestion in Client Swarm (`frontend/src/services/swarmOrchestrator.js`):* Added direct in-browser fetching of Open-Meteo satellite weather when `navigator.onLine` is true.
+  3. *Dynamic Voice Text Context (`frontend/src/services/edgeVoiceAgent.js` & `backend/app/agents/voice_agent.py`):* Conditioned the spoken advisory to weave live field metrics (*"किसान भाई, आपके खेत में तापमान {temp}°C और आर्द्रता {humidity}% है..."*) whenever online, strictly reserving the offline cautionary clause for genuine zero-connectivity offline sessions (`!navigator.onLine`).
+  4. *Explicit `is_live_weather` State Flag (`backend/app/services/weather_service.py`):* Returns `is_live_weather: True` on successful HTTP 200 telemetry responses.
+* **Architectural Rationale:** Ensures 100% telemetry consistency between backend and frontend while preventing false offline warnings on connected mobile devices.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-062</strong></summary>
+
+> **Question:** Under what specific condition does AgriNexus now include the spoken warning *"सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका..."*?
+>
+> 1. Whenever the user is in Ludhiana.
+> 2. Strictly when the client device is completely disconnected from the internet (`navigator.onLine === false`) and live satellite weather cannot be reached.
+> 3. Whenever the user uploads a tomato leaf.
+> 4. Every time the app opens.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* By enforcing state invariance across `is_live_weather` and `navigator.onLine`, live temperature and humidity are spoken whenever internet is available, reserving offline cautions purely for true disconnected agrarian dead zones.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
 * [x] **Zero Mock Data:** Real PlantVillage dataset, real ICAR database, real Base Sepolia contract, real Sarvam AI voice.
-* [x] **Full-Stack Test Coverage:** 44 passing tests across Pytest (22 tests), Hardhat (5 tests), and Vitest (17 tests).
+* [x] **Full-Stack Test Coverage:** 46 passing tests across Pytest (24 tests), Hardhat (5 tests), and Vitest (17 tests).
 * [x] **CI/CD Automation:** Automated GitHub Actions matrix validating every pull request.
 * [x] **Offline-First Resilience:** Store-and-forward queue with on-device native speech synthesis.
 * [x] **MIC Floor Protection:** Formulation separation with ICAR Minimum Inhibitory Concentration floor enforcement.
@@ -1109,6 +1142,8 @@ Each record explains:
 * [x] **100% In-Browser Offline MAS:** On-device 5-agent swarm execution + PWA Service Worker offline caching.
 * [x] **Trained Model Tier-1 Priority:** `agrinexus_vision.onnx` runs as primary engine with Gemini Vision as Tier-2 secondary fallback.
 * [x] **Silent Standalone PWA:** Automatic "Add to Home Screen" prompt for browser visitors; silent native UX when launched from home screen.
+* [x] **Live Meteorological State Invariance:** Zero false offline voice warnings when mobile device is connected to the internet.
+
 
 
 

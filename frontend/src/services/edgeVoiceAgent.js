@@ -54,7 +54,25 @@ export const generateLocalizedSpeechText = (state, languageCode = 'hi') => {
         return `Dear Farmer, your crop shows symptoms of ${diagnosis}. Chemical application cannot be verified safely. Please consult your nearest agricultural research center: ${kvkName} (${kvkDist} away).`;
     }
 
-    // Case C: Verified Safe Treatment with Weather Caution
+    // Case C: Verified Safe Treatment with Weather Context
+    const isLiveWeather = state.is_live_weather === true || (typeof navigator !== 'undefined' && navigator.onLine);
+    const temp = Math.round(state.current_temperature || 28);
+    const humidity = Math.round(state.current_humidity || 75);
+
+    if (isLiveWeather) {
+        if (languageCode === 'hi') {
+            return `किसान भाई, आपके खेत में तापमान ${temp}°C और आर्द्रता ${humidity}% है। ICAR मानकों के अनुसार आपकी फसल में ${localizedDisease} के उपचार हेतु ${chemical} की ${dosage} ${unit} प्रति एकड़ २०० लीटर पानी में घोलकर छिड़काव करें। छिड़काव सुबह या शाम को करें।`;
+        }
+        if (languageCode === 'pa') {
+            return `ਕਿਸਾਨ ਵੀਰੋ, ਤੁਹਾਡੇ ਖੇਤ ਵਿੱਚ ਤਾਪਮਾਨ ${temp}°C ਅਤੇ ਨਮੀ ${humidity}% ਹੈ। ਪ੍ਰਮਾਣਿਤ ICAR ਨਿਯਮਾਂ ਅਨੁਸਾਰ ਤੁਹਾਡੀ ਫਸਲ ਵਿੱਚ ${localizedDisease} ਲਈ ${chemical} ਦੀ ${dosage} ${unit} ਪ੍ਰਤੀ ਏਕੜ 200 ਲੀਟਰ ਪਾਣੀ ਵਿੱਚ ਮਿਲਾ ਕੇ ਛਿੜਕਾਅ ਕਰੋ।`;
+        }
+        if (languageCode === 'te') {
+            return `రైతు సోదరులారా, మీ ప్రాంతంలో ఉష్ణోగ్రత ${temp}°C మరియు తేమ ${humidity}% గా ఉంది. ICAR ప్రమాణాల ప్రకారం ${localizedDisease} నివారణకు ${chemical} ను ఎకరాకు ${dosage} ${unit} చొప్పున 200 లీటర్ల నీటిలో కలిపి పిచికారీ చేయండి.`;
+        }
+        return `Dear Farmer, current field temperature is ${temp}°C with ${humidity}% humidity. Based on certified ICAR protocols, your crop is affected by ${diagnosis}. Spray ${chemical} at an exact dosage of ${dosage} ${unit} per acre in 200 liters of water during cool morning or evening hours.`;
+    }
+
+    // Only if strictly offline without internet:
     if (languageCode === 'hi') {
         return `किसान भाई, सावधानी: इंटरनेट न होने के कारण लाइव मौसम प्राप्त नहीं हो सका, छिड़काव से पहले बारिश न होने की पुष्टि करें। ICAR मानकों के अनुसार आपकी फसल में ${localizedDisease} के उपचार हेतु ${chemical} की ${dosage} ${unit} प्रति एकड़ २०० लीटर पानी में घोलकर छिड़काव करें। छिड़काव सुबह या शाम को करें।`;
     }

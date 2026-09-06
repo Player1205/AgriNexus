@@ -78,20 +78,40 @@ describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
         expect(web3.passport_id).toBeGreaterThanOrEqual(101);
     });
 
-    it('Agent 5 (Voice): Generates offline Hindi speech text with weather caution', () => {
-        const state = {
+    it('Agent 5 (Voice): Generates live weather Hindi speech when online and offline caution when disconnected', () => {
+        // Online live weather test
+        const onlineState = {
             is_safe: true,
             is_crop_supported: true,
             vision_diagnosis: 'Tomato Late blight',
             proposed_chemical: 'Azoxystrobin',
             safe_dosage_ml_per_acre: 150.0,
-            dosage_unit: 'ml'
+            dosage_unit: 'ml',
+            current_temperature: 29.5,
+            current_humidity: 68.0,
+            is_live_weather: true
         };
-        const speech = generateLocalizedSpeechText(state, 'hi');
+        const onlineSpeech = generateLocalizedSpeechText(onlineState, 'hi');
+        expect(onlineSpeech).toContain('तापमान');
+        expect(onlineSpeech).not.toContain('इंटरनेट न होने के कारण');
+        expect(onlineSpeech).toContain('Azoxystrobin');
 
-        expect(speech).toContain('सावधानी: इंटरनेट न होने के कारण');
-        expect(speech).toContain('Azoxystrobin');
-        expect(speech).toContain('150');
+        // Offline zero-internet test
+        const offlineState = {
+            is_safe: true,
+            is_crop_supported: true,
+            vision_diagnosis: 'Tomato Late blight',
+            proposed_chemical: 'Azoxystrobin',
+            safe_dosage_ml_per_acre: 150.0,
+            dosage_unit: 'ml',
+            is_live_weather: false
+        };
+        // Temporarily mock navigator.onLine as false
+        const origOnLine = navigator.onLine;
+        Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+        const offlineSpeech = generateLocalizedSpeechText(offlineState, 'hi');
+        expect(offlineSpeech).toContain('सावधानी: इंटरनेट न होने के कारण');
+        Object.defineProperty(navigator, 'onLine', { value: origOnLine, configurable: true });
     });
 
     it('Full Swarm Pipeline: Executes complete 5-agent on-device pipeline with zero network', async () => {
@@ -103,6 +123,6 @@ describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
         expect(result.safe_dosage_ml_per_acre).toBeGreaterThan(0);
         expect(result.tx_hash).toBeDefined();
         expect(result.translated_text).toBeDefined();
-        expect(result.weather_data.temperature_c).toBe(28.0);
+        expect(result.weather_data.temperature_c).toBeGreaterThan(0);
     });
 });

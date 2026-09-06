@@ -121,12 +121,13 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                     "is_spray_safe": is_spray_safe,
                     "latitude": lat,
                     "longitude": lng,
-                    "location_source": source
+                    "location_source": source,
+                    "is_live_weather": True
                 }
     except Exception as e:
         print(f"[WEATHER SERVICE WARNING] Fallback to standard metrics: {e}")
 
-    # Robust safe fallback if internet offline
+    # Safe fallback if internet offline
     return {
         "temperature_c": 28.0,
         "relative_humidity": 75.0,
@@ -136,5 +137,6 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
         "is_spray_safe": True,
         "latitude": lat,
         "longitude": lng,
-        "location_source": source
+        "location_source": "OFFLINE_FALLBACK",
+        "is_live_weather": False
     }

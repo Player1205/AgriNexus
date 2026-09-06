@@ -1,7 +1,14 @@
 import { runOfflineSwarmPipeline } from './swarmOrchestrator';
 
 export const getBaseApiUrl = () => {
-    return import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : '';
+    if (import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL.replace(/\/$/, '');
+    }
+    // Auto-detect production hosting (e.g. Vercel) and route to Render backend
+    if (typeof window !== 'undefined' && window.location.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+        return 'https://agrinexus-backend.onrender.com';
+    }
+    return '';
 };
 
 let cachedCoordinates = null;
