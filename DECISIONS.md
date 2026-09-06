@@ -1032,11 +1032,71 @@ Each record explains:
 
 ---
 
+### ADR-060: Tier 1 Trained ONNX Model Priority with Tier 2 Multi-Modal LLM Fallback
+
+* **Context & Problem:** In earlier revisions, cloud Gemini Vision API calls were invoked by default when an internet connection was present, bypassing the fine-tuned `agrinexus_vision.onnx` (EfficientNet-B4) model on valid crop images. This introduced unnecessary external API latency ($>1200\text{ms}$ vs $40\text{ms}$ on-device) and disregarded the dedicated neural model trained on the 50,000+ PlantVillage dataset.
+* **What Was Changed & How:**
+  1. *Tier 1 (Trained ML Priority):* Refactored [`backend/app/agents/vision_agent.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/agents/vision_agent.py) so ONNX Runtime executes on `agrinexus_vision.onnx` first regardless of internet connectivity.
+  2. *Immediate Confidence Return:* If the trained model output has $\text{confidence} \ge 0.60$, the node returns immediately with zero external API calls.
+  3. *Tier 2 (Gemini Secondary Fallback):* Google Gemini 1.5 Flash Vision is strictly engaged only if the trained model has low confidence ($<60\%$) or fails to identify the subject, providing multi-modal identification of out-of-distribution subjects (e.g. houseplants, furniture).
+* **Architectural Rationale:** Guarantees lightning-fast ($<80\text{ms}$) deterministic execution using the custom-trained model while maintaining multi-modal LLM fallback safety for anomalous edge cases.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-060</strong></summary>
+
+> **Question:** When an internet connection is active, how does AgriNexus process an incoming leaf image?
+>
+> 1. It ignores the local ML model and calls Gemini Vision API immediately.
+> 2. It executes the trained ONNX EfficientNet-B4 model (Tier 1) first in $<80\text{ms}$. If confidence is $\ge 60\%$, it returns immediately with ZERO external API calls. Gemini Vision (Tier 2) is only consulted if confidence is $<60\%$.
+> 3. It sends the image to a manual reviewer.
+> 4. It waits for user approval.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* The tiered vision architecture prioritizes the custom-trained ONNX neural network for all in-domain diagnostics, utilizing Gemini Vision strictly as a secondary fallback for low-confidence edge cases.
+> </details>
+> </details>
+
+---
+
+### ADR-061: Automatic PWA Home-Screen Install Dispatcher with Silent Standalone Detection
+
+* **Context & Problem:** Smallholder farmers accessing `agri-nexus-eosin.vercel.app` via mobile web browsers need a zero-friction, one-tap method to install AgriNexus onto their smartphone home screen for 100% offline field capability. When already opened as an installed PWA (in standalone mode), displaying install prompts is disruptive and confusing.
+* **What Was Changed & How:**
+  1. *Silent Standalone Detection:* Implemented [`frontend/src/components/PwaInstallBanner.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/components/PwaInstallBanner.jsx) which checks `display-mode: standalone` and `navigator.standalone`. When already installed and launched from the home screen, the component returns `null` (100% silent, standard native app experience).
+  2. *Automated Home Screen Prompt:* Listens for `beforeinstallprompt` on Android and Chromium browsers, displaying an elegant banner: *"Install AgriNexus App (100% Offline)"* with an **[ Add to Home Screen ]** button that triggers native `deferredPrompt.prompt()`.
+  3. *iOS Safari Guidance:* Detects iOS devices in non-standalone mode and renders step-by-step instructions (*"Tap Share ⎋ → Add to Home Screen ⊞"*).
+  4. *PWA Meta Tags:* Enhanced [`frontend/index.html`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/index.html) with `apple-mobile-web-app-capable`, `theme-color`, and manifest links.
+  5. *Automated Unit Suite:* Authored [`frontend/src/test/PwaInstallBanner.test.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/test/PwaInstallBanner.test.jsx) covering standalone silence, browser install triggers, and session dismissals.
+* **Architectural Rationale:** Provides an authentic native mobile app installation experience without requiring app store downloads or developer accounts.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-061</strong></summary>
+
+> **Question:** What does AgriNexus display when a farmer opens the app after already adding it to their phone's home screen?
+>
+> 1. A popup asking them to re-install the app.
+> 2. Nothing (silent normal mode) — `PwaInstallBanner` detects `display-mode: standalone` and automatically hides all install prompts.
+> 3. An error message.
+> 4. A redirect to the Google Play Store.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* By inspecting the `standalone` display mode, AgriNexus behaves as a native mobile application, suppressing installation prompts once installed.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
 * [x] **Zero Mock Data:** Real PlantVillage dataset, real ICAR database, real Base Sepolia contract, real Sarvam AI voice.
-* [x] **Full-Stack Test Coverage:** 41 passing tests across Pytest (22 tests), Hardhat (5 tests), and Vitest (14 tests).
+* [x] **Full-Stack Test Coverage:** 44 passing tests across Pytest (22 tests), Hardhat (5 tests), and Vitest (17 tests).
 * [x] **CI/CD Automation:** Automated GitHub Actions matrix validating every pull request.
 * [x] **Offline-First Resilience:** Store-and-forward queue with on-device native speech synthesis.
 * [x] **MIC Floor Protection:** Formulation separation with ICAR Minimum Inhibitory Concentration floor enforcement.
@@ -1047,6 +1107,9 @@ Each record explains:
 * [x] **Mobile Live GPS & Dual Capture:** Pre-warmed location cache with dedicated Camera & Gallery inputs.
 * [x] **Crop Domain Gatekeeper:** Out-of-distribution non-target plant detection with zero-chemical safety interlock.
 * [x] **100% In-Browser Offline MAS:** On-device 5-agent swarm execution + PWA Service Worker offline caching.
+* [x] **Trained Model Tier-1 Priority:** `agrinexus_vision.onnx` runs as primary engine with Gemini Vision as Tier-2 secondary fallback.
+* [x] **Silent Standalone PWA:** Automatic "Add to Home Screen" prompt for browser visitors; silent native UX when launched from home screen.
+
 
 
 

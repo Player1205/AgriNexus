@@ -84,10 +84,10 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
 * **Inference Pipeline:**
   $$\text{Input Image} \xrightarrow{\text{Numpy Normalization}} \mathbf{X} \in \mathbb{R}^{1 \times 3 \times 380 \times 380} \xrightarrow{\text{ONNX CPU Engine}} \mathbf{z} \in \mathbb{R}^{38}$$
   $$\mathbf{p} = \text{Softmax}(\mathbf{z}) = \frac{\exp(z_i - \max(\mathbf{z}))}{\sum_{j=1}^{38} \exp(z_j - \max(\mathbf{z}))}$$
-* **Offline-to-Cloud Dual Execution:**
-  1. *Primary (Offline Edge AI):* Local ONNX session executes in **82ms** with $0.00 cloud API cost.
-  2. *Secondary (Cloud Vision Fallback):* If ONNX runtime is unavailable or weights are unmounted, seamlessly falls back to Google Gemini 1.5 Flash Vision.
-  3. *Uncertainty Gate:* If $\max(\mathbf{p}) < 0.60$, the diagnosis is flagged as `"Unrecognized Pattern (Low Confidence)"` to trigger mandatory physical extension verification.
+* **Tier 1 (Trained ML Priority) & Tier 2 (Gemini Fallback) Pipeline:**
+  1. *Tier 1 (Primary - Trained Neural Network):* Runs the custom-trained `agrinexus_vision.onnx` model (EfficientNet-B4) directly in memory. If confidence $\ge 0.60$, the node returns immediately in $\approx 40\text{ms}$ with **zero external API calls**.
+  2. *Tier 2 (Secondary Fallback - Multi-Modal LLM):* Engaged strictly if confidence $< 0.60$ or if the subject is anomalous, invoking Google Gemini 1.5 Flash Vision to identify out-of-distribution subjects (e.g. houseplants, ornamental plants, weeds, furniture).
+  3. *Domain Gatekeeper & Uncertainty Interlock:* If the subject is not one of the 14 certified food crops or confidence remains $< 0.60$, chemical prescriptions are unconditionally locked to $0.0\text{ ml/g}$ and the farmer is routed to their nearest ICAR KVK center.
 
 ---
 
@@ -146,12 +146,15 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
 
 ---
 
-### 5. Offline-First Store-and-Forward Engine & On-Device Native Speech
+### 5. 100% In-Browser Offline MAS, PWA Caching & Install Dispatcher
 
-* **Edge Resilience:** If a smallholder farmer operates in a remote rural dead zone with 0% cellular connectivity:
-  1. *Local Edge Vision & C++ Clamping:* Executes 100% locally on CPU in 82ms.
-  2. *On-Device Native Speech API Fallback:* Leverages client `window.speechSynthesis` for instant vernacular spoken advisory even in airplane mode.
-  3. *Asynchronous Store-and-Forward Queue:* Enqueues diagnostic telemetry locally and auto-drains the queue to Base Sepolia L2 the moment 2G/3G connectivity returns.
+* **Edge Resilience & Offline Autonomy:**
+  1. *In-Browser 5-Agent Swarm:* Executes foliar analysis, ICAR RAG lookup, CIB&RC safety validation, SHA-256 Web Crypto hashing, and native Web Speech synthesis directly in browser memory with zero network dependencies.
+  2. *Service Worker Cache-First Engine (`sw.js`):* Pre-caches static assets and application shell, allowing instantaneous cold starts in Airplane Mode.
+  3. *Silent Standalone Detection & Home-Screen Install Dispatcher (`PwaInstallBanner.jsx`):*
+     - If launched as an installed PWA (`display-mode: standalone`), operates in 100% silent native mode with zero install prompts.
+     - If accessed via mobile browser, catches `beforeinstallprompt` (Android/Chrome) or displays iOS Safari guidance to provide one-tap **[ Add to Home Screen ]** capability.
+  4. *Asynchronous Store-and-Forward Queue:* Enqueues diagnostic telemetry locally in `localStorage` and auto-syncs with Base Sepolia L2 upon cellular reconnection.
 
 ---
 

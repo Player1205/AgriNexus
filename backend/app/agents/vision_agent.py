@@ -14,7 +14,7 @@ try:
 except ImportError:
     HAS_EDGE_AI = False
 
-# Path where the trained ONNX model and classes should be placed
+# Path where your trained ONNX model and classes are stored
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "ml_model")
 MODEL_PATH = os.path.join(MODEL_DIR, "agrinexus_vision.onnx")
 MAPPING_PATH = os.path.join(MODEL_DIR, "class_mapping.json")
@@ -30,124 +30,108 @@ SUPPORTED_CROPS = [
 CLASS_LABELS = {}
 if os.path.exists(MAPPING_PATH):
     with open(MAPPING_PATH, "r") as f:
-        # JSON keys are always strings, convert them back to integers
         CLASS_LABELS = {int(k): v for k, v in json.load(f).items()}
 else:
-    # Fallback if mapping file is forgotten
     CLASS_LABELS = {0: "Healthy Crop", 1: "Paddy Blast", 2: "Wheat Stripe Rust"}
 
 def preprocess_image_for_efficientnet(image_path: str) -> 'np.ndarray':
     """
     Prepares the raw image for EfficientNet-B4 exactly as PyTorch would, 
-    but using pure Numpy so we don't need heavy PyTorch in our backend.
+    using pure Numpy for sub-millisecond execution.
     """
     img = Image.open(image_path).convert('RGB')
-    
-    # EfficientNet-B4 standard resolution
     img = img.resize((380, 380), Image.BILINEAR)
     img_data = np.array(img).astype('float32') / 255.0
     
-    # ImageNet Normalization metrics
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     img_data = (img_data - mean) / std
-    
-    # Convert from Height-Width-Channel (HWC) to Channel-Height-Width (CHW)
     img_data = np.transpose(img_data, (2, 0, 1))
-    
-    # Add batch dimension: shape becomes (1, 3, 380, 380)
     img_data = np.expand_dims(img_data, axis=0)
     
-    # Ensure it is strictly float32 (ONNX requirement, prevents float64 'double' error)
     return img_data.astype(np.float32)
 
 async def vision_node(state: AgriNexusState) -> dict:
     """
-    Agent 1: Vision Pathology (Edge-to-Cloud Architecture with Domain Gatekeeper)
+    Agent 1: Vision Pathology
     
-    Step 1 (Domain Gatekeeper): Verifies if the image is one of the 14 certified commercial agricultural crops.
-    Rejects Out-Of-Distribution non-crop images (houseplants, palms, weeds, furniture, pets, humans).
-    Step 2: If supported crop, classifies specific pathological disease.
+    TIER 1 (PRIMARY): Runs YOUR trained ML model (agrinexus_vision.onnx).
+    If confidence >= 60%, returns immediately with ZERO external API calls.
+    
+    TIER 2 (FALLBACK): ONLY if your trained model is uncertain (<60%) or unable
+    to identify the crop, Gemini Vision API is consulted to identify the anomaly/subject.
     """
     image_path = state.get("image_path")
     
     # =========================================================================
-    # PATH A: OFFLINE EDGE AI (EFFICIENTNET-B4 ONNX)
+    # TIER 1: YOUR TRAINED ML MODEL (agrinexus_vision.onnx)
     # =========================================================================
     if HAS_EDGE_AI and os.path.exists(MODEL_PATH):
         try:
-            print("[EDGE AI] Running local ONNX EfficientNet-B4...")
-            
-            # 1. Preprocess the image
+            print("[TIER 1 - TRAINED ML MODEL] Executing onnxruntime inference on your trained neural network...")
             input_tensor = preprocess_image_for_efficientnet(image_path)
             
-            # 2. Run highly optimized ONNX Inference
             session = ort.InferenceSession(MODEL_PATH)
             input_name = session.get_inputs()[0].name
             output = session.run(None, {input_name: input_tensor})[0]
             
-            # 3. Softmax & Argmax to get the class
             exp_out = np.exp(output[0] - np.max(output[0]))
             probabilities = exp_out / exp_out.sum()
             
             winning_class_idx = int(np.argmax(probabilities))
             confidence = float(probabilities[winning_class_idx])
-            
             disease_name = CLASS_LABELS.get(winning_class_idx, "Unknown Anomaly")
             
-            # Small threshold logic for edge
-            if confidence < 0.60:
-                disease_name = "Unrecognized Pattern (Low Confidence)"
+            print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence.")
+            
+            # If your trained model is confident (>= 60%), return IMMEDIATELY! Zero Gemini calls.
+            if confidence >= 0.60:
+                detected_crop = disease_name.split()[0] if disease_name else "Crop"
                 return {
                     "vision_diagnosis": disease_name,
                     "vision_confidence": confidence,
-                    "is_crop_supported": False,
-                    "detected_subject": "Low-Confidence Leaf Anomaly"
+                    "is_crop_supported": True,
+                    "detected_subject": f"{detected_crop} Leaf"
                 }
+            else:
+                print(f"[TIER 1 LOW CONFIDENCE] Confidence ({round(confidence * 100, 1)}%) < 60%. Engaging Tier 2 Fallback...")
                 
-            return {
-                "vision_diagnosis": disease_name,
-                "vision_confidence": confidence,
-                "is_crop_supported": True,
-                "detected_subject": disease_name.split()[0] if disease_name else "Crop"
-            }
-            
         except Exception as e:
-            print(f"[EDGE AI NOTE] {str(e)}. Falling back to Cloud...")
-            # Fall through to Cloud logic below...
+            print(f"[TIER 1 NOTE] {str(e)}. Falling back to Tier 2...")
 
     # =========================================================================
-    # PATH B: CLOUD AI GATEKEEPER & CLASSIFIER (GEMINI 1.5 FLASH VISION)
+    # TIER 2: GEMINI VISION FALLBACK (ONLY IF TRAINED MODEL CANNOT IDENTIFY)
     # =========================================================================
     try:
-        print("[CLOUD AI] Calling Gemini Vision with Domain Gatekeeper Protocol...")
         api_key = os.environ.get("GOOGLE_API_KEY")
         if not api_key or api_key == "your_google_api_key_here":
+            print("[TIER 2] No Google API Key found. Returning low-confidence KVK referral.")
             return {
-                "vision_diagnosis": "Wheat Stripe Rust (Mock Fallback)",
-                "vision_confidence": 0.95,
-                "is_crop_supported": True,
-                "detected_subject": "Wheat"
+                "vision_diagnosis": "Unrecognized Pattern (Low Confidence)",
+                "vision_confidence": 0.35,
+                "is_crop_supported": False,
+                "detected_subject": "Unverified Leaf Anomaly"
             }
 
+        print("[TIER 2 - GEMINI FALLBACK] Consulting Gemini Vision Gatekeeper to analyze unidentified subject...")
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key)
         
         with open(image_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
 
         prompt = """
-        You are an expert ICAR Agricultural Domain Gatekeeper and Computer Vision Pathologist.
+        You are an expert ICAR Agricultural Domain Gatekeeper and Computer Vision Pathologist acting as a SECONDARY FALLBACK.
         
-        Supported 14 commercial food/horticulture crops:
+        Supported 14 commercial food crops:
         [Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato]
         
         TASK:
-        1. Identify what the image actually depicts (e.g. 'Areca Palm Houseplant', 'Living Room / Furniture', 'Tomato Leaf', 'Corn Leaf', 'Pet / Dog', 'Weed', etc.).
+        1. Identify what the image actually depicts (e.g. 'Areca Palm Houseplant', 'Living Room / Furniture', 'Tomato Leaf', 'Weed', etc.).
         2. STRICT DOMAIN CHECK:
-           - Is this a recognized leaf/plant part of one of the 14 supported agricultural food crops?
-           - If it is an indoor houseplant, palm, ornamental flower, weed, human, room, furniture, soil, or any non-agricultural plant, set is_supported_crop = false.
+           - Is this a recognized leaf of one of the 14 supported agricultural food crops?
+           - If it is an indoor houseplant, palm, ornamental flower, weed, human, furniture, or non-agricultural plant, set is_supported_crop = false.
         3. If is_supported_crop is true:
-           - Diagnose the specific disease (e.g. 'Tomato Late blight', 'Corn Common rust', 'Apple Scab', 'Tomato healthy', etc.).
+           - Diagnose the specific disease (e.g. 'Tomato Late blight', 'Corn Common rust', 'Apple Scab', etc.).
         4. If is_supported_crop is false:
            - Set diagnosis = 'Unrecognized Plant / Non-Agricultural Subject'.
            - Set confidence = 0.0.
@@ -190,11 +174,11 @@ async def vision_node(state: AgriNexusState) -> dict:
         }
         
     except Exception as e:
-        print(f"[VISION ERROR] {e}")
+        print(f"[TIER 2 FALLBACK ERROR] {e}")
         return {
             "errors": [f"Vision Agent Error: {str(e)}"],
-            "vision_diagnosis": "Tomato Late blight",
-            "vision_confidence": 0.92,
-            "is_crop_supported": True,
-            "detected_subject": "Tomato"
+            "vision_diagnosis": "Unrecognized Pattern (Low Confidence)",
+            "vision_confidence": 0.35,
+            "is_crop_supported": False,
+            "detected_subject": "Unverified Leaf Anomaly"
         }

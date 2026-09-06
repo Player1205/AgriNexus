@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import FarmerView from './components/FarmerView';
 import TelemetryView from './components/TelemetryView';
+import PwaInstallBanner from './components/PwaInstallBanner';
 import { Sprout, Cpu, ShieldCheck } from 'lucide-react';
 
 export default function App() {
@@ -50,6 +51,9 @@ export default function App() {
             } lg:flex w-full lg:w-1/2 h-full min-h-0 overflow-y-auto overflow-x-hidden bg-[#020612]`}>
                 <TelemetryView />
             </div>
+
+            {/* PWA 100% Offline Add to Home Screen Banner (Silent when already installed) */}
+            <PwaInstallBanner />
         </div>
     );
 }
