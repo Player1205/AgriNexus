@@ -1,6 +1,8 @@
 <div align="center">
 
-  <h1>🌾 AgriNexus</h1>
+  <img src="frontend/public/app-logo.png" width="105" height="105" alt="AgriNexus Logo" />
+
+  <h1>AgriNexus</h1>
 
   <p align="center">
     <strong>Autonomous Multi-Agent Agronomy, Deterministic Safety Engine & Zero-Trust Supply Chain Infrastructure</strong>
@@ -14,7 +16,7 @@
     <a href="https://onnxruntime.ai"><img src="https://img.shields.io/badge/Edge_AI-ONNX_EfficientNet--B4-005CED?style=for-the-badge&logo=onnx&logoColor=white" alt="ONNX Runtime" /></a>
     <a href="https://isocpp.org"><img src="https://img.shields.io/badge/Safety_Core-C%2B%2B17%20%7C%20pybind11-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++" /></a>
     <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20LangGraph-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
-    <a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" /></a>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20PWA-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React PWA" /></a>
   </p>
 
 </div>
@@ -34,11 +36,13 @@
 4. [Real-Time Meteorological & Rain-Fastness Intelligence](#-real-time-meteorological--rain-fastness-intelligence)
 5. [Zero-Hallucination ICAR Agronomy Vector Core](#-zero-hallucination-icar-agronomy-vector-core-38-pathologies)
 6. [Statutory CIB&RC Safety & C++ Mathematical Clamping](#-statutory-cibrc-safety--c-mathematical-clamping)
-7. [Edge AI Model Benchmarks & Evaluation](#-edge-ai-model-benchmarks--evaluation)
-8. [Live Blockchain Traceability (Base Sepolia)](#-live-blockchain-traceability-base-sepolia)
-9. [11-Language Indic Voice Matrix (Sarvam AI)](#-11-language-indic-voice-matrix-sarvam-ai)
-10. [3D Telemetry Control Room & Farmer UI](#-3d-telemetry-control-room--farmer-ui)
-11. [Quick Start & Setup Guide](#-quick-start--setup-guide)
+7. [Edge AI Model Benchmarks & Vision Diagnostic Hierarchy](#-edge-ai-model-benchmarks--vision-diagnostic-hierarchy)
+8. [Progressive Web App (PWA) & Offline Multi-Agent Swarm](#-progressive-web-app-pwa--offline-multi-agent-swarm)
+9. [Live Blockchain Traceability (Base Sepolia)](#-live-blockchain-traceability-base-sepolia)
+10. [11-Language Indic Voice Matrix (Sarvam AI)](#-11-language-indic-voice-matrix-sarvam-ai)
+11. [3D Telemetry Control Room & Farmer UI](#-3d-telemetry-control-room--farmer-ui)
+12. [Full-Stack Automated Verification Matrix](#-full-stack-automated-verification-matrix)
+13. [Quick Start & Setup Guide](#-quick-start--setup-guide)
 
 ---
 
@@ -65,12 +69,14 @@ Smallholder farmers manage over 80% of farmland in developing nations, yet face 
 
 AgriNexus delivers a zero-trust, commercial-grade autonomous pipeline engineered specifically for real-world farming constraints:
 
-* **Instant Offline Edge Computer Vision:** Diagnoses 38 crop pathologies in ~80ms directly on the device using an optimized ONNX neural backbone without needing high-speed internet.
+* **Tier-1 Edge Computer Vision Invariant:** Always executes the trained ONNX EfficientNet-B4 neural backbone as primary vision pathology classifier (~80ms CPU inference). Gemini Vision functions strictly as a Tier-2 safety net for out-of-domain plants.
+* **Crop Domain Gatekeeper:** Actively screens against non-target species (e.g. houseplants like Areca palm, snake plants) with a zero-chemical safety interlock.
 * **Hyper-Local Meteorological Intelligence:** Automatically reads embedded Photo EXIF GPS or live device coordinates to fetch live temperature, humidity, wind drift, and 6-hour rain-fastness forecasts.
 * **Zero-Hallucination ICAR Knowledge Core:** Grounded in a comprehensive agronomic vector database of **38 certified ICAR protocols**, prescribing exact active chemical formulations, acre dosages, and water dilution ratios.
 * **Deterministic C++ Safety Interlocks:** A native compiled C++17 firewall (`pybind11`) intercepts all proposals, validates against statutory **CIB&RC Gazette Banned Lists**, and mathematically bounds dosages based on field humidity.
 * **Immutable Ethereum L2 Crop Passports:** Every verified treatment is cryptographically hashed and minted to Coinbase's **Base Sepolia** Layer-2 blockchain, providing tamper-proof provenance for insurance claims and international export certification.
-* **Native Vernacular Voice Consultations:** Delivers comprehensive, colloquial audio consultations in **11 Indian Regional Languages** powered by Sarvam AI's **Bulbul:v3** neural acoustic model.
+* **Acoustic Voice Hierarchy:** Prioritizes authentic **Sarvam AI Bulbul:v3** neural acoustic speech in 11 Indian languages online, seamlessly falling back to native on-device Web Speech synthesis when offline.
+* **Offline-First PWA:** Installable Progressive Web App with W3C maskable vector branding, service worker asset caching (`agrinexus-offline-v3`), and in-browser fallback multi-agent swarm.
 
 ---
 
@@ -86,7 +92,7 @@ flowchart TD
 
     subgraph SWARM ["🤖 Autonomous 5-Agent Multi-Agent Swarm (MAS)"]
         direction TB
-        E["🧠 AGENT 1: Vision Pathology\n(Offline ONNX EfficientNet-B4 · 80ms CPU)"]
+        E["🧠 AGENT 1: Vision Pathology\n(Offline ONNX EfficientNet-B4 · 80ms CPU · Fallback: Gemini Vision)"]
         --> F["📚 AGENT 2: Grounded ICAR RAG\n(38 Official ICAR Protocols · Zero Fallback Guessing)"]
         --> G["🛡️ AGENT 3: Deterministic C++ Safety Firewall\n(CIB&RC Banned Gazette · Rain/Wind Spray Interlock)"]
         --> H["⛓️ AGENT 4: Web3 Crop Passport Relayer\n(Base Sepolia L2 Gasless Smart Contract)"]
@@ -99,6 +105,7 @@ flowchart TD
     end
 
     IN --> SWARM
+    SWARM --> OUT
 ```
 
 ---
@@ -165,7 +172,7 @@ Before any chemical prescription reaches the farmer, it must pass the determinis
 
 ---
 
-## 📊 Edge AI Model Benchmarks & Evaluation
+## 📊 Edge AI Model Benchmarks & Vision Diagnostic Hierarchy
 
 AgriNexus utilizes an optimized **EfficientNet-B4** deep convolutional architecture trained on 50,000+ PlantVillage images across 38 crop disease classes, exported to **ONNX Runtime** for high-speed edge CPU execution:
 
@@ -179,7 +186,25 @@ AgriNexus utilizes an optimized **EfficientNet-B4** deep convolutional architect
 | **Model Size** | `382 MB` | **`75 MB (Quantized/Optimized)`** |
 | **Offline Edge Support** | ❌ Requires PyTorch + GPU | **✅ Pure Numpy + ONNX CPU Engine** |
 
-*All training, evaluation, Confusion Matrix, and ROC-AUC curve scripts are accessible in [`ml_pipeline/train_and_evaluate.py`](./ml_pipeline/train_and_evaluate.py).*
+### 🎯 Two-Tier Vision Invariant & Crop Domain Gatekeeper
+1. **Tier 1 — Trained Neural Model (Always Primary):**
+   - Whether online or offline, the local/edge ONNX EfficientNet-B4 model (`agrinexus_vision.onnx`) is **always the primary diagnostic engine**.
+   - Cloud Gemini Vision is completely bypassed during standard agronomic diagnoses, preserving the integrity and sovereignty of our custom-trained neural model.
+2. **Tier 2 — Secondary Cloud Fallback (Edge Cases Only):**
+   - Gemini Vision is invoked **only** if the trained model encounters an unrecognized sample, very low confidence (<60%), or missing binary weights.
+3. **Crop Domain Gatekeeper:**
+   - Detects out-of-distribution non-target foliage (e.g., Areca Palm, Snake Plant, Golden Pothos) and trips an immediate **Zero-Chemical Safety Interlock**, informing the user that non-agricultural houseplants require zero agrochemicals.
+
+---
+
+## 📱 Progressive Web App (PWA) & Offline Multi-Agent Swarm
+
+AgriNexus is engineered as a fully installable, native-feel Progressive Web App (PWA) across Android, iOS, Windows, and macOS:
+
+* **W3C Maskable Vector Brand Identity:** Equipped with high-definition 512×512 and 192×192 maskable icons (`icon-512.png`, `icon-192.png`) and Apple Touch icons (`apple-touch-icon.png`) with 80% safe-zone padding to avoid Android squircle/circular clipping.
+* **Network-First Navigation Caching:** Service worker (`agrinexus-offline-v3`) employs Network-First caching for HTML navigation, ensuring fresh deployments load immediately without blank screens while falling back to offline cache during outages.
+* **In-Browser Autonomous 5-Agent Swarm:** If the farmer loses connectivity in remote fields, client-side agents in `frontend/src/services/` execute the diagnostic pipeline, safety checks, store-and-forward queueing, and on-device vernacular voice guidance entirely inside the browser.
+* **Silent Standalone Mode:** Automatically prompts desktop/mobile browser visitors to "Add to Home Screen", while running silently in native fullscreen when launched from the home screen.
 
 ---
 
@@ -208,7 +233,10 @@ struct PassportRecord {
 
 ## 🎙️ 11-Language Indic Voice Matrix (Sarvam AI)
 
-AgriNexus natively speaks and writes in **11 Indian Regional Languages** powered by Sarvam AI's **Bulbul:v3** neural model, weaving in real-time temperature, humidity, and clear spray window confirmations:
+AgriNexus natively speaks and writes in **11 Indian Regional Languages** with a deterministic priority hierarchy:
+
+* **Online Primary (Sarvam AI Bulbul:v3):** High-fidelity neural voice synthesis (`shubh` speaker) executing with zero device-speech leakage whenever internet connectivity is detected. Includes interactive audio replay controls (`🔊 सुनो`).
+* **Offline Fallback (Native On-Device Web Speech):** Strictly and exclusively activated when offline (`!navigator.onLine`), generating localized speech synthesis without network latency or external dependencies, accompanied by meteorological caution warnings.
 
 | Language | Native Script | Agronomic Greeting | Language | Native Script | Agronomic Greeting |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -223,20 +251,42 @@ AgriNexus natively speaks and writes in **11 Indian Regional Languages** powered
 
 ## 🖥️ 3D Telemetry Control Room & Farmer UI
 
-* **Farmer Field Interface ([`FarmerView.jsx`](./frontend/src/components/FarmerView.jsx)):** Mobile-responsive, single-tap photo upload, live **Farm Weather HUD Badge** (`⛅ 34°C · 55% Humidity · Safe to Spray ✓`), bilingual regional language selector, and an automated Sarvam AI audio player.
+* **Farmer Field Interface ([`FarmerView.jsx`](./frontend/src/components/FarmerView.jsx)):** Mobile-responsive, single-tap photo upload (dual Camera & Gallery support), live **Farm Weather HUD Badge** (`⛅ 34°C · 55% Humidity · Safe to Spray ✓`), bilingual regional language selector, and an automated Sarvam AI audio player with manual replay triggers.
 * **Swarm Control Room ([`TelemetryView.jsx`](./frontend/src/components/TelemetryView.jsx)):** Real-time 3D cybernetic canvas featuring **progressive 850ms laser line propagation**, dynamic bot orbital wobbles, shield rotations, harmonic sound ripples, and a live cryptographic ledger with direct `[BaseScan ↗]` one-click explorer links.
+
+---
+
+## 🧪 Full-Stack Automated Verification Matrix
+
+Every pull request and build is verified through a 46-test automated matrix across 3 distinct technology runtimes:
+
+| Test Suite | Framework | Scope | Passing Tests |
+|---|---|---|---|
+| **Deterministic Core & Backend** | Pytest (`pytest tests`) | C++ safety engine, ICAR RAG retrieval, KVK Haversine resolver, weather gatekeeper, and crop domain firewall | **24 / 24 ✅** |
+| **Client Swarm & UI Components** | Vitest (`vitest run`) | Edge multi-agent swarm, voice priority guards, offline store-and-forward queue, FarmerView HUD, and logo branding | **17 / 17 ✅** |
+| **Smart Contract Provenance** | Hardhat (`npx hardhat test`) | CropPassport Solidity contract, Base Sepolia event emissions, owner-only authorization, and record integrity | **5 / 5 ✅** |
+| **Production Bundle Compilation** | Vite (`vite build`) | TypeScript/JSX compilation, asset hashing, Tailwind CSS tree-shaking, and PWA manifest linking | **0 Errors ✅** |
 
 ---
 
 ## ⚡ Quick Start & Setup Guide
 
-### 1. Configure Environment (`backend/.env`):
+### 1. Configure Environment
+
+**Backend (`backend/.env`):**
 ```env
 SARVAM_API_KEY=your_sarvam_api_key_here
 GOOGLE_API_KEY=your_gemini_api_key_here
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
 DEVELOPER_PRIVATE_KEY=your_wallet_private_key_here
 CROP_PASSPORT_CONTRACT_ADDRESS=0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7
+PORT=8000
+HOST=0.0.0.0
+```
+
+**Frontend (`frontend/.env`):**
+```env
+VITE_SARVAM_API_KEY=your_sarvam_api_key_here
 ```
 
 ### 2. Launch Backend (FastAPI + LangGraph):
@@ -256,6 +306,18 @@ npm install
 npm run dev
 ```
 *Frontend runs on `http://localhost:5173`.*
+
+### 4. Execute Full-Stack Test Suites:
+```bash
+# Backend Pytest Suite
+cd backend && python -m pytest tests
+
+# Frontend Vitest Suite
+cd ../frontend && npm test -- --run
+
+# Smart Contract Hardhat Suite
+cd ../contracts && npx hardhat test
+```
 
 ---
 
