@@ -274,8 +274,8 @@ export default function FarmerView({ onAnalysisComplete }) {
 
                 {/* 1. Header */}
                 <div className="text-center space-y-1 w-full">
-                    <div className="flex items-center justify-center gap-2">
-                        <span className="text-2xl sm:text-3xl">🌾</span>
+                    <div className="flex items-center justify-center gap-2.5">
+                        <img src="/app-logo.png" alt="AgriNexus Logo" className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-sm" />
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900 tracking-tight">AgriNexus</h1>
                     </div>
                     <p className="text-gray-500 text-xs sm:text-sm font-medium">फसल सुरक्षा एवं प्रामाणिक सलाह • Autonomous Agricultural Swarm</p>

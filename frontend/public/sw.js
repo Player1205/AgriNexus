@@ -1,10 +1,12 @@
-const CACHE_NAME = 'agrinexus-offline-v2';
+const CACHE_NAME = 'agrinexus-offline-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/app-logo.png',
   '/icon-192.png',
   '/icon-512.png',
+  '/apple-touch-icon.png',
   '/favicon.ico'
 ];
 

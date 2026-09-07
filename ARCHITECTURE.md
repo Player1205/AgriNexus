@@ -216,12 +216,17 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
 
 ---
 
-### 7. Frontend Telemetry & Cybernetic Canvas
+### 7. Frontend Telemetry, Progressive Web App & Cybernetic Canvas
 
 * **Farmer View ([`FarmerView.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/components/FarmerView.jsx)):**
-  * Zero-clutter mobile interface with single-tap capture.
+  * Zero-clutter mobile interface with single-tap dual-source capture (Camera / Gallery).
+  * High-fidelity brand identity with transparent vector emblem header branding.
   * Live **Farm Weather HUD Badge** (`⛅ 28.4°C · 76% Humidity · Safe to Spray ✓`).
-  * Auto-playing Sarvam AI audio player.
+  * Auto-playing Sarvam AI audio player with Indic dialect replay controls.
+* **Progressive Web App (PWA) & Offline Shell:**
+  * W3C-compliant Maskable Icons (`icon-512.png`, `icon-192.png`, `apple-touch-icon.png`) with 80% inner safe-zone preservation for dynamic OS adaptive icon clipping.
+  * Multi-tiered Service Worker (`agrinexus-offline-v3`) with Network-First navigation caching to prevent stale bundle 404s and offline asset fallback.
+  * Standalone display mode with automated install trigger for browser visitors and quiet ambient execution for home-screen launches.
 * **Swarm Control Room ([`TelemetryView.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/components/TelemetryView.jsx)):**
   * Cybernetic 3D SVG canvas running on a real-time WebSocket event bus (`/ws/telemetry`).
   * **Progressive 850ms laser line propagation** linking active nodes sequentially (`Vision` $\rightarrow$ `RAG` $\rightarrow$ `Safety` $\rightarrow$ `Web3` $\rightarrow$ `Voice`).

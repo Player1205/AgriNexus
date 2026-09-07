@@ -18,6 +18,7 @@ describe('FarmerView UI Component Suite', () => {
         render(<FarmerView />);
         
         expect(screen.getByText('AgriNexus')).toBeInTheDocument();
+        expect(screen.getByAltText('AgriNexus Logo')).toBeInTheDocument();
         expect(screen.getByText(/Autonomous Agricultural Swarm/i)).toBeInTheDocument();
         expect(screen.getByText('फोटो खींचें')).toBeInTheDocument();
         expect(screen.getByText('गैलरी से चुनें')).toBeInTheDocument();

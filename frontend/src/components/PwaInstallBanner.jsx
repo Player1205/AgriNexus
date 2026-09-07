@@ -107,9 +107,11 @@ export default function PwaInstallBanner() {
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/50">
-                        <Sparkles className="w-6 h-6 text-white animate-pulse" />
-                    </div>
+                    <img 
+                        src="/icon-192.png" 
+                        alt="AgriNexus Logo" 
+                        className="w-11 h-11 rounded-xl shadow-lg object-cover border border-emerald-400/40 shrink-0 bg-white" 
+                    />
                     <div>
                         <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-1.5">
                             Install AgriNexus App

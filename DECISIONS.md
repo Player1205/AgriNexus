@@ -1189,6 +1189,43 @@ Each record explains:
 
 ---
 
+### ADR-065: High-Fidelity PWA Brand Identity & Maskable Vector Icon Integration
+
+* **Context & Problem:** The user requested an official custom brand logo for the PWA app icon matching an uploaded emblem featuring twin golden wheat stalks rising from dual emerald stems with curved leaves. Previously, the PWA used generic placeholder assets and an emoji (`🌾`) in the FarmerView header. The reference thumbnail uploaded by the user was low-resolution (65x62 px); naive interpolation or scaling would produce blurry, pixelated artifacts unsuited for commercial deployment. Furthermore, Android Progressive Web App standards mandate that launcher icons comply with the W3C Maskable Icon specification with an 80% inner safe-zone to prevent the emblem from being clipped by circular, squircle, or rounded-corner OS icon masks.
+* **What Was Changed & How:**
+  1. *High-Resolution Vector Asset Generation:* Generated a crisp, high-definition 1024x1024 master emblem matching the exact design geometry: twin segmented golden wheat stalks flanked by curved emerald green foliage.
+  2. *Multi-Resolution Maskable Icon Suite (`frontend/public/`):* Programmatically synthesized all required production icons via Pillow:
+     * `icon-512.png`: 512x512 with safe-zone compliance (70.3% emblem height within the central 80% safe circle) and `any maskable` purpose.
+     * `icon-192.png`: 192x192 maskable icon for home screen launcher grids and install banners.
+     * `apple-touch-icon.png`: 180x180 high-contrast icon for iOS Safari home screen bookmarks.
+     * `favicon.ico`: Multi-resolution binary icon containing 16x16, 32x32, 48x48, and 64x64 mipmaps for browser tabs.
+     * `app-logo.png`: 512x512 transparent background PNG for in-app headers and navigation branding.
+  3. *Manifest & HTML Standardization (`frontend/public/manifest.json`, `frontend/index.html`):* Registered `apple-touch-icon.png` in HTML headers and declared all icon resolutions in the web app manifest with `purpose: "any maskable"`.
+  4. *Service Worker Offline Cache (`frontend/public/sw.js`):* Bumped cache version to `agrinexus-offline-v3` and added `/app-logo.png` and `/apple-touch-icon.png` to `STATIC_ASSETS`, guaranteeing 100% offline icon availability without network requests.
+  5. *UI Brand Integration (`frontend/src/components/FarmerView.jsx`, `frontend/src/components/PwaInstallBanner.jsx`):* Replaced the text emoji in the navigation header with `<img src="/app-logo.png" alt="AgriNexus Logo" className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-sm" />` and updated the PWA install modal to display the high-definition brand logo.
+  6. *Automated Test Verification (`frontend/src/test/FarmerView.test.jsx`):* Updated test assertions to verify `alt="AgriNexus Logo"` rendering.
+* **Architectural Rationale:** Ensures professional commercial-grade brand identity, zero image distortion on any device screen density (retina / 4K / mobile OLED), full compliance with Android/iOS PWA installation criteria, and instant offline cache persistence.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-065</strong></summary>
+
+> **Question:** Why does the W3C Maskable Icon specification require PWA icons to maintain their core emblem inside the central 80% circle ("safe zone")?
+>
+> 1. Because images outside 80% will cause HTTP 404 errors in the service worker.
+> 2. Because Android and various mobile OS launchers apply dynamic shapes (circles, squircles, teardrops) to app icons, clipping away outer edges; centering within 80% guarantees the logo is never cropped.
+> 3. Because browsers only load icons smaller than 100 kilobytes.
+> 4. Because iOS Safari requires square corners and will reject icons without safe zones.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* The W3C Maskable Icon specification accommodates Android launcher icon masks (Adaptive Icons). Launchers can mask the icon into circles, rounded squares, or squircles. The outer 10% on all sides is discarded by the mask, so important artwork must reside entirely within the central 80% circle ("safe zone").
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
@@ -1209,6 +1246,8 @@ Each record explains:
 * [x] **Live Meteorological State Invariance:** Zero false offline voice warnings when mobile device is connected to the internet.
 * [x] **PWA Installability & Network-First Invariance:** W3C 192/512px icon compliance and network-first navigation cache preventing deployment black screens.
 * [x] **Sarvam AI Bulbul:v3 Online Voice Priority:** Authentic Indic voice synthesis prioritized online with offline-only on-device Web Speech fallback.
+* [x] **High-Fidelity PWA Brand Identity:** Custom maskable vector icons and transparent brand emblem across PWA manifests and UI.
+
 
 
 
