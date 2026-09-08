@@ -1268,6 +1268,45 @@ Each record explains:
 
 ---
 
+### ADR-067: Desktop PWA Shortcut & Multi-Resolution Windows Icon Synchronization
+
+* **Context & Problem:** While the mobile PWA on mobile devices rendered the custom golden wheat emblem with emerald green foliage, the Windows laptop desktop shortcut (`AgriNexus - Autonomous Agricultural Swarm.lnk`) continued displaying the obsolete dark green square with light green diamond.
+  - *Chromium Desktop App Architecture:* When Google Chrome or Microsoft Edge installs a Progressive Web App on Windows, Chromium generates a static Windows Icon file (`.ico`) in `%LOCALAPPDATA%\Google\Chrome\User Data\Default\Web Applications\_crx_<app_id>\`, writes an MD5 verification file (`.ico.md5`), and generates `.lnk` shortcuts on the Desktop and Start Menu referencing this `.ico` file.
+  - *Windows Icon Cache Persistence:* Windows Explorer caches icon bitmaps in `IconCache.db`. When PWA manifest assets were updated on the server, Windows did not automatically regenerate existing desktop `.lnk` icons.
+  - *Manifest Purpose Ambiguity:* The PWA `manifest.json` combined `"purpose": "any maskable"` in single entries. Under the Chromium Desktop PWA specification, desktop browsers require explicit `"purpose": "any"` declarations to avoid applying circular/squircle maskable padding to desktop icons.
+* **What Was Changed & How:**
+  1. *W3C Manifest Icon Purpose Decoupling (`frontend/public/manifest.json`):*
+     Decoupled icon definitions into separate entries for `"purpose": "any"` (desktop full-bleed display) and `"purpose": "maskable"` (mobile safe-zone compliance) for both 192x192 and 512x512 resolutions.
+  2. *Multi-Resolution Windows ICO Core (`frontend/public/favicon.ico`):*
+     Engineered a 7-frame multi-resolution ICO file containing 16x16, 24x24, 32x32, 48x48, 64x64, 128x128, and 256x256 pixel frames generated with smooth antialiased squircle corner clipping (radius = 20% of width) and high-quality Lanczos downsampling.
+  3. *Index HTML Explicit Head Links (`frontend/index.html`):*
+     Added explicit `<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">` and `<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">` to guarantee high-resolution icon discovery across desktop browser tabs.
+  4. *Service Worker Cache Bump (`frontend/public/sw.js`):*
+     Bumped cache version to `agrinexus-offline-v4` to purge stale cached icons across all client browsers and offline workers.
+  5. *Local Windows Chrome Web App & Shell Cache Invalidation:*
+     Directly updated `Web Applications\_crx_dllangnamakjpmnokfmhpnlmcombdioh\AgriNexus - Autonomous Agricultural Swarm.ico` with the new 7-frame golden wheat icon, recalculated the MD5 digest in `.ico.md5`, touched the desktop and start menu `.lnk` shortcuts, and invoked the Win32 API `SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSH, 0, 0)` to immediately flush Windows Explorer's icon cache without requiring an OS restart.
+* **Architectural Rationale:** Cross-platform brand consistency is vital for user trust. Decoupling `any` and `maskable` icon purposes ensures that desktop shortcuts receive sharp, native-proportioned emblems while mobile launchers receive adaptive, safe-zone protected icons.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-067</strong></summary>
+
+> **Question:** In the W3C Web App Manifest specification, why is it considered best practice to declare separate manifest entries for `"purpose": "any"` and `"purpose": "maskable"` rather than a single combined `"purpose": "any maskable"`?
+>
+> 1. Because combined purpose declarations trigger a fatal JavaScript syntax error in Vite.
+> 2. Because desktop operating systems (Windows, macOS) prefer full-bleed icons without safe-zone inset padding for taskbars and desktop shortcuts, whereas mobile operating systems (Android) apply dynamic adaptive masks that crop the outer 20%; separating them allows browsers to serve the optimal icon variant to each platform.
+> 3. Because Chromium only allows 192px icons to be maskable and 512px icons to be any.
+> 4. Because service workers cannot cache images with multiple purpose properties.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* If an icon is marked only as maskable (or combined), desktop platforms that do not use adaptive masking might render the icon with unnecessary inner padding (since the artwork is shrunk into the 80% safe zone). Providing separate entries with dedicated purposes allows desktop operating systems to display full-bleed `"any"` icons while mobile platforms use `"maskable"` icons.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
@@ -1290,6 +1329,7 @@ Each record explains:
 * [x] **Sarvam AI Bulbul:v3 Online Voice Priority:** Authentic Indic voice synthesis prioritized online with offline-only on-device Web Speech fallback.
 * [x] **High-Fidelity PWA Brand Identity:** Custom maskable vector icons and transparent brand emblem across PWA manifests and UI.
 * [x] **Fact-Grounded Meteorological Voice Interlocks:** Active rain delay, wind drift, and extreme heat safety gates voiced across 11 Indic languages and client UI.
+* [x] **Desktop PWA & Windows Icon Cache Synchronization:** Multi-resolution 7-frame ICO and decoupled any/maskable manifest compliance across desktop shortcuts.
 
 
 
