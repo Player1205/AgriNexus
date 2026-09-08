@@ -1284,8 +1284,8 @@ Each record explains:
   4. *Service Worker Cache Bump (`frontend/public/sw.js`):*
      Bumped cache version to `agrinexus-offline-v4` to purge stale cached icons across all client browsers and offline workers.
   5. *Local Windows Chrome Web App & Shell Cache Invalidation:*
-     Directly updated `Web Applications\_crx_dllangnamakjpmnokfmhpnlmcombdioh\AgriNexus - Autonomous Agricultural Swarm.ico` with the new 7-frame golden wheat icon, recalculated the MD5 digest in `.ico.md5`, touched the desktop and start menu `.lnk` shortcuts, and invoked the Win32 API `SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSH, 0, 0)` to immediately flush Windows Explorer's icon cache without requiring an OS restart.
-* **Architectural Rationale:** Cross-platform brand consistency is vital for user trust. Decoupling `any` and `maskable` icon purposes ensures that desktop shortcuts receive sharp, native-proportioned emblems while mobile launchers receive adaptive, safe-zone protected icons.
+     Directly updated `Web Applications\_crx_dllangnamakjpmnokfmhpnlmcombdioh\AgriNexus - Autonomous Agricultural Swarm.ico` with the new 7-frame golden wheat icon, recalculated the MD5 digest in `.ico.md5`, created a dedicated cache-breaking file `agrinexus_app_logo.ico` in the Chrome Web Applications folder, re-pointed the desktop and start menu `.lnk` shortcuts to `agrinexus_app_logo.ico,0` via `win32com`, invoked Win32 `SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSH, 0, 0)`, and restarted Windows Explorer (`explorer.exe`) to bypass persistent `iconcache_*.db` thumb caches.
+* **Architectural Rationale:** Cross-platform brand consistency is vital for user trust. Decoupling `any` and `maskable` icon purposes ensures that desktop shortcuts receive sharp, native-proportioned emblems while mobile launchers receive adaptive, safe-zone protected icons. Bypassing Windows Explorer's persistent icon cache with a unique file target guarantees instantaneous visual refresh without requiring an operating system restart.
 
 <details>
 <summary>🧠 <strong>Knowledge-Check Quiz: ADR-067</strong></summary>
