@@ -46,6 +46,8 @@ export default function FarmerView({ onAnalysisComplete }) {
     const [isMicProtected, setIsMicProtected] = useState(false);
     const [isCropSupported, setIsCropSupported] = useState(true);
     const [detectedSubject, setDetectedSubject] = useState('');
+    const [isSpraySafe, setIsSpraySafe] = useState(true);
+    const [weatherWarnings, setWeatherWarnings] = useState([]);
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [offlineSyncCount, setOfflineSyncCount] = useState(0);
 
@@ -152,6 +154,8 @@ export default function FarmerView({ onAnalysisComplete }) {
         setWeather(null);
         setNearestKvk(null);
         setIsMicProtected(false);
+        setIsSpraySafe(true);
+        setWeatherWarnings([]);
         setActiveNode(null);
 
         try {
@@ -214,6 +218,15 @@ export default function FarmerView({ onAnalysisComplete }) {
             }
             if (result.detected_subject) {
                 setDetectedSubject(result.detected_subject);
+            }
+
+            if (result.is_spray_safe !== undefined) {
+                setIsSpraySafe(result.is_spray_safe);
+            }
+            if (result.weather_warnings && Array.isArray(result.weather_warnings)) {
+                setWeatherWarnings(result.weather_warnings);
+            } else if (result.safety_warning && (result.safety_warning.includes('rain') || result.safety_warning.includes('wind') || result.safety_warning.includes('temperature') || result.safety_warning.includes('barish') || result.safety_warning.includes('hawa'))) {
+                setWeatherWarnings([result.safety_warning]);
             }
 
             setStatus(result.is_safe ? STATUS.SUCCESS : STATUS.ERROR);
@@ -405,6 +418,23 @@ export default function FarmerView({ onAnalysisComplete }) {
                                 </span>
                             )}
                         </div>
+
+                        {/* Weather Spray Safety Alert Banner */}
+                        {(!isSpraySafe || (weatherWarnings && weatherWarnings.length > 0)) && (
+                            <div className="w-full bg-amber-50 border-2 border-amber-300/80 p-2.5 rounded-xl flex items-start gap-2 text-amber-900 text-xs shadow-sm">
+                                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5 animate-pulse" />
+                                <div className="flex flex-col text-left">
+                                    <span className="font-extrabold text-amber-950 text-xs">
+                                        ⚠️ मौसम चेतावनी — छिड़काव स्थगित करें (Weather Alert):
+                                    </span>
+                                    <span className="text-[11px] text-amber-900 font-medium leading-tight mt-0.5">
+                                        {weatherWarnings && weatherWarnings.length > 0
+                                            ? weatherWarnings.join(" | ")
+                                            : "प्रतिकूल मौसम के कारण अभी रासायनिक छिड़काव न करें। मौसम साफ होने की प्रतीक्षा करें।"}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                         {translatedText && (
                             <div className="w-full flex flex-col items-center gap-2 mt-1">
                                 <p className="text-xs text-gray-700 text-center italic bg-gray-50 p-3 rounded-xl border border-gray-100 w-full leading-relaxed">

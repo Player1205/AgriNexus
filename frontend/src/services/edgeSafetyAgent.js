@@ -114,7 +114,25 @@ export const runEdgeSafetyAgent = async (state) => {
         }
     }
 
-    // Case 3: Mathematical Formulation Clamping & ICAR MIC Floor Enforcement
+    // Case 3: Meteorological Spray Safety Interlocks
+    const rainRisk = Number(state.rain_risk_6h_percent || 0.0);
+    const windSpeed = Number(state.wind_speed_kmh || 6.0);
+    const temperature = Number(state.current_temperature || 28.0);
+
+    const weatherWarnings = [];
+    if (rainRisk >= 35.0) {
+        weatherWarnings.push(`High rain probability (${Math.round(rainRisk)}% in next 6h). Delay spraying to avoid chemical wash-off.`);
+    }
+    if (windSpeed >= 15.0) {
+        weatherWarnings.push(`High wind speed (${windSpeed} km/h). Delay spraying to prevent chemical drift into neighboring areas.`);
+    }
+    if (temperature >= 36.0) {
+        weatherWarnings.push(`High temperature (${temperature}°C). Spray strictly during dawn or dusk to avoid foliar burn.`);
+    }
+
+    const isSpraySafe = (windSpeed <= 15.0) && (rainRisk < 35.0) && (temperature <= 36.0);
+
+    // Case 4: Mathematical Formulation Clamping & ICAR MIC Floor Enforcement
     let boundedDosage = Math.min(ragDosage, maxStat);
     let micHeld = false;
 
@@ -129,8 +147,13 @@ export const runEdgeSafetyAgent = async (state) => {
     }
 
     const finalDosage = Math.round(boundedDosage * 10) / 10;
-    const warningMsg = `Deterministic Safety Core: Verified compliant within ICAR therapeutic window [${minMic}-${maxStat} ${unit}/acre].` +
-        (micHeld ? ' (Protected at Minimum Inhibitory Concentration floor).' : '');
+    let warningMsg = '';
+    if (weatherWarnings.length > 0) {
+        warningMsg = weatherWarnings.join(" | ");
+    } else {
+        warningMsg = `Deterministic Safety Core: Verified compliant within ICAR therapeutic window [${minMic}-${maxStat} ${unit}/acre].` +
+            (micHeld ? ' (Protected at Minimum Inhibitory Concentration floor).' : '');
+    }
 
     return {
         is_safe: true,
@@ -140,6 +163,9 @@ export const runEdgeSafetyAgent = async (state) => {
         safety_warning: warningMsg,
         is_non_actionable_referral: false,
         is_mic_protected: micHeld,
-        nearest_kvk: null
+        nearest_kvk: null,
+        is_spray_safe: isSpraySafe,
+        weather_warnings: weatherWarnings
     };
 };
+

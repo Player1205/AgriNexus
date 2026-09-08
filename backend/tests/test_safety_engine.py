@@ -121,3 +121,84 @@ async def test_safety_low_confidence_triggers_kvk_referral():
     assert result["nearest_kvk"] is not None
     assert "Samrala" in result["nearest_kvk"]["name"] or "Ludhiana" in result["nearest_kvk"]["district"]
     assert result["nearest_kvk"]["distance_km"] < 50.0
+
+@pytest.mark.asyncio
+async def test_safety_rain_fastness_interlock():
+    """Verify that rain risk >= 35% flags is_spray_safe as False and issues rain warning."""
+    state = {
+        "proposed_chemical": "Azoxystrobin 18.2% + Difenoconazole 11.4% SC",
+        "safe_dosage_ml_per_acre": 150.0,
+        "current_humidity": 75.0,
+        "current_temperature": 28.0,
+        "rain_risk_6h_percent": 55.0, # 55% rain risk exceeds 35% threshold
+        "wind_speed_kmh": 8.0,
+        "vision_confidence": 0.95,
+        "vision_diagnosis": "Tomato Late Blight"
+    }
+    result = await safety_node(state)
+    assert result["is_safe"] is True
+    assert result["is_spray_safe"] is False
+    assert any("rain" in w.lower() for w in result["weather_warnings"])
+    assert "Delay spraying" in result["safety_warning"]
+
+@pytest.mark.asyncio
+async def test_safety_wind_drift_interlock():
+    """Verify that wind speed >= 15 km/h flags is_spray_safe as False and alerts against chemical drift."""
+    state = {
+        "proposed_chemical": "Chlorothalonil 75% WP",
+        "safe_dosage_ml_per_acre": 200.0,
+        "current_humidity": 65.0,
+        "current_temperature": 27.0,
+        "rain_risk_6h_percent": 10.0,
+        "wind_speed_kmh": 18.5, # 18.5 km/h exceeds 15 km/h threshold
+        "vision_confidence": 0.93,
+        "vision_diagnosis": "Tomato Early Blight"
+    }
+    result = await safety_node(state)
+    assert result["is_safe"] is True
+    assert result["is_spray_safe"] is False
+    assert any("wind" in w.lower() for w in result["weather_warnings"])
+    assert "chemical drift" in result["safety_warning"]
+
+@pytest.mark.asyncio
+async def test_safety_extreme_heat_interlock():
+    """Verify that temperature >= 36°C flags is_spray_safe as False and mandates dawn/dusk application."""
+    state = {
+        "proposed_chemical": "Copper Oxychloride 50% WP",
+        "safe_dosage_ml_per_acre": 250.0,
+        "current_humidity": 50.0,
+        "current_temperature": 38.0, # 38°C exceeds 36°C threshold
+        "rain_risk_6h_percent": 5.0,
+        "wind_speed_kmh": 7.0,
+        "vision_confidence": 0.90,
+        "vision_diagnosis": "Tomato Leaf Mold"
+    }
+    result = await safety_node(state)
+    assert result["is_safe"] is True
+    assert result["is_spray_safe"] is False
+    assert any("dawn or dusk" in w.lower() for w in result["weather_warnings"])
+
+@pytest.mark.asyncio
+async def test_voice_agent_rain_delay_vernacular_speech():
+    """Verify voice_node generates explicit rain delay advisory in Hindi speech text."""
+    from app.agents.voice_agent import voice_node
+    state = {
+        "is_safe": True,
+        "is_spray_safe": False,
+        "proposed_chemical": "Azoxystrobin 18.2% + Difenoconazole 11.4% SC",
+        "safe_dosage_ml_per_acre": 150.0,
+        "dosage_unit": "ml",
+        "vision_confidence": 0.95,
+        "vision_diagnosis": "Tomato Late Blight",
+        "current_temperature": 28.0,
+        "current_humidity": 80.0,
+        "rain_risk_6h_percent": 60.0,
+        "wind_speed_kmh": 8.0,
+        "language_code": "hi",
+        "location_source": "DEVICE_LIVE_GPS"
+    }
+    result = await voice_node(state)
+    text = result["translated_text"]
+    assert "बारिश" in text or "rain" in text.lower()
+    assert "छिड़काव" in text or "spray" in text.lower()
+    assert ("टालें" in text or "न करें" in text or "delay" in text.lower() or "postpone" in text.lower())

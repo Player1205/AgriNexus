@@ -114,6 +114,62 @@ describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
         Object.defineProperty(navigator, 'onLine', { value: origOnLine, configurable: true });
     });
 
+    it('Agent 5 (Voice): Generates explicit Rain Delay and Wind Drift warnings when weather is adverse', () => {
+        // High rain risk test (>= 35%)
+        const rainState = {
+            is_safe: true,
+            is_crop_supported: true,
+            vision_diagnosis: 'Tomato Late blight',
+            proposed_chemical: 'Azoxystrobin',
+            safe_dosage_ml_per_acre: 150.0,
+            dosage_unit: 'ml',
+            current_temperature: 27.0,
+            current_humidity: 85.0,
+            rain_risk_6h_percent: 65,
+            wind_speed_kmh: 8.0,
+            is_live_weather: true
+        };
+        const rainSpeech = generateLocalizedSpeechText(rainState, 'hi');
+        expect(rainSpeech).toContain('65% बारिश');
+        expect(rainSpeech).toContain('छिड़काव बिल्कुल न करें');
+
+        // High wind speed test (>= 15 km/h)
+        const windState = {
+            is_safe: true,
+            is_crop_supported: true,
+            vision_diagnosis: 'Tomato Late blight',
+            proposed_chemical: 'Azoxystrobin',
+            safe_dosage_ml_per_acre: 150.0,
+            dosage_unit: 'ml',
+            current_temperature: 28.0,
+            current_humidity: 60.0,
+            rain_risk_6h_percent: 10,
+            wind_speed_kmh: 18.5,
+            is_live_weather: true
+        };
+        const windSpeech = generateLocalizedSpeechText(windState, 'hi');
+        expect(windSpeech).toContain('18.5 km/h तेज हवा');
+        expect(windSpeech).toContain('आज छिड़काव बिल्कुल न करें');
+
+        // Extreme heat test (>= 36°C)
+        const heatState = {
+            is_safe: true,
+            is_crop_supported: true,
+            vision_diagnosis: 'Tomato Late blight',
+            proposed_chemical: 'Azoxystrobin',
+            safe_dosage_ml_per_acre: 150.0,
+            dosage_unit: 'ml',
+            current_temperature: 38.5,
+            current_humidity: 45.0,
+            rain_risk_6h_percent: 5,
+            wind_speed_kmh: 6.0,
+            is_live_weather: true
+        };
+        const heatSpeech = generateLocalizedSpeechText(heatState, 'hi');
+        expect(heatSpeech).toContain('38.5°C');
+        expect(heatSpeech).toContain('दोपहर में छिड़काव बिल्कुल न करें');
+    });
+
     it('Full Swarm Pipeline: Executes complete 5-agent on-device pipeline with zero network', async () => {
         const origOnLine = navigator.onLine;
         Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });

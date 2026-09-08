@@ -91,12 +91,14 @@ async def safety_node(state: AgriNexusState) -> dict:
 
     # Case 3: Meteorological Spray Safety Interlocks
     weather_warnings = []
-    if rain_risk >= 40.0:
+    if rain_risk >= 35.0:
         weather_warnings.append(f"High rain probability ({int(rain_risk)}% in next 6h). Delay spraying to avoid chemical wash-off.")
     if wind_speed >= 15.0:
         weather_warnings.append(f"High wind speed ({wind_speed} km/h). Delay spraying to prevent chemical drift into neighboring areas.")
     if temperature >= 36.0:
         weather_warnings.append(f"High temperature ({temperature}°C). Spray strictly during dawn or dusk to avoid foliar burn.")
+
+    is_spray_safe = (wind_speed <= 15.0) and (rain_risk < 35.0) and (temperature <= 36.0)
 
     # Case 4: Mathematical Formulation Clamping & ICAR MIC Floor Enforcement
     bounded_dosage = min(rag_dosage, max_stat)
@@ -131,7 +133,9 @@ async def safety_node(state: AgriNexusState) -> dict:
                     "formulation_type": formulation_type,
                     "safety_warning": result.warning_message,
                     "is_non_actionable_referral": False,
-                    "is_mic_protected": False
+                    "is_mic_protected": False,
+                    "is_spray_safe": False,
+                    "weather_warnings": weather_warnings
                 }
             final_dosage = round(result.recommended_dosage, 1)
             mic_held = getattr(result, 'is_mic_protected', mic_held)
@@ -154,5 +158,7 @@ async def safety_node(state: AgriNexusState) -> dict:
         "safety_warning": warning_msg,
         "is_non_actionable_referral": False,
         "is_mic_protected": mic_held,
-        "nearest_kvk": None
+        "nearest_kvk": None,
+        "is_spray_safe": is_spray_safe,
+        "weather_warnings": weather_warnings
     }

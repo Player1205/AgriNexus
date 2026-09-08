@@ -207,9 +207,13 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
   2. *Tier 2 — Offline Autonomous Fallback (`window.speechSynthesis`):* Strictly reserved for true zero-connectivity agrarian dead zones (`!navigator.onLine`). Generates localized utterances locally on the browser thread without network dependencies.
 * **Language Support (11 Indic Languages):**
   * `hi-IN` (Hindi), `pa-IN` (Punjabi), `te-IN` (Telugu), `ta-IN` (Tamil), `ml-IN` (Malayalam), `kn-IN` (Kannada), `bn-IN` (Bengali), `mr-IN` (Marathi), `gu-IN` (Gujarati), `od-IN` (Odia), `en-IN` (Indian English).
-* **Advisory Structure:**
+* **Advisory Structure & Active Spray Gates:**
   1. *Colloquial Respectful Greeting* (e.g. *ਕਿਸਾਨ ਵੀਰੋ, రైతు సోదరులారా, விவசாய சகோதரர்களே*).
-  2. *Live Weather Context* (e.g. *"Field temperature is 28°C with 76% humidity"*).
+  2. *Live Weather Context & Active Spray Gates*:
+     * **Adverse Weather Gate (Rain $\ge 35\%$ or Wind $\ge 15\text{ km/h}$):** Commands explicit **"DO NOT SPRAY TODAY / DELAY APPLICATION"** stating exact rain probability and wind velocity to prevent chemical wash-off and aerosol drift.
+     * **Extreme Heat Gate (Temperature $\ge 36^\circ\text{C}$):** Mandates application strictly during early morning (<8 AM) or late evening (>6 PM) to prevent acute foliar scorching and droplet evaporation.
+     * **Optimal Weather Window:** Confirms verified safe spray window with exact field temperature, humidity, and wind metrics.
+     * **Zero-Internet State:** Issues transparent caution that live weather could not be retrieved and mandates manual sky inspection.
   3. *Pathology Description* in native script (e.g. *पत्ती फफूंद (Leaf Mold)*, *पछेता झुलसा (Late Blight)*).
   4. *Exact Chemical & Mixing Instruction* (*Chemical name, exact dosage per acre, and 200L clean water volume*).
   5. *Field Drainage & Rain Precautions*.

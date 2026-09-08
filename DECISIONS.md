@@ -1226,11 +1226,53 @@ Each record explains:
 
 ---
 
+### ADR-066: Fact-Grounded Meteorological Voice Gates & Vernacular Spray Interlocks
+
+* **Context & Problem:** While hyper-local meteorological metrics (temperature, humidity, precipitation probability, wind speed) were accurately resolved via Open-Meteo in `weather_service.py` and evaluated in `safety_agent.py`, the voice synthesis pipeline (`voice_agent.py` and `edgeVoiceAgent.js`) did not faithfully communicate these vital interlocks to the farmer:
+  1. *Rain-Fastness Discrepancy:* `weather_service.py` evaluated rain at $\ge 35\%$, while `voice_agent.py` checked $\ge 40\%$, and all fallback/offline voice templates completely dropped the rain risk warning.
+  2. *Dropped Wind Warning:* Wind speed ($\ge 15.0\text{ km/h}$) was flagged as text in `safety_agent.py`, but completely omitted from the spoken vernacular audio.
+  3. *Passive vs. Active Interlock:* When rain or wind hazards were active, the system still delivered the standard dosage recipe with generic "safe to spray" phrasing, rather than commanding an explicit spray interlock: **"DO NOT SPRAY TODAY / DELAY SPRAYING"**.
+  In field agronomy, spraying before rain washes off expensive systemic chemicals (wasting ₹1,200–₹3,500/acre), spraying during high wind causes aerosol drift into neighboring farms and waterways, and spraying in >36°C heat causes acute foliar scorching.
+* **What Was Changed & How:**
+  1. *Unified Meteorological Thresholds (`safety_agent.py` & `weather_service.py`):*
+     Standardized the rain-fastness threshold to `35.0%`, wind drift to `15.0 km/h`, and extreme heat to `36.0°C`. Computed `is_spray_safe = (wind_speed <= 15.0) and (rain_risk < 35.0) and (temperature <= 36.0)` and passed structured `weather_warnings` across state.
+  2. *Data-Grounded LLM Voice Prompts (`voice_agent.py`):*
+     Engineered exact numerical metrics (`rain_risk%`, `wind_speed km/h`, `temperature°C`) into the synthesis prompt. When rain ($\ge 35\%$) or wind ($\ge 15\text{ km/h}$) is dangerous, the advisory explicitly directs the farmer to postpone spraying until conditions clear. When temperature $\ge 36^\circ\text{C}$, the voice mandates morning (<8 AM) or evening (>6 PM) application.
+  3. *11-Language Vernacular Fallback Audio Matrix (`voice_agent.py`):*
+     Built dynamic, fact-based audio generators for all 11 Indic languages (`hi`, `pa`, `te`, `ta`, `ml`, `kn`, `bn`, `mr`, `gu`, `od`, `en`) stating exact percentages and wind speeds with unambiguous delay directives.
+  4. *In-Browser Edge MAS Synchronization (`edgeSafetyAgent.js` & `edgeVoiceAgent.js`):*
+     Added identical mathematical spray gates to client-side edge agents, guaranteeing that on-device offline voice synthesis issues the exact same rain, wind, and heat interlocks.
+  5. *Synchronized UI Weather Alert Banner (`FarmerView.jsx`):*
+     Added an active amber alert banner in the Verified Safe card whenever `is_spray_safe === false` or weather warnings exist (`⚠️ मौसम चेतावनी — छिड़काव स्थगित करें`), harmonizing visual cues with spoken audio.
+  6. *Automated Multi-Stack Test Coverage:*
+     Added 4 unit tests in Pytest (`test_safety_rain_fastness_interlock`, `test_safety_wind_drift_interlock`, `test_safety_extreme_heat_interlock`, `test_voice_agent_rain_delay_vernacular_speech`) and expanded Vitest tests covering rain delay, wind drift, and extreme heat advisories.
+* **Architectural Rationale:** Converts weather metrics from passive UI decoration into an active, life-critical agronomic interlock that protects the farmer's crop and financial investment.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-066</strong></summary>
+
+> **Question:** In the AgriNexus meteorological safety architecture, why does a rain risk $\ge 35\%$ trigger an active "DELAY SPRAYING" voice interlock rather than simply reducing the pesticide dosage?
+>
+> 1. Because pesticides become toxic when mixed with rainwater.
+> 2. Because foliar systemic fungicides require at least 4 to 6 hours of rain-free drying to penetrate leaf stomata; rain within this window washes off the chemical before absorption, wasting the farmer's financial investment and polluting waterways.
+> 3. Because rain drops break the glass on mobile cameras.
+> 4. Because Open-Meteo disables weather forecasts during rain.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Chemical efficacy requires rain-fastness. If rain falls within 4–6 hours of foliar application, the chemical is washed away before systemic absorption occurs. Reducing the dosage would only lead to sub-lethal under-dosing and pathogen resistance, so postponing the entire spray until dry weather is the only agronomically sound decision.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
 * [x] **Zero Mock Data:** Real PlantVillage dataset, real ICAR database, real Base Sepolia contract, real Sarvam AI voice.
-* [x] **Full-Stack Test Coverage:** 46 passing tests across Pytest (24 tests), Hardhat (5 tests), and Vitest (17 tests).
+* [x] **Full-Stack Test Coverage:** 51 passing tests across Pytest (28 tests), Hardhat (5 tests), and Vitest (18 tests).
 * [x] **CI/CD Automation:** Automated GitHub Actions matrix validating every pull request.
 * [x] **Offline-First Resilience:** Store-and-forward queue with on-device native speech synthesis.
 * [x] **MIC Floor Protection:** Formulation separation with ICAR Minimum Inhibitory Concentration floor enforcement.
@@ -1247,6 +1289,8 @@ Each record explains:
 * [x] **PWA Installability & Network-First Invariance:** W3C 192/512px icon compliance and network-first navigation cache preventing deployment black screens.
 * [x] **Sarvam AI Bulbul:v3 Online Voice Priority:** Authentic Indic voice synthesis prioritized online with offline-only on-device Web Speech fallback.
 * [x] **High-Fidelity PWA Brand Identity:** Custom maskable vector icons and transparent brand emblem across PWA manifests and UI.
+* [x] **Fact-Grounded Meteorological Voice Interlocks:** Active rain delay, wind drift, and extreme heat safety gates voiced across 11 Indic languages and client UI.
+
 
 
 

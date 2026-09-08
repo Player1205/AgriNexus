@@ -133,9 +133,10 @@ In precision agriculture, chemical efficacy is 100% weather-dependent. AgriNexus
         [ 🛡️ Evaluate Rain-Fastness, Wind Drift & Spray Timing ]
 ```
 
-* **Rain-Fastness Interlock:** If rain probability exceeds $35\%$ in the next 6 hours, spraying is flagged unsafe to prevent costly chemical wash-off.
-* **Wind Drift Protection:** If wind speed exceeds $15 \text{ km/h}$, the system alerts against chemical drift into neighboring water bodies.
-* **Extreme Heat Safety:** Under temperatures $>36^\circ\text{C}$, the system mandates spraying strictly at dawn or dusk to avoid droplet evaporation and foliar scorching.
+* **Rain-Fastness Interlock:** If rain probability exceeds $35\%$ in the next 6 hours, spraying is flagged unsafe to prevent costly chemical wash-off. Spoken voice audio explicitly commands the farmer to delay spraying until rain clears.
+* **Wind Drift Protection:** If wind speed exceeds $15 \text{ km/h}$, the system alerts against chemical drift into neighboring water bodies and advises postponing until wind calms.
+* **Extreme Heat Safety:** Under temperatures $>36^\circ\text{C}$, the system mandates spraying strictly at dawn (before 8 AM) or dusk (after 6 PM) to avoid rapid droplet evaporation and foliar scorching.
+* **Active UI & Spoken Voice Feedback:** Adverse weather conditions immediately render an amber **Weather Alert Banner** in the Farmer UI and inject factual numerical warnings directly into the 11-language Sarvam AI voice output.
 
 ---
 
@@ -258,12 +259,12 @@ AgriNexus natively speaks and writes in **11 Indian Regional Languages** with a 
 
 ## 🧪 Full-Stack Automated Verification Matrix
 
-Every pull request and build is verified through a 46-test automated matrix across 3 distinct technology runtimes:
+Every pull request and build is verified through a 51-test automated matrix across 3 distinct technology runtimes:
 
 | Test Suite | Framework | Scope | Passing Tests |
 |---|---|---|---|
-| **Deterministic Core & Backend** | Pytest (`pytest tests`) | C++ safety engine, ICAR RAG retrieval, KVK Haversine resolver, weather gatekeeper, and crop domain firewall | **24 / 24 ✅** |
-| **Client Swarm & UI Components** | Vitest (`vitest run`) | Edge multi-agent swarm, voice priority guards, offline store-and-forward queue, FarmerView HUD, and logo branding | **17 / 17 ✅** |
+| **Deterministic Core & Backend** | Pytest (`pytest tests`) | C++ safety engine, ICAR RAG retrieval, KVK Haversine resolver, weather spray interlocks, and crop domain firewall | **28 / 28 ✅** |
+| **Client Swarm & UI Components** | Vitest (`vitest run`) | Edge multi-agent swarm, meteorological voice gates, offline store-and-forward queue, FarmerView HUD, and logo branding | **18 / 18 ✅** |
 | **Smart Contract Provenance** | Hardhat (`npx hardhat test`) | CropPassport Solidity contract, Base Sepolia event emissions, owner-only authorization, and record integrity | **5 / 5 ✅** |
 | **Production Bundle Compilation** | Vite (`vite build`) | TypeScript/JSX compilation, asset hashing, Tailwind CSS tree-shaking, and PWA manifest linking | **0 Errors ✅** |
 
