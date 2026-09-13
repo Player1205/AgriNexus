@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadImage, createTelemetrySocket, getBaseApiUrl } from '../services/api';
+import { synthesizeSarvamSpeech } from '../services/edgeVoiceAgent';
 import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon } from 'lucide-react';
 
 const LANGUAGES = [
@@ -137,6 +138,17 @@ export default function FarmerView({ onAnalysisComplete }) {
                     a.play()?.catch((e) => console.warn('[AUDIO] Playback error:', e));
                 } catch {}
             }
+        } else if (typeof navigator !== 'undefined' && navigator.onLine && translatedText) {
+            // User gesture tap to synthesize and play Sarvam AI online speech
+            synthesizeSarvamSpeech(translatedText, selectedLang).then((newUrl) => {
+                if (newUrl) {
+                    setAudioUrl(newUrl);
+                    try {
+                        const a = new Audio(newUrl);
+                        a.play()?.catch(() => {});
+                    } catch {}
+                }
+            });
         } else if (typeof navigator !== 'undefined' && !navigator.onLine && translatedText) {
             speakOnDeviceFallback(translatedText, selectedLang);
         }
@@ -207,6 +219,11 @@ export default function FarmerView({ onAnalysisComplete }) {
                     ? result.vernacular_audio_url
                     : `${baseUrl}${result.vernacular_audio_url}`;
                 setAudioUrl(resolvedAudio);
+            } else if (result.translated_text && typeof navigator !== 'undefined' && navigator.onLine) {
+                // Online but audioUrl was not ready from cloud; synthesize immediately via Sarvam AI
+                synthesizeSarvamSpeech(result.translated_text, selectedLang).then((newUrl) => {
+                    if (newUrl) setAudioUrl(newUrl);
+                });
             } else if (result.translated_text && !navigator.onLine) {
                 speakOnDeviceFallback(result.translated_text, selectedLang);
             }
@@ -615,7 +632,7 @@ export default function FarmerView({ onAnalysisComplete }) {
                 )}
 
                 {/* 8. Sarvam AI Audio Player */}
-                {audioUrl && (
+                {audioUrl ? (
                     <div className="w-full bg-white p-3.5 rounded-2xl shadow-lg border border-emerald-200 flex flex-col gap-2 animate-in slide-in-from-bottom-4 duration-300">
                         <div className="flex items-center justify-between px-1 text-xs">
                             <span className="flex items-center gap-1.5 text-emerald-800 font-bold">
@@ -634,7 +651,21 @@ export default function FarmerView({ onAnalysisComplete }) {
                             className="w-full h-9 rounded-lg"
                         />
                     </div>
-                )}
+                ) : (translatedText && !isOffline) ? (
+                    <div className="w-full bg-emerald-50/90 p-3 rounded-2xl border border-emerald-200 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 text-xs text-emerald-800 font-semibold">
+                            <Volume2 className="w-4 h-4 text-emerald-600 animate-pulse" />
+                            <span>Sarvam AI Audio ready</span>
+                        </div>
+                        <button
+                            onClick={handleReplayVoice}
+                            className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-xl text-xs font-bold shadow-md hover:from-emerald-700 hover:to-green-700 active:scale-95 transition-all flex items-center gap-1.5"
+                        >
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>Play Voice Note</span>
+                        </button>
+                    </div>
+                ) : null}
 
             </div>
         </div>

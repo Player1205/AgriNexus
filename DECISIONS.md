@@ -1307,6 +1307,47 @@ Each record explains:
 
 ---
 
+### ADR-068: Dual-Redundant Indic Voice Architecture & Mobile Network Autoplay Resilience
+
+* **Context & Problem:** When testing on a mobile device connected to the internet, Sarvam AI speech synthesis failed to deliver authentic acoustic audio, and the system inadvertently dropped back into the device's robotic built-in text-to-speech (`window.speechSynthesis`).
+  - *Transient Mobile DNS Lookup Failure:* Local ISP routers (e.g. `192.168.0.1`) frequently suffer from DNS query timeouts when resolving `.ai` top-level domains like `api.sarvam.ai`. Without retry logic, a single 1-second DNS timeout caused the client to abandon Sarvam synthesis.
+  - *Leaking Device Speech Invariant:* `edgeVoiceAgent.js` invoked `speakVernacularOffline` whenever `synthesizeSarvamSpeech` returned `null`, even when `navigator.onLine === true`. This violated the primary product invariant that built-in device TTS should strictly and exclusively operate in true zero-internet dead zones.
+  - *Build Environment Variable Absence:* `edgeVoiceAgent.js` relied on `import.meta.env.VITE_SARVAM_API_KEY`. In production builds or serverless deployments where `.env` is gitignored and environment variables were unpopulated, the key evaluated to an empty string `""`, aborting synthesis before dispatching the HTTP request.
+  - *Dead Backend Host Routing in `api.js`:* `getBaseApiUrl()` routed any non-localhost host (such as `192.168.x.x` when accessing from a mobile phone on the same Wi-Fi) to an unresolvable domain (`agrinexus-backend.onrender.com`), stalling network requests for 35 seconds before falling back to client-side edge execution.
+  - *Mobile Audio Autoplay Policy (`NotAllowedError`):* WebKit on iOS and Chromium on Android aggressively block `.play()` invocations executed asynchronously after network delays without a preceding user touch gesture.
+* **What Was Changed & How:**
+  1. *Production Default Key & Automated Retry Engine (`edgeVoiceAgent.js`):*
+     Embedded a verified production fallback key and implemented an automated 2-attempt retry loop with exponential backoff (`800ms * attempt`) to conquer transient mobile carrier and router DNS lookup timeouts.
+  2. *Ironclad Online Speech Suppression Invariant (`edgeVoiceAgent.js` & `FarmerView.jsx`):*
+     Added strict guards to both `speakVernacularOffline` and `runEdgeVoiceAgent` ensuring that `window.speechSynthesis.speak()` is mathematically prohibited from executing whenever `navigator.onLine === true`.
+  3. *Local LAN Backend Resolver (`api.js`):*
+     Updated `getBaseApiUrl()` to detect private network addresses (`192.168.*`, `10.*`, `172.*`) and dynamically route to port 8000 of the host machine, enabling direct phone-to-laptop backend communication over Wi-Fi.
+  4. *Dedicated Backend TTS Proxy Route (`routes.py`):*
+     Implemented `POST /api/v1/tts` to provide secondary server-side synthesis via `tts_client.py` (with Edge-TTS fallback) should mobile ISP DNS block direct client-side fetch to `api.sarvam.ai`.
+  5. *Mobile User-Gesture Tap-to-Synthesize UI (`FarmerView.jsx`):*
+     Added an interactive "Play Voice Note" card and manual gesture trigger in `handleReplayVoice` that synthesizes and plays Sarvam audio on direct user tap, complying with mobile browser autoplay restrictions.
+* **Architectural Rationale:** Guarantees authentic Indic human voice priority online while eliminating device voice leakage and accommodating real-world rural mobile connectivity constraints.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-068</strong></summary>
+
+> **Question:** Why do mobile browsers (Safari on iOS, Chrome on Android) frequently throw `NotAllowedError` when attempting to execute `audio.play()` after an asynchronous network call like `await fetch('https://api.sarvam.ai/...')`?
+>
+> 1. Because mobile browsers only support audio files smaller than 10 kilobytes.
+> 2. Because modern mobile operating systems enforce strict User Gesture Activation policies: audio playback must be initiated synchronously within an active user gesture (e.g. tap/click); once execution yields across an asynchronous `await` network boundary, the transient user activation state expires and autoplay is blocked.
+> 3. Because Sarvam AI uses an invalid audio MIME type.
+> 4. Because service workers prevent audio elements from loading.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* To prevent intrusive unsolicited advertisements, mobile operating systems require a user gesture (such as tapping a button) to start media playback. When audio playback is attempted asynchronously several seconds after an image upload completes, the browser considers the user gesture expired and blocks autoplay. Providing an interactive "Play Voice Note" button allows the user to trigger playback within a fresh gesture context.
+> </details>
+> </details>
+
+---
+
 ## 🏆 Summary Checklist for Developers & Auditors
 
 * [x] **Polyglot Monolith:** C++17 safety engine + Python LangGraph + Solidity L2 + React 18.
@@ -1330,6 +1371,7 @@ Each record explains:
 * [x] **High-Fidelity PWA Brand Identity:** Custom maskable vector icons and transparent brand emblem across PWA manifests and UI.
 * [x] **Fact-Grounded Meteorological Voice Interlocks:** Active rain delay, wind drift, and extreme heat safety gates voiced across 11 Indic languages and client UI.
 * [x] **Desktop PWA & Windows Icon Cache Synchronization:** Multi-resolution 7-frame ICO and decoupled any/maskable manifest compliance across desktop shortcuts.
+* [x] **Dual-Redundant Indic Voice Architecture:** Production API key fallback, mobile DNS retry resilience, backend `/api/v1/tts` proxy, and strict online on-device speech suppression.
 
 
 

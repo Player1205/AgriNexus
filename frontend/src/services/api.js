@@ -4,9 +4,11 @@ export const getBaseApiUrl = () => {
     if (import.meta.env.VITE_API_URL) {
         return import.meta.env.VITE_API_URL.replace(/\/$/, '');
     }
-    // Auto-detect production hosting (e.g. Vercel) and route to Render backend
-    if (typeof window !== 'undefined' && window.location.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
-        return 'https://agrinexus-backend.onrender.com';
+    if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.')) {
+            return `http://${host}:8000`;
+        }
     }
     return '';
 };

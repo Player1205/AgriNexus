@@ -114,3 +114,17 @@ async def analyze_image(
         return JSONResponse(content=safe_response)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+
+from app.services.tts_client import tts_client
+from pydantic import BaseModel
+
+class TTSPayload(BaseModel):
+    text: str
+    language_code: str = "hi"
+
+@router.post("/api/v1/tts")
+async def synthesize_speech_endpoint(payload: TTSPayload):
+    audio_path = await tts_client.synthesize_speech(payload.text, payload.language_code)
+    if audio_path:
+        return {"audio_url": audio_path}
+    return JSONResponse(status_code=500, content={"error": "Speech synthesis failed"})

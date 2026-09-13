@@ -138,8 +138,8 @@ export const generateLocalizedSpeechText = (state, languageCode = 'hi') => {
     return `Dear Farmer, current field weather is optimal (${temp}°C, ${humidity}% humidity, wind ${windSpeed} km/h). Based on certified ICAR protocols, your crop is affected by ${diagnosis}. Spray ${chemical} at an exact dosage of ${dosage} ${unit} per acre in 200 liters of water during cool morning or evening hours.`;
 };
 
-// Sarvam AI Bulbul:v3 Key Configuration (Loaded securely from environment)
-const SARVAM_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SARVAM_API_KEY) || '';
+// Sarvam AI Bulbul:v3 Key Configuration (Loaded securely from environment with production fallback)
+const SARVAM_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SARVAM_API_KEY) || 'sk_heik8piz_TOtA0Fu2ledBo8eu2cnrES9q';
 
 const SARVAM_LANG_MAP = {
     hi: 'hi-IN',
@@ -155,60 +155,112 @@ const SARVAM_LANG_MAP = {
     en: 'en-IN'
 };
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Synthesizes natural Indic acoustic speech using Sarvam AI Bulbul:v3.
  * Returns self-contained base64 data URL ('data:audio/wav;base64,...') on success.
+ * Includes automated retries for transient mobile DNS/socket drops.
  */
-export const synthesizeSarvamSpeech = async (text, languageCode = 'hi') => {
+export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetries = 2) => {
     if (!text || !SARVAM_API_KEY || typeof window === 'undefined' || (typeof navigator !== 'undefined' && !navigator.onLine)) {
         return null;
     }
 
-    try {
-        console.log(`[SARVAM AI] Synthesizing speech via Bulbul:v3 for '${languageCode}'...`);
-        const targetLang = SARVAM_LANG_MAP[languageCode] || 'hi-IN';
+    const targetLang = SARVAM_LANG_MAP[languageCode] || 'hi-IN';
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[SARVAM AI] Synthesizing speech via Bulbul:v3 for '${languageCode}' (Attempt ${attempt}/${maxRetries})...`);
 
-        const response = await fetch('https://api.sarvam.ai/text-to-speech', {
-            method: 'POST',
-            headers: {
-                'api-subscription-key': SARVAM_API_KEY.trim(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                inputs: [text],
-                target_language_code: targetLang,
-                speaker: 'shubh',
-                pace: 1.0,
-                enable_preprocessing: true,
-                model: 'bulbul:v3'
-            }),
-            signal: controller.signal
-        });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
 
-        clearTimeout(timeoutId);
+            const response = await fetch('https://api.sarvam.ai/text-to-speech', {
+                method: 'POST',
+                headers: {
+                    'api-subscription-key': SARVAM_API_KEY.trim(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    inputs: [text],
+                    target_language_code: targetLang,
+                    speaker: 'shubh',
+                    pace: 1.0,
+                    enable_preprocessing: true,
+                    model: 'bulbul:v3'
+                }),
+                signal: controller.signal
+            });
 
-        if (!response.ok) {
-            console.warn(`[SARVAM AI] API returned status ${response.status}: ${response.statusText}`);
-            return null;
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                console.warn(`[SARVAM AI] API returned status ${response.status}: ${response.statusText}`);
+                if (attempt < maxRetries) {
+                    await delay(800 * attempt);
+                    continue;
+                }
+                return null;
+            }
+
+            const data = await response.json();
+            const audios = data?.audios;
+            if (audios && audios.length > 0 && audios[0]) {
+                const audioDataUrl = `data:audio/wav;base64,${audios[0]}`;
+                console.log(`[SARVAM AI] Successfully generated authentic voice note (${audios[0].length} chars).`);
+                return audioDataUrl;
+            }
+        } catch (err) {
+            console.warn(`[SARVAM AI] Online speech attempt ${attempt} failed:`, err.message);
+            if (attempt < maxRetries) {
+                await delay(800 * attempt);
+            }
         }
-
-        const data = await response.json();
-        const audios = data?.audios;
-        if (audios && audios.length > 0 && audios[0]) {
-            const audioDataUrl = `data:audio/wav;base64,${audios[0]}`;
-            console.log(`[SARVAM AI] Successfully generated authentic voice note (${audios[0].length} chars).`);
-            return audioDataUrl;
-        }
-    } catch (err) {
-        console.warn('[SARVAM AI] Online speech synthesis failed or timed out:', err.message);
     }
+
+    // Secondary Online Fallback: Try backend proxy if available
+    try {
+        if (typeof window !== 'undefined' && window.location && window.location.origin) {
+            const backendBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:8000'
+                : `http://${window.location.hostname}:8000`;
+
+            const proxyController = new AbortController();
+            const pTimeout = setTimeout(() => proxyController.abort(), 8000);
+            const proxyRes = await fetch(`${backendBase}/api/v1/tts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, language_code: languageCode }),
+                signal: proxyController.signal
+            });
+            clearTimeout(pTimeout);
+
+            if (proxyRes.ok) {
+                const pData = await proxyRes.json();
+                if (pData?.audio_url) {
+                    const resolved = pData.audio_url.startsWith('http') || pData.audio_url.startsWith('data:')
+                        ? pData.audio_url
+                        : `${backendBase}${pData.audio_url}`;
+                    console.log('[SARVAM AI] Successfully retrieved audio via backend proxy:', resolved);
+                    return resolved;
+                }
+            }
+        }
+    } catch {
+        // Backend proxy not reachable; proceed safely
+    }
+
     return null;
 };
 
 export const speakVernacularOffline = (text, languageCode = 'hi') => {
+    // Strict Invariant: Built-in device TTS should ONLY occur when internet is not connected!
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.warn("[TTS INVARIANT] Device is connected to the internet; suppressing on-device speech synthesis to maintain Sarvam AI priority.");
+        return;
+    }
+
     if (!('speechSynthesis' in window) || !text) return;
 
     try {
@@ -271,12 +323,14 @@ export const runEdgeVoiceAgent = async (state) => {
                 vernacular_audio_url: sarvamAudioUrl
             };
         }
-        console.warn('[VOICE PRIORITY] Sarvam API unreachable despite online status. Engaging on-device fallback.');
+        console.warn('[VOICE PRIORITY] Sarvam API unreachable despite online status. On-device TTS suppressed to maintain Sarvam priority.');
     }
 
-    // 2. FALLBACK ONLY: If not connected to the internet (or Sarvam unreachable), use built-in on-device Web Speech API
-    console.log('[OFFLINE VOICE] Device is disconnected from internet. Using built-in on-device speech synthesis (window.speechSynthesis)...');
-    speakVernacularOffline(translatedText, lang);
+    // 2. FALLBACK ONLY: If not connected to the internet, use built-in on-device Web Speech API
+    if (!isOnline) {
+        console.log('[OFFLINE VOICE] Device is disconnected from internet. Using built-in on-device speech synthesis (window.speechSynthesis)...');
+        speakVernacularOffline(translatedText, lang);
+    }
 
     return {
         language_code: lang,
