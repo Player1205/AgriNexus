@@ -152,10 +152,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
             synthesizeSarvamSpeech(translatedText, selectedLang).then((newUrl) => {
                 if (newUrl) {
                     setAudioUrl(newUrl);
-                    try {
-                        const a = new Audio(newUrl);
-                        a.play()?.catch(() => {});
-                    } catch {}
+                    // Playback is automatically handled by the useEffect above when audioUrl state updates
                 }
             });
         } else if (typeof navigator !== 'undefined' && !navigator.onLine && translatedText) {
