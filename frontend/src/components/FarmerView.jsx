@@ -17,6 +17,82 @@ const LANGUAGES = [
     { code: 'en', name: 'English', label: 'English' }
 ];
 
+const UI_STRINGS = {
+    hi: {
+        subtitle: "फसल सुरक्षा एवं प्रामाणिक सलाह • Autonomous Agricultural Swarm",
+        selectLang: "भाषा चुनें (Select Language)",
+        camera: "फोटो खींचें",
+        gallery: "गैलरी से चुनें"
+    },
+    pa: {
+        subtitle: "ਫ਼ਸਲ ਸੁਰੱਖਿਆ ਅਤੇ ਪ੍ਰਮਾਣਿਕ ਸਲਾਹ • Autonomous Agricultural Swarm",
+        selectLang: "ਭਾਸ਼ਾ ਚੁਣੋ (Select Language)",
+        camera: "ਫ਼ੋਟੋ ਖਿੱਚੋ",
+        gallery: "ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ"
+    },
+    en: {
+        subtitle: "Crop Protection & Authentic Advisory • Autonomous Agricultural Swarm",
+        selectLang: "Select Language",
+        camera: "Take Photo",
+        gallery: "Choose from Gallery"
+    },
+    te: {
+        subtitle: "పంట రక్షణ & ప్రామాణిక సలహా • Autonomous Agricultural Swarm",
+        selectLang: "భాషను ఎంచుకోండి (Select Language)",
+        camera: "ఫోటో తీయండి",
+        gallery: "గ్యాలరీ నుండి ఎంచుకోండి"
+    },
+    ta: {
+        subtitle: "பயிர் பாதுகாப்பு மற்றும் உண்மையான ஆலோசனை • Autonomous Agricultural Swarm",
+        selectLang: "மொழியைத் தேர்ந்தெடுக்கவும் (Select Language)",
+        camera: "புகைப்படம் எடுக்கவும்",
+        gallery: "கேலரியில் இருந்து தேர்ந்தெடுக்கவும்"
+    },
+    ml: {
+        subtitle: "വിള സംരക്ഷണവും ആധികാരിക ഉപദേശവും • Autonomous Agricultural Swarm",
+        selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക (Select Language)",
+        camera: "ഫോട്ടോ എടുക്കുക",
+        gallery: "ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക"
+    },
+    kn: {
+        subtitle: "ಬೆಳೆ ರಕ್ಷಣೆ ಮತ್ತು ಅಧಿಕೃತ ಸಲಹೆ • Autonomous Agricultural Swarm",
+        selectLang: "ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ (Select Language)",
+        camera: "ಫೋಟೋ ತೆಗೆದುಕೊಳ್ಳಿ",
+        gallery: "ಗ್ಯಾಲರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ"
+    },
+    bn: {
+        subtitle: "ফসল সুরক্ষা এবং খাঁটি পরামর্শ • Autonomous Agricultural Swarm",
+        selectLang: "ভাষা নির্বাচন করুন (Select Language)",
+        camera: "ছবি তুলুন",
+        gallery: "গ্যালারি থেকে বেছে নিন"
+    },
+    mr: {
+        subtitle: "पीक संरक्षण आणि अधिकृत सल्ला • Autonomous Agricultural Swarm",
+        selectLang: "भाषा निवडा (Select Language)",
+        camera: "फोटो काढा",
+        gallery: "गॅलरीमधून निवडा"
+    },
+    gu: {
+        subtitle: "પાક રક્ષણ અને અધિકૃત સલાહ • Autonomous Agricultural Swarm",
+        selectLang: "ભાષા પસંદ કરો (Select Language)",
+        camera: "ફોટો લો",
+        gallery: "ગેલેરીમાંથી પસંદ કરો"
+    },
+    od: {
+        subtitle: "ଫସଲ ସୁରକ୍ଷା ଏବଂ ପ୍ରାମାଣିକ ପରାମର୍ଶ • Autonomous Agricultural Swarm",
+        selectLang: "ଭାଷା ବାଛନ୍ତୁ (Select Language)",
+        camera: "ଫଟୋ ଉଠାନ୍ତୁ",
+        gallery: "ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ"
+    }
+};
+
+const getUIString = (lang, key) => {
+    if (UI_STRINGS[lang] && UI_STRINGS[lang][key]) {
+        return UI_STRINGS[lang][key];
+    }
+    return UI_STRINGS['en'][key] || UI_STRINGS['hi'][key];
+};
+
 const STATUS = {
     IDLE: 'idle',
     UPLOADING: 'uploading',
@@ -327,14 +403,14 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                         <img src="/app-logo.png" alt="AgriNexus Logo" className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-sm" />
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900 tracking-tight">AgriNexus</h1>
                     </div>
-                    <p className="text-gray-500 text-xs sm:text-sm font-medium">फसल सुरक्षा एवं प्रामाणिक सलाह • Autonomous Agricultural Swarm</p>
+                    <p className="text-gray-500 text-xs sm:text-sm font-medium">{getUIString(selectedLang, 'subtitle')}</p>
                 </div>
 
                 {/* 2. Language Selector Card */}
                 <div className="w-full bg-white p-3 rounded-2xl shadow-sm border border-green-100/80 flex flex-col gap-2">
                     <div className="flex items-center justify-between px-1 text-[11px] font-semibold text-gray-500">
                         <span className="flex items-center gap-1.5 text-green-700">
-                            <Globe className="w-3.5 h-3.5" /> भाषा चुनें (Select Language)
+                            <Globe className="w-3.5 h-3.5" /> {getUIString(selectedLang, 'selectLang')}
                         </span>
                         <span className="text-green-800 font-bold bg-green-50 px-2.5 py-0.5 rounded-full border border-green-200">
                             {currentLangObj.name} ({currentLangObj.label})
@@ -379,7 +455,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                             <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <span className="text-green-900 font-bold text-xs sm:text-sm tracking-wide">
-                            फोटो खींचें
+                            {getUIString(selectedLang, 'camera')}
                         </span>
                         <span className="text-[10px] text-green-700 font-medium">
                             (Camera)
@@ -397,7 +473,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                             <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <span className="text-emerald-900 font-bold text-xs sm:text-sm tracking-wide">
-                            गैलरी से चुनें
+                            {getUIString(selectedLang, 'gallery')}
                         </span>
                         <span className="text-[10px] text-emerald-700 font-medium">
                             (Gallery)
