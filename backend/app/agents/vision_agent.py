@@ -61,8 +61,8 @@ async def vision_node(state: AgriNexusState) -> dict:
     TIER 2 (FALLBACK): ONLY if your trained model is uncertain (<60%) or unable
     to identify the crop, Gemini Vision API is consulted to identify the anomaly/subject.
     """
-    image_path = state.get("image_path")
-    
+    image_path = state.get("image_path", "")
+
     # =========================================================================
     # TIER 1: YOUR TRAINED ML MODEL (agrinexus_vision.onnx)
     # =========================================================================

@@ -1,187 +1,166 @@
-/**
- * In-Browser Computer Vision Pathology Agent (Agent 1 - On-Device).
- * Executes in ~80ms completely offline in mobile browser memory.
- */
+import { InferenceSession, Tensor, env } from 'onnxruntime-web';
 
-// 14 Certified Commercial Agricultural Food Crops
+// Configure ONNX Runtime to use local WASM files
+env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+
 export const CERTIFIED_CROPS = [
     "Tomato", "Potato", "Corn", "Apple", "Grape", "Strawberry",
     "Pepper", "Orange", "Soybean", "Peach", "Cherry", "Squash",
     "Raspberry", "Blueberry"
 ];
 
-/**
- * Extracts visual foliar features and runs Domain Gatekeeper analysis on-device.
- */
+const EFFICIENTNET_CLASSES = [
+    "Apple Apple scab",
+    "Apple Black rot",
+    "Apple Cedar apple rust",
+    "Apple healthy",
+    "Blueberry healthy",
+    "Cherry Powdery mildew",
+    "Cherry healthy",
+    "Corn Cercospora leaf spot",
+    "Corn Common rust",
+    "Corn Northern Leaf Blight",
+    "Corn healthy",
+    "Grape Black rot",
+    "Grape Esca",
+    "Grape Leaf blight",
+    "Grape healthy",
+    "Orange Haunglongbing",
+    "Peach Bacterial spot",
+    "Peach healthy",
+    "Pepper Bacterial spot",
+    "Pepper healthy",
+    "Potato Early blight",
+    "Potato Late blight",
+    "Potato healthy",
+    "Raspberry healthy",
+    "Soybean healthy",
+    "Squash Powdery mildew",
+    "Strawberry Leaf scorch",
+    "Strawberry healthy",
+    "Tomato Bacterial spot",
+    "Tomato Early blight",
+    "Tomato Late blight",
+    "Tomato Leaf Mold",
+    "Tomato Septoria leaf spot",
+    "Tomato Spider mites",
+    "Tomato Target Spot",
+    "Tomato Yellow Leaf Curl Virus",
+    "Tomato mosaic virus",
+    "Tomato healthy"
+];
+
+let cachedSession = null;
+
+const initSession = async () => {
+    if (!cachedSession) {
+        // Loads your REAL 71MB ONNX model from the frontend public folder
+        cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', {
+            executionProviders: ['wasm']
+        });
+    }
+    return cachedSession;
+};
+
+const preprocessImage = (imageElement) => {
+    const canvas = document.createElement('canvas');
+    const width = 380;
+    const height = 380;
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imageElement, 0, 0, width, height);
+    const imgData = ctx.getImageData(0, 0, width, height).data;
+
+    const float32Data = new Float32Array(3 * width * height);
+    const mean = [0.485, 0.456, 0.406];
+    const std = [0.229, 0.224, 0.225];
+
+    // CHW Format for EfficientNet
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+            const r = imgData[i] / 255.0;
+            const g = imgData[i + 1] / 255.0;
+            const b = imgData[i + 2] / 255.0;
+
+            float32Data[y * width + x] = (r - mean[0]) / std[0]; // R
+            float32Data[width * height + y * width + x] = (g - mean[1]) / std[1]; // G
+            float32Data[2 * width * height + y * width + x] = (b - mean[2]) / std[2]; // B
+        }
+    }
+
+    return new Tensor('float32', float32Data, [1, 3, height, width]);
+};
+
+function softmax(arr) {
+    const max = Math.max(...arr);
+    const exps = arr.map(x => Math.exp(x - max));
+    const sumExps = exps.reduce((acc, val) => acc + val, 0);
+    return exps.map(x => x / sumExps);
+}
+
 export const runEdgeVisionAgent = async (file) => {
-    return new Promise((resolve) => {
-        const filenameLower = (file && file.name ? file.name.toLowerCase() : '');
+    return new Promise(async (resolve) => {
+        try {
+            console.log("[EDGE AI] Booting Real EfficientNet ONNX Engine...");
+            const session = await initSession();
 
-        // Immediate Domain Gatekeeper evaluation on filename / metadata if present
-        if (filenameLower.includes('palm') || filenameLower.includes('areca') || filenameLower.includes('houseplant') || filenameLower.includes('room') || filenameLower.includes('pothos') || filenameLower.includes('money')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = async () => {
+                    try {
+                        const inputTensor = preprocessImage(img);
+                        const inputName = session.inputNames[0];
+                        const outputMap = await session.run({ [inputName]: inputTensor });
+                        const outputData = outputMap[session.outputNames[0]].data;
+
+                        const probabilities = softmax(Array.from(outputData));
+                        
+                        let maxProb = 0;
+                        let maxIdx = 0;
+                        for (let i = 0; i < probabilities.length; i++) {
+                            if (probabilities[i] > maxProb) {
+                                maxProb = probabilities[i];
+                                maxIdx = i;
+                            }
+                        }
+
+                        const diseaseName = EFFICIENTNET_CLASSES[maxIdx];
+                        const detectedCrop = diseaseName.split(" ")[0];
+
+                        console.log(`[EDGE AI] REAL Prediction: ${diseaseName} at ${(maxProb * 100).toFixed(2)}%`);
+
+                        resolve({
+                            vision_diagnosis: diseaseName,
+                            vision_confidence: maxProb,
+                            is_crop_supported: CERTIFIED_CROPS.includes(detectedCrop),
+                            detected_subject: `${detectedCrop} Leaf`
+                        });
+
+                    } catch (err) {
+                        console.error("[EDGE AI] Inference Error:", err);
+                        resolve({
+                            vision_diagnosis: "Unknown",
+                            vision_confidence: 0,
+                            is_crop_supported: false,
+                            detected_subject: "Unknown Subject"
+                        });
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error("[EDGE AI] Initialization Error:", error);
             resolve({
-                vision_diagnosis: "Unrecognized Plant / Non-Agricultural Subject",
-                vision_confidence: 0.0,
+                vision_diagnosis: "Error Loading Model",
+                vision_confidence: 0,
                 is_crop_supported: false,
-                detected_subject: "Indoor Ornamental Plant / Houseplant"
+                detected_subject: "Error"
             });
-            return;
         }
-
-        if (filenameLower.includes('apple') || filenameLower.includes('scab')) {
-            resolve({
-                vision_diagnosis: "Apple Scab",
-                vision_confidence: 0.94,
-                is_crop_supported: true,
-                detected_subject: "Apple Leaf"
-            });
-            return;
-        }
-
-        if (filenameLower.includes('corn') || filenameLower.includes('rust')) {
-            resolve({
-                vision_diagnosis: "Corn Common rust",
-                vision_confidence: 0.93,
-                is_crop_supported: true,
-                detected_subject: "Corn Leaf"
-            });
-            return;
-        }
-
-        if (filenameLower.includes('potato') || filenameLower.includes('early')) {
-            resolve({
-                vision_diagnosis: "Potato Early blight",
-                vision_confidence: 0.91,
-                is_crop_supported: true,
-                detected_subject: "Potato Leaf"
-            });
-            return;
-        }
-
-        if (typeof FileReader === 'undefined' || !file) {
-            resolve({
-                vision_diagnosis: "Tomato Late blight",
-                vision_confidence: 0.95,
-                is_crop_supported: true,
-                detected_subject: "Tomato Leaf"
-            });
-            return;
-        }
-
-        const reader = new FileReader();
-
-        reader.onload = (e) => {
-            if (typeof Image === 'undefined') {
-                resolve({
-                    vision_diagnosis: "Tomato Late blight",
-                    vision_confidence: 0.95,
-                    is_crop_supported: true,
-                    detected_subject: "Tomato Leaf"
-                });
-                return;
-            }
-
-            const img = new Image();
-
-            // Headless / jsdom fallback timer
-            const fallbackTimer = setTimeout(() => {
-                resolve({
-                    vision_diagnosis: "Tomato Late blight",
-                    vision_confidence: 0.95,
-                    is_crop_supported: true,
-                    detected_subject: "Tomato Leaf"
-                });
-            }, 60);
-
-            img.onload = () => {
-                clearTimeout(fallbackTimer);
-                try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-
-                    const width = 224;
-                    const height = 224;
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    const imgData = ctx.getImageData(0, 0, width, height);
-                    const data = imgData.data;
-
-                    let rSum = 0, gSum = 0, bSum = 0;
-                    let darkPixels = 0;
-                    let necroticBrownPixels = 0;
-                    let totalPixels = width * height;
-
-                    for (let i = 0; i < data.length; i += 4) {
-                        const r = data[i];
-                        const g = data[i + 1];
-                        const b = data[i + 2];
-
-                        rSum += r;
-                        gSum += g;
-                        bSum += b;
-
-                        // Dark / Necrotic lesions (Brown/Black spots typical of Blight/Rust)
-                        if (r > 60 && g > 40 && b < 50 && (r - g) > 15) {
-                            necroticBrownPixels++;
-                        }
-                        if (r < 40 && g < 40 && b < 40) {
-                            darkPixels++;
-                        }
-                    }
-
-                    const avgR = rSum / totalPixels;
-                    const avgG = gSum / totalPixels;
-                    const lesionRatio = (necroticBrownPixels + darkPixels) / totalPixels;
-
-                    if (lesionRatio > 0.08 || avgG > avgR) {
-                        resolve({
-                            vision_diagnosis: "Tomato Late blight",
-                            vision_confidence: 0.95,
-                            is_crop_supported: true,
-                            detected_subject: "Tomato Leaf"
-                        });
-                    } else {
-                        resolve({
-                            vision_diagnosis: "Tomato Late blight",
-                            vision_confidence: 0.89,
-                            is_crop_supported: true,
-                            detected_subject: "Tomato Leaf"
-                        });
-                    }
-                } catch {
-                    resolve({
-                        vision_diagnosis: "Tomato Late blight",
-                        vision_confidence: 0.92,
-                        is_crop_supported: true,
-                        detected_subject: "Tomato Leaf"
-                    });
-                }
-            };
-
-            img.onerror = () => {
-                clearTimeout(fallbackTimer);
-                resolve({
-                    vision_diagnosis: "Tomato Late blight",
-                    vision_confidence: 0.90,
-                    is_crop_supported: true,
-                    detected_subject: "Tomato Leaf"
-                });
-            };
-
-            img.src = e.target.result;
-        };
-
-        reader.onerror = () => {
-            resolve({
-                vision_diagnosis: "Tomato Late blight",
-                vision_confidence: 0.90,
-                is_crop_supported: true,
-                detected_subject: "Tomato Leaf"
-            });
-        };
-
-        reader.readAsDataURL(file);
     });
 };

@@ -48,64 +48,56 @@ export default function TelemetryView() {
             ws = createTelemetrySocket((data) => {
                 if (!isMounted) return;
                 const { node, state } = data;
-                const nodeIdx = NODE_ORDER.indexOf(node);
-                if (nodeIdx === -1) return;
 
-                // If starting a fresh run from Agent 1 (Vision)
-                if (node === 'vision') {
-                    clearAllTimers();
-                    setDrawnEdges(new Set());
-                    setActiveDrawingEdge(null);
-                    setCompletedNodes(new Set(['vision']));
-                    setEvents([{ node, timestamp: new Date().toLocaleTimeString(), state }]);
-                    setIgnitingNode('vision');
-                    setActiveNode('vision');
+                setEvents((prev) => {
+                    if (node === 'vision') {
+                        setDrawnEdges(new Set());
+                        setActiveDrawingEdge(null);
+                        setCompletedNodes(new Set(['vision']));
+                        setIgnitingNode('vision');
+                        setActiveNode('vision');
 
-                    const t1 = setTimeout(() => {
-                        if (isMounted) setIgnitingNode(null);
-                    }, 800);
-                    timersRef.current.push(t1);
-                    return;
-                }
+                        const t1 = setTimeout(() => {
+                            if (isMounted) setIgnitingNode(null);
+                        }, 800);
+                        timersRef.current.push(t1);
+                        return [{ node, timestamp: new Date().toLocaleTimeString(), state }];
+                    }
 
-                // For subsequent nodes (RAG, Safety, Web3, Voice):
-                const prevNode = NODE_ORDER[nodeIdx - 1];
-                const edgeId = `${prevNode}-${node}`;
+                    if (prev.some(e => e.node === node)) return prev;
 
-                // Stage 1: Trigger the progressive Laser Beam
-                setActiveDrawingEdge(edgeId);
-                setActiveNode(null);
-
-                // Stage 2 (after 850ms beam travel): Laser beam arrives at target node
-                const t2 = setTimeout(() => {
-                    if (!isMounted) return;
-                    setDrawnEdges((prev) => new Set([...prev, edgeId]));
-                    setActiveDrawingEdge(null);
-
-                    // Ignite target node into glowing activation
                     setIgnitingNode(node);
                     setActiveNode(node);
+                    
+                    const currentNodeIndex = NODE_ORDER.indexOf(node);
+                    let edgeId = null;
+                    if (currentNodeIndex > 0) {
+                        const prevNode = NODE_ORDER[currentNodeIndex - 1];
+                        edgeId = `${prevNode}-${node}`;
+                        setActiveDrawingEdge(edgeId);
+                    }
 
-                    setCompletedNodes((prev) => {
-                        const next = new Set(prev);
-                        for (let i = 0; i <= nodeIdx; i++) {
-                            next.add(NODE_ORDER[i]);
+                    const t2 = setTimeout(() => {
+                        if (isMounted) {
+                            if (edgeId) {
+                                setDrawnEdges(d => new Set([...d, edgeId]));
+                            }
+                            setActiveDrawingEdge(null);
+                            setCompletedNodes(prevSet => new Set([...prevSet, node]));
                         }
-                        return next;
-                    });
 
-                    // Append event to cryptographic terminal
-                    setEvents((prev) => [...prev, { node, timestamp: new Date().toLocaleTimeString(), state }]);
+                        // Cool down ignite burst to steady active state
+                        const t3 = setTimeout(() => {
+                            if (isMounted) setIgnitingNode(null);
+                        }, 700);
+                        timersRef.current.push(t3);
+                    }, 850);
 
-                    // Cool down ignite burst to steady active state
-                    const t3 = setTimeout(() => {
-                        if (isMounted) setIgnitingNode(null);
-                    }, 700);
-                    timersRef.current.push(t3);
-                }, 850);
+                    timersRef.current.push(t2);
+                    return [...prev, { node, timestamp: new Date().toLocaleTimeString(), state }];
+                });
 
-                timersRef.current.push(t2);
-            });
+            }, 'telemetry_view');
 
             ws.onclose = () => {
                 if (isMounted) {

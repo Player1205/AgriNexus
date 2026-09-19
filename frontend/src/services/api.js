@@ -121,18 +121,19 @@ export const uploadImage = async (file, language = 'hi') => {
     }
 };
 
-export const createTelemetrySocket = (onMessage) => {
+export const createTelemetrySocket = (onMessage, listenerId = 'default') => {
     // Register local telemetry callback for on-device swarm
     if (typeof window !== 'undefined') {
         if (!window.__agrinexus_telemetry_listeners) {
-            window.__agrinexus_telemetry_listeners = [];
+            window.__agrinexus_telemetry_listeners = {};
         }
-        window.__agrinexus_telemetry_listeners.push(onMessage);
+        // Overwrite previous listener with the same ID to prevent React Strict Mode duplication
+        window.__agrinexus_telemetry_listeners[listenerId] = onMessage;
     }
 
     const unregisterLocal = () => {
         if (typeof window !== 'undefined' && window.__agrinexus_telemetry_listeners) {
-            window.__agrinexus_telemetry_listeners = window.__agrinexus_telemetry_listeners.filter(cb => cb !== onMessage);
+            delete window.__agrinexus_telemetry_listeners[listenerId];
         }
     };
 

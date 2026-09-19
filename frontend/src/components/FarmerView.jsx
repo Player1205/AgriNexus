@@ -51,6 +51,8 @@ export default function FarmerView({ onAnalysisComplete }) {
     const [weatherWarnings, setWeatherWarnings] = useState([]);
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [offlineSyncCount, setOfflineSyncCount] = useState(0);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [boundingBox, setBoundingBox] = useState(null);
 
     const cameraInputRef = useRef(null);
     const galleryInputRef = useRef(null);
@@ -85,7 +87,7 @@ export default function FarmerView({ onAnalysisComplete }) {
         if (status === STATUS.PROCESSING) {
             ws = createTelemetrySocket((data) => {
                 setActiveNode(data.node);
-            });
+            }, 'farmer_view');
         } else {
             setActiveNode(null);
         }
@@ -133,10 +135,8 @@ export default function FarmerView({ onAnalysisComplete }) {
                     audioRef.current.play()?.catch((e) => console.warn('[AUDIO] Playback error:', e));
                 } catch {}
             } else {
-                try {
-                    const a = new Audio(audioUrl);
-                    a.play()?.catch((e) => console.warn('[AUDIO] Playback error:', e));
-                } catch {}
+                // Prevent ghost audio that cannot be paused by the user UI
+                console.warn('[AUDIO] Audio player is not mounted yet.');
             }
         } else if (typeof navigator !== 'undefined' && navigator.onLine && translatedText) {
             // User gesture tap to synthesize and play Sarvam AI online speech
@@ -158,6 +158,8 @@ export default function FarmerView({ onAnalysisComplete }) {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        setPreviewUrl(URL.createObjectURL(file));
+        setBoundingBox(null);
         setStatus(STATUS.UPLOADING);
         setErrorMessage('');
         setAudioUrl(null);
@@ -206,6 +208,9 @@ export default function FarmerView({ onAnalysisComplete }) {
             }
             if (result.nearest_kvk) {
                 setNearestKvk(result.nearest_kvk);
+            }
+            if (result.bounding_box) {
+                setBoundingBox(result.bounding_box);
             }
 
             if (result.vernacular_audio_url) {
@@ -402,6 +407,30 @@ export default function FarmerView({ onAnalysisComplete }) {
                         className="hidden"
                     />
                 </div>
+
+                {/* Image Preview with Bounding Box Overlay */}
+                {previewUrl && (
+                    <div className="w-full relative mt-2 mb-2 rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black/5 flex justify-center">
+                        <div className="relative inline-block max-w-full">
+                            <img src={previewUrl} alt="Uploaded Crop" className="max-w-full h-auto max-h-64 object-contain" />
+                            {boundingBox && (
+                                <div 
+                                    className="absolute border-2 border-red-500 bg-red-500/20 pointer-events-none transition-all duration-500"
+                                    style={{
+                                        left: `${(boundingBox.x / 640) * 100}%`,
+                                        top: `${(boundingBox.y / 640) * 100}%`,
+                                        width: `${(boundingBox.width / 640) * 100}%`,
+                                        height: `${(boundingBox.height / 640) * 100}%`
+                                    }}
+                                >
+                                    <span className="absolute -top-5 left-[-2px] bg-red-500 text-white text-[10px] font-bold px-1 py-0.5 rounded-t whitespace-nowrap">
+                                        {diagnosis || "Detected Area"}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* 4. Status Indicator */}
                 {status === STATUS.PROCESSING && (

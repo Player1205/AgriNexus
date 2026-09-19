@@ -126,7 +126,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
         }
         // Also trigger any global window telemetry subscribers
         if (typeof window !== 'undefined' && window.__agrinexus_telemetry_listeners) {
-            window.__agrinexus_telemetry_listeners.forEach(listener => {
+            Object.values(window.__agrinexus_telemetry_listeners).forEach(listener => {
                 try {
                     listener({ node: nodeName, state: currentState });
                 } catch (e) {
