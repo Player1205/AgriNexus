@@ -92,7 +92,7 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
     }
 
     try:
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        async with httpx.AsyncClient(timeout=8.0) as client:
             resp = await client.get(url, params=params)
             if resp.status_code == 200:
                 data = resp.json()

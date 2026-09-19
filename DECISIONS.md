@@ -1373,6 +1373,67 @@ Each record explains:
 * [x] **Desktop PWA & Windows Icon Cache Synchronization:** Multi-resolution 7-frame ICO and decoupled any/maskable manifest compliance across desktop shortcuts.
 * [x] **Dual-Redundant Indic Voice Architecture:** Production API key fallback, mobile DNS retry resilience, backend `/api/v1/tts` proxy, and strict online on-device speech suppression.
 
+---
+
+### ADR-069: Meteorological Offline State Alignment & Resilient Frontend Rendering
+
+* **Context & Problem:** When the Open-Meteo API timed out or blocked requests despite the user having active internet connectivity, the backend correctly downgraded to the `OFFLINE_FALLBACK` state. However, two critical discrepancies confused the user:
+  1. *Dropped State Variable:* The boolean `is_live_weather` was missing from the `initial_state` constructed in `routes.py`, forcing downstream agents (like `voice_agent.py`) to awkwardly guess offline status using string matching on `location_source`.
+  2. *False Positive UI Success:* `FarmerView.jsx` only checked for `location_source === 'regional_baseline'` to render the Amber warning box. Because the fallback string was `OFFLINE_FALLBACK`, the frontend mistakenly rendered the blue "Successfully Fetched" UI while the Voice Agent correctly voiced the "unable to fetch live weather" offline warning text.
+* **What Was Changed & How:**
+  1. *Backend State Injection:* Explicitly passed `is_live_weather` from the Open-Meteo dictionary into the `initial_state` in `routes.py`, restoring true deterministic boolean logic to the safety and voice agents.
+  2. *Resilient UI Rendering:* Updated `FarmerView.jsx` to render the Amber Offline Warning banner if `!weather.is_live_weather` OR if `location_source` matched `OFFLINE_FALLBACK` or `REGIONAL_BASELINE` (case-insensitive).
+  3. *Increased Timeout Tolerance:* Increased the HTTP GET timeout from 4.0s to 8.0s in `weather_service.py`, and 2.5s to 6.0s in `swarmOrchestrator.js` to mitigate transient API drops on slow rural mobile networks.
+* **Architectural Rationale:** Enforces absolute synchronization between backend state variables, frontend UI representations, and LLM voice audio strings, guaranteeing that the user sees exactly what the system is doing.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-069</strong></summary>
+
+> **Question:** Why did the UI show a blue "Success" banner while the audio said "Offline Fallback" when the API failed?
+>
+> 1. Because the blue banner is hardcoded in React.
+> 2. Because the frontend UI conditionally matched a specific string (`regional_baseline`) and ignored the explicit boolean state (`is_live_weather`) and other fallback strings (`OFFLINE_FALLBACK`), creating a disjoint between rendering and business logic.
+> 3. Because Open-Meteo returns blue banners by default.
+> 4. Because React state was stale.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Hardcoding string checks in frontend UI components leads to edge-case bugs when the backend introduces new fallback states. Relying on explicit boolean flags (`is_live_weather`) guarantees consistent behavior across all components.
+> </details>
+</details>
+
+---
+
+### ADR-070: Multi-Subscriber Offline Telemetry & WebSocket Reset Safety
+
+* **Context & Problem:** When a user uploaded a second image after a successful first run, the text logs in the Farmer UI updated ("Minting immutable passport on Base L2..."), but the visual 3D node animations in the Telemetry View froze and stopped running.
+  - *Callback Overwrite:* The `createTelemetrySocket` implementation used a single global window variable (`window.__agrinexus_telemetry_listener`) for offline mode telemetry broadcasting. When `FarmerView` mounted/re-rendered and called `createTelemetrySocket`, it silently overwrote the global callback registered by `TelemetryView`, cutting off the 3D control room from offline event streams.
+* **What Was Changed & How:**
+  1. *Array-Based Subscriber Pattern (`api.js`):* Upgraded the global telemetry listener into a multi-subscriber array (`window.__agrinexus_telemetry_listeners = []`), allowing both `FarmerView` and `TelemetryView` to subscribe simultaneously.
+  2. *Graceful Subscriber Deregistration (`api.js`):* Intercepted and patched `ws.close()` to ensure components safely filter and deregister their specific callback from the array when unmounting.
+  3. *Robust Edge Execution Broadcast (`swarmOrchestrator.js`):* Updated the offline fallback broadcaster to iterate and execute all registered callback hooks.
+* **Architectural Rationale:** Embraces standard Publisher-Subscriber (Pub/Sub) design patterns for global browser events, ensuring complete component isolation and preventing destructive state overwrites.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-070</strong></summary>
+
+> **Question:** What is the fundamental danger of attaching event callbacks directly to `window.someCallback = myFunc` instead of using an array or `EventTarget`?
+>
+> 1. It causes memory leaks on mobile devices.
+> 2. It violates strict mode.
+> 3. It restricts the system to a single listener; any subsequent component that attaches a callback will silently overwrite and disconnect previous subscribers.
+> 4. It blocks the main thread.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 3**  
+> *Explanation:* A direct variable assignment allows only one function to exist at a time. Using arrays or native Event Listeners permits an arbitrary number of UI components to react to the same telemetry pulse independently.
+> </details>
+</details>
+
 
 
 

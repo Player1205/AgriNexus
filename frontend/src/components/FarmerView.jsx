@@ -593,23 +593,23 @@ export default function FarmerView({ onAnalysisComplete }) {
                 {/* 7. Live Farm Meteorological Telemetry HUD */}
                 {weather && (
                     <div className={`w-full p-3 rounded-2xl border shadow-sm flex items-center justify-between animate-in fade-in duration-300 ${
-                        weather.location_source === 'regional_baseline'
+                        (!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
                             ? 'bg-amber-50/90 border-amber-200'
                             : 'bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 border-blue-200/80'
                     }`}>
                         <div className="flex items-center gap-2.5">
-                            <span className="text-xl">{weather.location_source === 'regional_baseline' ? '⚠️' : '⛅'}</span>
+                            <span className="text-xl">{(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK') ? '⚠️' : '⛅'}</span>
                             <div className="flex flex-col">
                                 <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
                                     {weather.temperature_c}°C · {weather.relative_humidity}% Humidity
-                                    {weather.location_source === 'regional_baseline' && (
+                                    {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK') && (
                                         <span className="text-[9px] bg-amber-200 text-amber-900 font-bold px-1.5 py-0.5 rounded">
                                             Offline Baseline
                                         </span>
                                     )}
                                 </span>
                                 <span className="text-[10px] text-gray-600 font-medium">
-                                    {weather.location_source === 'regional_baseline' 
+                                    {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
                                         ? 'लाइव मौसम अनुपलब्ध — छिड़काव से पहले बारिश न होने की पुष्टि करें' 
                                         : `Rain Risk (6h): ${weather.rain_risk_6h_percent}% · Wind: ${weather.wind_speed_kmh} km/h`
                                     }
@@ -617,13 +617,13 @@ export default function FarmerView({ onAnalysisComplete }) {
                             </div>
                         </div>
                         <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-sm ${
-                            weather.location_source === 'regional_baseline'
+                            (!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
                                 ? 'bg-amber-100 text-amber-900 border border-amber-300'
                                 : weather.is_spray_safe 
                                     ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
                                     : 'bg-amber-100 text-amber-900 border border-amber-300'
                         }`}>
-                            {weather.location_source === 'regional_baseline'
+                            {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
                                 ? 'Check Rain ⚠'
                                 : weather.is_spray_safe ? 'Safe to Spray ✓' : 'Delay Spray ⚠'
                             }

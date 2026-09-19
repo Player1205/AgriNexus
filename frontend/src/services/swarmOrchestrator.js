@@ -27,7 +27,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
     if (isOnline) {
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 2500);
+            const timer = setTimeout(() => controller.abort(), 6000);
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&hourly=precipitation_probability&forecast_hours=6`, { signal: controller.signal });
             clearTimeout(timer);
             if (res.ok) {
@@ -70,8 +70,14 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
             onTelemetryUpdate({ node: nodeName, state: currentState });
         }
         // Also trigger any global window telemetry subscribers
-        if (typeof window !== 'undefined' && window.__agrinexus_telemetry_listener) {
-            window.__agrinexus_telemetry_listener({ node: nodeName, state: currentState });
+        if (typeof window !== 'undefined' && window.__agrinexus_telemetry_listeners) {
+            window.__agrinexus_telemetry_listeners.forEach(listener => {
+                try {
+                    listener({ node: nodeName, state: currentState });
+                } catch (e) {
+                    console.error(e);
+                }
+            });
         }
     };
 

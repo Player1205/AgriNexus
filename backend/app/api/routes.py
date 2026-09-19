@@ -83,6 +83,7 @@ async def analyze_image(
         "wind_speed_kmh": weather["wind_speed_kmh"],
         "is_spray_safe": weather["is_spray_safe"],
         "location_source": weather["location_source"],
+        "is_live_weather": weather.get("is_live_weather", True),
         "client_latitude": latitude,
         "client_longitude": longitude,
         "errors": []

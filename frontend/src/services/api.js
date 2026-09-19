@@ -124,11 +124,20 @@ export const uploadImage = async (file, language = 'hi') => {
 export const createTelemetrySocket = (onMessage) => {
     // Register local telemetry callback for on-device swarm
     if (typeof window !== 'undefined') {
-        window.__agrinexus_telemetry_listener = onMessage;
+        if (!window.__agrinexus_telemetry_listeners) {
+            window.__agrinexus_telemetry_listeners = [];
+        }
+        window.__agrinexus_telemetry_listeners.push(onMessage);
     }
 
+    const unregisterLocal = () => {
+        if (typeof window !== 'undefined' && window.__agrinexus_telemetry_listeners) {
+            window.__agrinexus_telemetry_listeners = window.__agrinexus_telemetry_listeners.filter(cb => cb !== onMessage);
+        }
+    };
+
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        return { close: () => {} };
+        return { close: unregisterLocal };
     }
 
     let wsUrl;
@@ -160,8 +169,14 @@ export const createTelemetrySocket = (onMessage) => {
             console.warn("Telemetry WebSocket offline/unreachable:", err);
         };
 
+        const originalClose = ws.close.bind(ws);
+        ws.close = () => {
+            unregisterLocal();
+            originalClose();
+        };
+
         return ws;
     } catch {
-        return { close: () => {} };
+        return { close: unregisterLocal };
     }
 };
