@@ -90,10 +90,10 @@ async def vision_node(state: AgriNexusState) -> dict:
             
             print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence (Margin: {round(confidence_margin * 100, 1)}%).")
             
-            # Stricter Dual-Gate Verification:
-            # 1. High absolute confidence (>= 97%) to prevent false positives on out-of-distribution noise / text documents.
-            # 2. Significant confidence margin (>= 60%) between top-1 and runner-up to reject ambiguous guesses.
-            if confidence >= 0.97 and confidence_margin >= 0.60:
+            # Dual-Gate Mathematical Verification:
+            # 1. Statistical significance floor (>= 55% vs uniform prior of 2.63% across 38 classes).
+            # 2. Significant confidence margin (>= 12%) between top-1 and runner-up to reject ambiguous guesses.
+            if confidence >= 0.55 and confidence_margin >= 0.12:
                 detected_crop = disease_name.split()[0] if disease_name else "Crop"
                 return {
                     "vision_diagnosis": disease_name,
@@ -102,7 +102,7 @@ async def vision_node(state: AgriNexusState) -> dict:
                     "detected_subject": f"{detected_crop} Leaf"
                 }
             else:
-                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 85% or Margin ({round(confidence_margin * 100, 1)}%) < 30%. Engaging Tier 2 Gemini Gatekeeper...")
+                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 55% or Margin ({round(confidence_margin * 100, 1)}%) < 12%. Engaging Tier 2 Gemini Gatekeeper...")
                 
         except Exception as e:
             print(f"[TIER 1 NOTE] {str(e)}. Falling back to Tier 2...")

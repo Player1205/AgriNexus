@@ -76,9 +76,9 @@ const checkOrganicChlorophyllContent = (imgData) => {
         totalSampled++;
 
         // 1. Dominant green foliar chlorophyll
-        const isGreen = (g > r * 1.05 && g > b * 1.05 && g > 35);
-        // 2. Agricultural foliar necrosis / lesion / chlorosis tones (yellow/brown)
-        const isFoliarNecrotic = (r > 60 && g > 45 && b < 110 && (r + g) > (b * 2.0));
+        const isGreen = (g > r * 1.02 && g > b * 1.02 && g > 30);
+        // 2. Agricultural foliar necrosis / lesion / chlorosis tones (yellow/brown/rust/tan)
+        const isFoliarNecrotic = (r > 45 && g > 30 && b < 130 && (r + g) > (b * 1.6));
 
         if (isGreen || isFoliarNecrotic) {
             organicPixels++;
@@ -147,8 +147,8 @@ export const runEdgeVisionAgent = async (file) => {
                         console.log(`[EDGE AI] Foliar Organic Ratio: ${(organicRatio * 100).toFixed(1)}%`);
 
                         // Gate 1: Non-agricultural image check (Document / Screenshot / White screen bouncer)
-                        if (organicRatio < 0.15) {
-                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 15% required).`);
+                        if (organicRatio < 0.04) {
+                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 4% required).`);
                             resolve({
                                 vision_diagnosis: "Non-Agricultural Image (Low Foliar Pigment)",
                                 vision_confidence: 0.0,
@@ -174,10 +174,10 @@ export const runEdgeVisionAgent = async (file) => {
 
                         console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
 
-                        // Gate 2: Stricter Edge AI Validation (Confidence & Margin Floor)
-                        // Real PlantVillage/PlantDoc foliar diseases score >= 98% with high margin (>= 60%).
-                        // Deep Neural Networks are overconfident. An image of a poster with green leaves might trigger 95% confidence on Edge.
-                        if (top1.prob < 0.97 || margin < 0.60) {
+                        // Gate 2: Edge AI Validation (Confidence & Margin Floor)
+                        // Across 38 classes (random chance = 2.63%), top-1 confidence >= 55% with margin >= 12%
+                        // represents statistically sound crop disease identification on edge mobile devices.
+                        if (top1.prob < 0.55 || margin < 0.12) {
                             console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
                             resolve({
                                 vision_diagnosis: "Unrecognized / Unsupported Plant",

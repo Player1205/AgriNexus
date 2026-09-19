@@ -105,6 +105,47 @@ async def test_vision_node_tier1_priority_on_confident_ml_model(monkeypatch):
     assert "Tomato" in result["vision_diagnosis"] or "Leaf" in result["detected_subject"]
 
 @pytest.mark.asyncio
+async def test_vision_node_tier1_accepts_moderate_confidence_detection(monkeypatch):
+    """
+    Verifies that a real foliar prediction with moderate confidence (~68%, margin 25%)
+    is accepted by Tier 1 on-device/backend model without engaging Gemini fallback.
+    """
+    from app.agents.vision_agent import vision_node
+    import numpy as np
+
+    monkeypatch.setattr("app.agents.vision_agent.preprocess_image_for_efficientnet", lambda p: np.zeros((1, 3, 380, 380), dtype=np.float32))
+
+    class MockModerateConfSession:
+        def __init__(self, *args, **kwargs):
+            pass
+        def get_inputs(self):
+            class MockInput:
+                name = "input"
+            return [MockInput()]
+        def run(self, *args, **kwargs):
+            # Class 20 (Potato Early blight): logit=4.5, runner-up Class 21: logit=0.8, rest: 0.0 => ~70% confidence
+            logits = np.zeros((1, 38), dtype=np.float32)
+            logits[0, 20] = 4.5  # ~70% confidence
+            logits[0, 21] = 0.8  # ~2% runner up
+            return [logits]
+
+    monkeypatch.setattr("app.agents.vision_agent.ort.InferenceSession", MockModerateConfSession)
+    monkeypatch.setattr("app.agents.vision_agent.HAS_EDGE_AI", True)
+    monkeypatch.setattr("app.agents.vision_agent.os.path.exists", lambda p: True)
+
+    # Monkeypatch Gemini to blow up if called - proving zero Gemini calls were made
+    def boom(*args, **kwargs):
+        raise AssertionError("Tier 2 Gemini fallback should NOT have been called for confident detection!")
+    monkeypatch.setattr("app.agents.vision_agent.ChatGoogleGenerativeAI", boom)
+
+    state = {"image_path": "fake_leaf.jpg"}
+    result = await vision_node(state)
+
+    assert result["vision_confidence"] >= 0.55
+    assert result["is_crop_supported"] is True
+    assert "Potato" in result["vision_diagnosis"] and "Early blight" in result["vision_diagnosis"]
+
+@pytest.mark.asyncio
 async def test_vision_node_tier2_fallback_when_confidence_below_threshold(monkeypatch):
     """
     Verifies that when the trained ONNX model has low confidence (< 60%),
