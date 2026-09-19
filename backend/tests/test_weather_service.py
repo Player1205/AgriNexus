@@ -23,11 +23,12 @@ async def test_weather_device_gps_resolution():
 
 @pytest.mark.asyncio
 async def test_weather_fallback_resolution():
-    """Verify graceful fallback to regional baseline when GPS is omitted or denied."""
+    """Verify graceful fallback restricts metrics when GPS is omitted or denied."""
     weather = await fetch_live_weather(client_lat=None, client_lng=None)
     
     assert weather is not None
-    assert weather["latitude"] == DEFAULT_LAT
-    assert weather["longitude"] == DEFAULT_LNG
-    assert weather["location_source"] == "REGIONAL_BASELINE"
-    assert isinstance(weather["is_spray_safe"], bool)
+    assert weather["latitude"] is None
+    assert weather["longitude"] is None
+    assert weather["location_source"] == "UNKNOWN_LOCATION_RESTRICTED"
+    assert weather["is_live_weather"] is False
+    assert weather["is_spray_safe"] is False
