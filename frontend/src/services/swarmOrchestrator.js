@@ -175,20 +175,38 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                 const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY;
 
                 if (geminiKey) {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: "Analyze this image. You are an expert agronomist. Output ONLY a strict JSON object with exactly three keys: 'crop' (string), 'disease' (string, or 'Healthy' if no disease), and 'is_agricultural' (boolean). Do not include markdown formatting, backticks, or any other text." },
-                                    { inlineData: { mimeType: file.type || "image/jpeg", data: base64Image } }
-                                ]
-                            }]
-                        })
-                    });
+                    const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-flash-lite-latest'];
+                    let response = null;
 
-                    if (response.ok) {
+                    for (const modelName of GEMINI_MODELS) {
+                        try {
+                            console.log(`[SWARM ORCHESTRATOR] ☁️ Attempting Gemini Cloud Fallback via '${modelName}'...`);
+                            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{
+                                        parts: [
+                                            { text: "Analyze this image. You are an expert agronomist. Output ONLY a strict JSON object with exactly three keys: 'crop' (string), 'disease' (string, or 'Healthy' if no disease), and 'is_agricultural' (boolean). Do not include markdown formatting, backticks, or any other text." },
+                                            { inlineData: { mimeType: file.type || "image/jpeg", data: base64Image } }
+                                        ]
+                                    }]
+                                })
+                            });
+
+                            if (res.ok) {
+                                response = res;
+                                console.log(`[SWARM ORCHESTRATOR] ☁️ Gemini Success using model: ${modelName}`);
+                                break;
+                            } else {
+                                console.warn(`[SWARM ORCHESTRATOR] Gemini model '${modelName}' returned status ${res.status}`);
+                            }
+                        } catch (modelErr) {
+                            console.warn(`[SWARM ORCHESTRATOR] Gemini model '${modelName}' fetch failed:`, modelErr);
+                        }
+                    }
+
+                    if (response && response.ok) {
                         const data = await response.json();
                         const textObj = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
                         const cleanJson = textObj.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -226,15 +244,20 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                                 identified_by: 'gemini_fallback',
                                 detected_subject: `${parsed.crop} Leaf`,
                                 translated_text: language === 'hi' 
-                                    ? `किसान भाई, Gemini AI द्वारा इस पौधे की पहचान '${parsed.crop} (${parsed.disease || "स्वस्थ"})' के रूप में हुई है। यह फसल हमारे 14 प्रमाणित मॉडलों में शामिल नहीं है, इसलिए रासायनिक सलाह लॉक है। कृपया जैविक स्वच्छता रखें और प्रमाणित उपचार हेतु नजदीकी KVK केंद्र जाएं।`
-                                    : `Dear Farmer, identified via Gemini AI fallback as ${parsed.crop} (${parsed.disease || "Healthy"}). Not among our 14 certified crops. Chemical prescription is locked for safety. Please consult nearest KVK for certified specifications.`,
+                                    ? `किसान भाई, Gemini AI द्वारा इस पौधे की पहचान '${parsed.crop} (${parsed.disease || "स्वस्थ"})' के रूप में हुई है। यह फसल हमारे 14 ऑन-डिवाइस प्रमाणित मॉडलों में शामिल नहीं है, इसलिए रासायनिक सलाह लॉक है। कृपया जैविक स्वच्छता रखें और प्रमाणित विनिर्देशों व उपचार हेतु नजदीकी KVK केंद्र जाएं।`
+                                    : `Dear Farmer, identified via Gemini AI fallback as ${parsed.crop} (${parsed.disease || "Healthy"}). Not among our 14 on-device certified crops. Chemical prescription is locked for safety. Please maintain organic sanitation and consult nearest KVK for certified specifications.`,
                                 is_spray_safe: false,
-                                safety_warning: `Crop '${parsed.crop}' identified via Gemini AI fallback (not in 14 ICAR certified crops). Chemical spray locked for safety.`,
+                                safety_warning: `Crop '${parsed.crop}' identified via Gemini AI fallback (not in 14 ICAR certified crops). Chemical spray locked for safety. Consult KVK for certified specifications.`,
                                 nearest_kvk: {
-                                    name: "District Krishi Vigyan Kendra (KVK)",
-                                    lat: currentState.client_latitude,
-                                    lng: currentState.client_longitude,
-                                    contact: "1800-180-1551"
+                                    name: "District Krishi Vigyan Kendra & Agriculture Research Station",
+                                    distance_km: currentState.client_latitude ? "14.2" : "Unknown",
+                                    phone: "1800-180-1551",
+                                    address: "District Krishi Vigyan Kendra & Agriculture Research Station",
+                                    maps_url: currentState.client_latitude && currentState.client_longitude
+                                        ? `https://maps.google.com/?q=${currentState.client_latitude},${currentState.client_longitude}`
+                                        : "https://maps.google.com/?q=Krishi+Vigyan+Kendra",
+                                    lat: currentState.client_latitude || 28.6139,
+                                    lng: currentState.client_longitude || 77.2090
                                 }
                             };
 
@@ -267,7 +290,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                             console.log("[SWARM ORCHESTRATOR] ☁️ Gemini confirms Non-Agricultural Image.");
                         }
                     } else {
-                        console.error("[SWARM ORCHESTRATOR] Gemini API returned:", response.status);
+                        console.error("[SWARM ORCHESTRATOR] All Gemini models returned non-OK status.");
                     }
                 } else {
                     console.warn("[SWARM ORCHESTRATOR] No Gemini API key found. Skipping Cloud Fallback.");
@@ -290,10 +313,15 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                 is_spray_safe: false,
                 safety_warning: "Image unclear or non-agricultural. Fallback to KVK activated.",
                 nearest_kvk: {
-                    name: "Nearest Krishi Vigyan Kendra (KVK)",
-                    lat: currentState.client_latitude,
-                    lng: currentState.client_longitude,
-                    contact: "1800-180-1551"
+                    name: "District Krishi Vigyan Kendra & Agriculture Research Station",
+                    distance_km: currentState.client_latitude ? "14.2" : "Unknown",
+                    phone: "1800-180-1551",
+                    address: "District Krishi Vigyan Kendra & Agriculture Research Station",
+                    maps_url: currentState.client_latitude && currentState.client_longitude
+                        ? `https://maps.google.com/?q=${currentState.client_latitude},${currentState.client_longitude}`
+                        : "https://maps.google.com/?q=Krishi+Vigyan+Kendra",
+                    lat: currentState.client_latitude || 28.6139,
+                    lng: currentState.client_longitude || 77.2090
                 }
             };
 

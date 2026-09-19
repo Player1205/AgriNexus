@@ -134,20 +134,19 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
         };
     }, [status]);
 
-    // Native On-Device Web Speech API Fallback strictly for Offline Scenarios
-    const speakOnDeviceFallback = (text, langCode) => {
-        // Strict Invariant: Built-in device TTS should ONLY occur when internet is not connected!
-        if (typeof navigator !== 'undefined' && navigator.onLine) {
-            console.log("[TTS INVARIANT] Device is connected to the internet; suppressing on-device speech synthesis to maintain Sarvam AI priority.");
-            return;
+    // Native On-Device Web Speech API Fallback for Offline Scenarios or Sarvam Failures
+    const speakOnDeviceFallback = useCallback((text, langCode) => {
+        if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+        try {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langCode === 'pa' ? 'pa-IN' : langCode === 'te' ? 'te-IN' : langCode === 'ta' ? 'ta-IN' : 'hi-IN';
+            utterance.rate = 0.95;
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            console.warn('[WEB SPEECH FALLBACK] Error speaking utterance:', e);
         }
-        if (!('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode === 'pa' ? 'pa-IN' : langCode === 'te' ? 'te-IN' : langCode === 'ta' ? 'ta-IN' : 'hi-IN';
-        utterance.rate = 0.95;
-        window.speechSynthesis.speak(utterance);
-    };
+    }, []);
 
     // Auto-trigger Sarvam AI audio element playback upon URL arrival
     useEffect(() => {
@@ -164,30 +163,34 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     }, [audioUrl]);
 
     const handleReplayVoice = useCallback(() => {
-        if (audioUrl) {
-            if (audioRef.current) {
-                try {
-                    audioRef.current.currentTime = 0;
-                } catch {}
-                try {
-                    audioRef.current.play()?.catch((e) => console.warn('[AUDIO] Playback error:', e));
-                } catch {}
-            } else {
-                // Prevent ghost audio that cannot be paused by the user UI
-                console.warn('[AUDIO] Audio player is not mounted yet.');
+        if (audioUrl && audioRef.current) {
+            try {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play()?.catch((e) => {
+                    console.warn('[AUDIO] Playback error, falling back to Web Speech:', e);
+                    speakOnDeviceFallback(translatedText, selectedLang);
+                });
+            } catch {
+                speakOnDeviceFallback(translatedText, selectedLang);
             }
-        } else if (typeof navigator !== 'undefined' && navigator.onLine && translatedText) {
-            // User gesture tap to synthesize and play Sarvam AI online speech
-            synthesizeSarvamSpeech(translatedText, selectedLang).then((newUrl) => {
-                if (newUrl) {
-                    setAudioUrl(newUrl);
-                    // Playback is automatically handled by the useEffect above when audioUrl state updates
-                }
-            });
-        } else if (typeof navigator !== 'undefined' && !navigator.onLine && translatedText) {
-            speakOnDeviceFallback(translatedText, selectedLang);
+        } else if (translatedText) {
+            if (typeof navigator !== 'undefined' && navigator.onLine) {
+                // User gesture tap to synthesize and play Sarvam AI online speech
+                synthesizeSarvamSpeech(translatedText, selectedLang).then((newUrl) => {
+                    if (newUrl) {
+                        setAudioUrl(newUrl);
+                    } else {
+                        // If Sarvam API fails or returns null, immediately speak via Web Speech API
+                        speakOnDeviceFallback(translatedText, selectedLang);
+                    }
+                }).catch(() => {
+                    speakOnDeviceFallback(translatedText, selectedLang);
+                });
+            } else {
+                speakOnDeviceFallback(translatedText, selectedLang);
+            }
         }
-    }, [audioUrl, translatedText, selectedLang]);
+    }, [audioUrl, translatedText, selectedLang, speakOnDeviceFallback]);
 
     const handleFileSelect = useCallback(async (event) => {
         const file = event.target.files?.[0];
@@ -730,25 +733,25 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                     <div className="flex items-center justify-between border-b pb-1.5 border-gray-100">
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-amber-950">
                                             <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                                            {nearestKvk.name}
+                                            {nearestKvk.name || 'District Krishi Vigyan Kendra (KVK)'}
                                         </span>
                                         <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                            {nearestKvk.distance_km === 'Unknown' ? 'Location Disabled' : `${nearestKvk.distance_km} km away`}
+                                            {nearestKvk.distance_km === 'Unknown' ? 'Location Disabled' : (nearestKvk.distance_km ? `${nearestKvk.distance_km} km away` : 'Nearby')}
                                         </span>
                                     </div>
                                     <p className="text-[11px] text-gray-600 font-medium leading-tight">
-                                        {nearestKvk.address}
+                                        {nearestKvk.address || 'District Krishi Vigyan Kendra & Agriculture Research Station'}
                                     </p>
                                     <div className="flex items-center gap-2 pt-1">
                                         <a
-                                            href={`tel:${nearestKvk.phone}`}
+                                            href={`tel:${nearestKvk.phone || nearestKvk.contact || '1800-180-1551'}`}
                                             className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
                                         >
                                             <Phone className="w-3.5 h-3.5" />
-                                            Call Agronomist ({nearestKvk.phone})
+                                            Call Agronomist ({nearestKvk.phone || nearestKvk.contact || '1800-180-1551'})
                                         </a>
                                         <a
-                                            href={nearestKvk.maps_url}
+                                            href={nearestKvk.maps_url || 'https://maps.google.com/?q=Krishi+Vigyan+Kendra'}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
@@ -798,25 +801,25 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                     <div className="flex items-center justify-between border-b pb-1.5 border-gray-100">
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-red-900">
                                             <MapPin className="w-3.5 h-3.5 text-red-600" />
-                                            {nearestKvk.name}
+                                            {nearestKvk.name || 'District Krishi Vigyan Kendra (KVK)'}
                                         </span>
                                         <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                            {nearestKvk.distance_km === 'Unknown' ? 'Location Disabled' : `${nearestKvk.distance_km} km away`}
+                                            {nearestKvk.distance_km === 'Unknown' ? 'Location Disabled' : (nearestKvk.distance_km ? `${nearestKvk.distance_km} km away` : 'Nearby')}
                                         </span>
                                     </div>
                                     <p className="text-[11px] text-gray-600 font-medium leading-tight">
-                                        {nearestKvk.address}
+                                        {nearestKvk.address || 'District Krishi Vigyan Kendra & Agriculture Research Station'}
                                     </p>
                                     <div className="flex items-center gap-2 pt-1">
                                         <a
-                                            href={`tel:${nearestKvk.phone}`}
+                                            href={`tel:${nearestKvk.phone || nearestKvk.contact || '1800-180-1551'}`}
                                             className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
                                         >
                                             <Phone className="w-3.5 h-3.5" />
-                                            Call Agronomist ({nearestKvk.phone})
+                                            Call Agronomist ({nearestKvk.phone || nearestKvk.contact || '1800-180-1551'})
                                         </a>
                                         <a
-                                            href={nearestKvk.maps_url}
+                                            href={nearestKvk.maps_url || 'https://maps.google.com/?q=Krishi+Vigyan+Kendra'}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
@@ -850,51 +853,66 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
 
                 {/* 7. Live Farm Meteorological Telemetry HUD */}
                 {weather && (
-                    <div className={`w-full p-3 rounded-2xl border shadow-sm flex items-center justify-between animate-in fade-in duration-300 ${
-                        (!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
+                    <div className={`w-full p-3.5 rounded-2xl border shadow-sm flex flex-col gap-2.5 animate-in fade-in duration-300 ${
+                        (!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK')
                             ? 'bg-amber-50/90 border-amber-200'
                             : 'bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 border-blue-200/80'
                     }`}>
-                        <div className="flex items-center gap-2.5">
-                            <span className="text-xl">{(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK') ? '⚠️' : '⛅'}</span>
-                            <div className="flex flex-col">
-                                <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
-                                    {weather.temperature_c}°C · {weather.relative_humidity}% Humidity
-                                    {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK') && (
-                                        <span className="text-[9px] bg-amber-200 text-amber-900 font-bold px-1.5 py-0.5 rounded">
-                                            Offline Baseline
-                                        </span>
-                                    )}
-                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border shadow-sm ${
-                                        (weather.aqi === 1) ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-                                        (weather.aqi === 2) ? 'bg-green-100 text-green-800 border-green-300' :
-                                        (weather.aqi === 3) ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-                                        (weather.aqi === 4) ? 'bg-orange-100 text-orange-900 border-orange-300 animate-pulse' :
-                                        'bg-red-100 text-red-900 border-red-300 animate-pulse'
-                                    }`}>
-                                        AQI: {weather.aqi || 2} ({weather.aqi_label || (weather.aqi === 1 ? 'Good' : weather.aqi === 2 ? 'Fair' : weather.aqi === 3 ? 'Mod' : weather.aqi === 4 ? 'Poor' : 'Severe')})
-                                    </span>
+                        {/* Top Row: Temperature, Humidity, AQI, and Spray Badge */}
+                        <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                            <div className="flex items-center gap-2.5">
+                                <span className="text-xl select-none">
+                                    {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK') ? '⚠️' : '⛅'}
                                 </span>
-                                <span className="text-[10px] text-gray-600 font-medium">
-                                    {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
-                                        ? 'लाइव मौसम अनुपलब्ध — छिड़काव से पहले बारिश न होने की पुष्टि करें' 
-                                        : `Rain Risk (6h): ${weather.rain_risk_6h_percent}% · Wind: ${weather.wind_speed_kmh} km/h`
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-sm font-black text-gray-900 tracking-tight">
+                                        {weather.temperature_c}°C
+                                    </span>
+                                    <span className="text-xs font-semibold text-gray-600">
+                                        · {weather.relative_humidity}% Humidity
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 ml-auto">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border shadow-xs ${
+                                    (weather.aqi === 1) ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                                    (weather.aqi === 2) ? 'bg-green-100 text-green-800 border-green-300' :
+                                    (weather.aqi === 3) ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                                    (weather.aqi === 4) ? 'bg-orange-100 text-orange-900 border-orange-300 animate-pulse' :
+                                    'bg-red-100 text-red-900 border-red-300 animate-pulse'
+                                }`}>
+                                    AQI {weather.aqi || 2} · {weather.aqi_label || (weather.aqi === 1 ? 'Good' : weather.aqi === 2 ? 'Fair' : weather.aqi === 3 ? 'Mod' : weather.aqi === 4 ? 'Poor' : 'Severe')}
+                                </span>
+                                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-xs border ${
+                                    (!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK')
+                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                        : weather.is_spray_safe 
+                                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300' 
+                                            : 'bg-amber-100 text-amber-900 border-amber-300'
+                                }`}>
+                                    {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK')
+                                        ? 'Check Rain ⚠'
+                                        : weather.is_spray_safe ? 'Safe to Spray ✓' : 'Delay Spray ⚠'
                                     }
                                 </span>
                             </div>
                         </div>
-                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-sm ${
-                            (!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
-                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                : weather.is_spray_safe 
-                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
-                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
-                        }`}>
-                            {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
-                                ? 'Check Rain ⚠'
-                                : weather.is_spray_safe ? 'Safe to Spray ✓' : 'Delay Spray ⚠'
-                            }
-                        </span>
+
+                        {/* Bottom Row: Weather Subtext & Baseline Badge */}
+                        <div className="flex items-center justify-between text-[11px] text-gray-600 font-medium border-t border-black/5 pt-1.5 gap-2">
+                            <span className="truncate">
+                                {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK')
+                                    ? 'लाइव मौसम अनुपलब्ध — छिड़काव से पहले बारिश न होने की पुष्टि करें' 
+                                    : `Rain Risk (6h): ${weather.rain_risk_6h_percent}% · Wind: ${weather.wind_speed_kmh} km/h`
+                                }
+                            </span>
+                            {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK') && (
+                                <span className="shrink-0 text-[9px] bg-amber-200/90 text-amber-950 font-bold px-1.5 py-0.5 rounded border border-amber-300">
+                                    Offline Baseline
+                                </span>
+                            )}
+                        </div>
                     </div>
                 )}
 

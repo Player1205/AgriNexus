@@ -169,6 +169,21 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
 
     const targetLang = SARVAM_LANG_MAP[languageCode] || 'hi-IN';
 
+    // Sarvam API has a strict 500-char limit per input chunk; truncate cleanly at sentence/word boundary
+    let sarvamText = text.trim();
+    if (sarvamText.length > 490) {
+        const truncated = sarvamText.slice(0, 490);
+        const lastStop = Math.max(
+            truncated.lastIndexOf('।'),
+            truncated.lastIndexOf('.'),
+            truncated.lastIndexOf('?'),
+            truncated.lastIndexOf('!'),
+            truncated.lastIndexOf(','),
+            truncated.lastIndexOf(' ')
+        );
+        sarvamText = lastStop > 100 ? truncated.slice(0, lastStop) : truncated;
+    }
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`[SARVAM AI] Synthesizing speech via Bulbul:v3 for '${languageCode}' (Attempt ${attempt}/${maxRetries})...`);
@@ -183,7 +198,7 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    inputs: [text],
+                    inputs: [sarvamText],
                     target_language_code: targetLang,
                     speaker: 'shubh',
                     pace: 1.0,

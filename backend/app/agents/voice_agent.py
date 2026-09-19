@@ -507,7 +507,6 @@ async def voice_node(state: AgriNexusState) -> dict:
     try:
         api_key = os.environ.get("GOOGLE_API_KEY")
         if api_key and api_key != "your_google_api_key_here":
-            llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", google_api_key=api_key)
             prompt = f"""You are an expert senior agricultural scientist (Agronomist) advising an Indian farmer in their native language.
             
 Translate and adapt the following agricultural advisory into natural, fluent, and highly detailed colloquial {target_language} (written in {target_script} script).
@@ -520,7 +519,20 @@ IMPORTANT INSTRUCTIONS:
 
 Advisory text: '{english_text}'"""
             
-            response = llm.invoke(prompt)
+            gemini_models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+            response = None
+            for model_name in gemini_models:
+                try:
+                    llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
+                    res = llm.invoke(prompt)
+                    if res and res.content:
+                        response = res
+                        break
+                except Exception as model_err:
+                    print(f"[VOICE LLM] Model '{model_name}' failed: {model_err}")
+
+            if not response or not response.content:
+                raise RuntimeError("All Gemini models in voice cascade failed.")
             raw_content = response.content
             if isinstance(raw_content, list):
                 parts = []

@@ -122,7 +122,6 @@ async def vision_node(state: AgriNexusState) -> dict:
             }
 
         print("[TIER 2 - GEMINI FALLBACK] Consulting Gemini Vision Gatekeeper to analyze unidentified subject...")
-        llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", google_api_key=api_key)
         
         with open(image_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
@@ -152,7 +151,22 @@ async def vision_node(state: AgriNexusState) -> dict:
             ]
         )
         
-        response = llm.invoke([message])
+        gemini_models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+        response = None
+        for model_name in gemini_models:
+            try:
+                print(f"[TIER 2 - GEMINI FALLBACK] Attempting model '{model_name}'...")
+                llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
+                res = llm.invoke([message])
+                if res and res.content:
+                    response = res
+                    print(f"[TIER 2 - GEMINI FALLBACK] Success with model: {model_name}")
+                    break
+            except Exception as model_err:
+                print(f"[TIER 2 - GEMINI FALLBACK] Model '{model_name}' failed: {model_err}")
+
+        if not response or not response.content:
+            raise RuntimeError("All Gemini models in fallback cascade failed or rate-limited.")
         raw_content = response.content
         if isinstance(raw_content, list):
             parts = []

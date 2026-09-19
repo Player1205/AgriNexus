@@ -1668,3 +1668,50 @@ Each record explains:
 > *Explanation:* Under severe atmospheric particulate loads and stagnant inversions, droplet evaporation and particulate adsorption cause pesticide drift and acute inhalation risks, violating ICAR and international Good Agricultural Practices (GAP).
 > </details>
 </details>
+
+---
+
+### ADR-080: Gemini Flash Model Cascade, Sarvam 500-Char Audio Truncation, Web Speech Fallback, and Responsive Weather HUD Redesign
+
+**Context & The Problem:**
+1. *Gemini Free Tier Quota Exhaustion (429):* The offline swarm fallback hardcoded `gemini-3.6-flash`. On Google AI Free Tier, `gemini-3.6-flash` is restricted to 20 requests/day, triggering `429 RESOURCE_EXHAUSTED` and preventing fallback detection for uncertified crops like Guava. Conversely, `gemini-flash-latest` and `gemini-flash-lite-latest` on the same key have separate operational quotas and responded successfully.
+2. *KVK Contract Schema Disconnect:* The edge swarm orchestrator supplied `{ contact: "1800-180-1551" }` instead of the schema expected by `FarmerView.jsx` (`phone`, `distance_km`, `address`, `maps_url`), causing the UI to display "undefined km away" and "Call Agronomist ()".
+3. *Sarvam AI 500-Character Ceiling Failure:* When localized advisory texts exceeded 500 characters, Sarvam AI Bulbul:v3 returned `HTTP 400 Bad Request`. Additionally, the frontend's Web Speech API fallback was unconditionally suppressed whenever `navigator.onLine === true`, leaving farmers with silence when Sarvam synthesis failed.
+4. *Cramped Weather HUD:* Telemetry metrics, offline baseline indicators, and AQI pill badges were forced into a single horizontal flex line without responsive wrapping, causing text collisions and overlapping labels on mobile displays.
+
+**What Was Changed & How It Was Changed:**
+1. *Multi-Model Gemini Fallback Cascade (`swarmOrchestrator.js`, `vision_agent.py`, `voice_agent.py`):*
+   - Implemented sequential cascading across `['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-flash-lite-latest']`. If a model returns 429 or fails, the orchestrator automatically steps to the next model in sub-second time.
+2. *Contract-Compliant KVK Geo-Resolution (`swarmOrchestrator.js`, `FarmerView.jsx`):*
+   - Updated the swarm orchestrator's KVK fallback to provide complete, typed attributes: `name`, `distance_km`, `phone`, `address`, and dynamic Google Maps navigation URLs.
+   - Added defensive fallback chaining in `FarmerView.jsx` (`nearestKvk.phone || nearestKvk.contact || '1800-180-1551'`) to eliminate `undefined` strings in production UI.
+3. *Audio Payload Boundary Clamping & Active Fallback (`edgeVoiceAgent.js`, `FarmerView.jsx`):*
+   - Added punctuation-aware string truncation under 490 characters in `synthesizeSarvamSpeech` (`lastIndexOf('।')`, `.`, `,`, ` `) matching the backend's `tts_client.py`.
+   - Removed the `navigator.onLine` suppression in `speakOnDeviceFallback` and wired `handleReplayVoice` to instantly fall back to native device speech if Sarvam synthesis returns null.
+4. *Two-Row Responsive Weather HUD (`FarmerView.jsx`):*
+   - Redesigned the meteorological bar into two structured rows:
+     - **Row 1:** High-visibility temperature and humidity on the left; color-coded AQI pill and Spray Safety badge on the right.
+     - **Row 2:** Meteorological advisory context with an isolated `Offline Baseline` tag.
+
+**Architectural Rationale:**
+- Guarantees zero unhandled failure modes during cloud throttling.
+- Closes the audio gap so farmers with low literacy always receive acoustic spoken advice even if third-party cloud TTS fails.
+- Prevents UI layout clipping on mobile screens across rural field devices.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-080</strong></summary>
+
+> **Question:** Why should client-side TTS implementations truncate input strings at sentence or punctuation boundaries rather than hard character slicing?
+>
+> 1. Because browsers crash if strings are sliced midway through a word.
+> 2. Because cutting in the middle of a syllable or word alters phoneme tokenization and can produce garbled acoustic artifacts or corrupt multi-byte UTF-8 Indic characters.
+> 3. Because audio files cannot exceed 1 MB.
+> 4. Because punctuation marks are mandatory for HTTP headers.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Truncating at sentence boundaries (`।`, `.`) or word spaces preserves grammatical completeness and prevents splitting multi-byte UTF-8 Unicode characters (common in Indic scripts like Devanagari, Gurmukhi, and Telugu), ensuring acoustic intelligibility.
+> </details>
+</details>
