@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadImage, createTelemetrySocket, getBaseApiUrl } from '../services/api';
 import { synthesizeSarvamSpeech } from '../services/edgeVoiceAgent';
 import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon, Database } from 'lucide-react';
+import LaptopWebcamModal from './LaptopWebcamModal';
 
 const LANGUAGES = [
     { code: 'hi', name: 'हिन्दी', label: 'Hindi' },
@@ -63,6 +64,10 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     const [detectedSubject, setDetectedSubject] = useState('');
     const [isSpraySafe, setIsSpraySafe] = useState(true);
     const [weatherWarnings, setWeatherWarnings] = useState([]);
+
+    // Laptop Webcam Fallback State
+    const [showLaptopWebcam, setShowLaptopWebcam] = useState(false);
+
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [offlineSyncCount, setOfflineSyncCount] = useState(0);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -291,9 +296,14 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     }, [selectedLang, onAnalysisComplete]);
 
     const triggerCamera = () => {
-        if (cameraInputRef.current) {
-            cameraInputRef.current.value = '';
-            cameraInputRef.current.click();
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            if (cameraInputRef.current) {
+                cameraInputRef.current.value = '';
+                cameraInputRef.current.click();
+            }
+        } else {
+            setShowLaptopWebcam(true);
         }
     };
 
@@ -739,6 +749,15 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                 ) : null}
 
             </div>
+
+            {/* Laptop Webcam Modal (Fallback for Desktop) */}
+            <LaptopWebcamModal 
+                isOpen={showLaptopWebcam} 
+                onClose={() => setShowLaptopWebcam(false)} 
+                onCapture={(file) => {
+                    handleFileSelect({ target: { files: [file] } });
+                }} 
+            />
         </div>
     );
 }
