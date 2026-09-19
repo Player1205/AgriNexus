@@ -60,7 +60,13 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // Offline fallback
-          return caches.match('/index.html').then((cached) => cached || caches.match('/'));
+          return caches.match('/index.html')
+            .then((cached) => cached || caches.match('/'))
+            .then((finalFallback) => finalFallback || new Response('AgriNexus is offline. Please check your connection.', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: new Headers({ 'Content-Type': 'text/plain' })
+            }));
         })
     );
     return;
@@ -81,7 +87,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          return caches.match(event.request);
+          return caches.match(event.request).then((res) => res || new Response('', { status: 404, statusText: 'Not Found' }));
         });
     })
   );

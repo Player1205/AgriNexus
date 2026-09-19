@@ -62,10 +62,14 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     useEffect(() => {
         const handleOnline = () => {
             setIsOffline(false);
-            const queue = JSON.parse(localStorage.getItem('agrinexus_offline_queue') || '[]');
+            let queue = [];
+            try {
+                queue = JSON.parse(localStorage.getItem('agrinexus_offline_queue') || '[]');
+            } catch {
+                localStorage.removeItem('agrinexus_offline_queue');
+            }
             if (queue.length > 0) {
                 setOfflineSyncCount(queue.length);
-                // Clear queue as we are back online
                 localStorage.removeItem('agrinexus_offline_queue');
                 setTimeout(() => setOfflineSyncCount(0), 4000);
             }
@@ -86,6 +90,11 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
         let ws;
         if (status === STATUS.PROCESSING) {
             ws = createTelemetrySocket((data) => {
+                // Strict isolation
+                const activeSession = typeof window !== 'undefined' ? window.__agrinexus_active_session : null;
+                if (!activeSession || data.session_id !== activeSession) {
+                    return; // Ignore events from other devices / sessions
+                }
                 setActiveNode(data.node);
             }, 'farmer_view');
         } else {
@@ -182,7 +191,12 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                     filename: file.name,
                     language: selectedLang
                 };
-                const existing = JSON.parse(localStorage.getItem('agrinexus_offline_queue') || '[]');
+                let existing = [];
+                try {
+                    existing = JSON.parse(localStorage.getItem('agrinexus_offline_queue') || '[]');
+                } catch {
+                    existing = [];
+                }
                 existing.push(pendingRecord);
                 localStorage.setItem('agrinexus_offline_queue', JSON.stringify(existing));
             }
@@ -282,7 +296,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     const currentLangObj = LANGUAGES.find((l) => l.code === selectedLang) || LANGUAGES[0];
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full min-h-0 bg-gradient-to-b from-green-50/80 via-white to-green-50/40 px-4 sm:px-8 py-5 sm:py-8 overflow-y-auto overflow-x-hidden">
+        <div className="flex flex-col items-center justify-start w-full h-full min-h-0 bg-gradient-to-b from-green-50/80 via-white to-green-50/40 px-4 sm:px-8 py-5 sm:py-8 overflow-y-auto overflow-x-hidden">
             
             {/* Centered Professional Container */}
             <div className="w-full max-w-md flex flex-col items-center gap-4 sm:gap-5 my-auto">

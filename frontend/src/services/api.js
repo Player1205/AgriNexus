@@ -83,6 +83,7 @@ export const getClientLocation = () => {
 /**
  * Unified Edge-to-Cloud Analysis Dispatcher.
  * Automatically runs 100% On-Device when offline or if server is unreachable.
+ * Each upload generates a unique session_id to scope telemetry events.
  */
 export const uploadImage = async (file, language = "hi") => {
   let loc = null;
@@ -111,6 +112,7 @@ export const uploadImage = async (file, language = "hi") => {
       formData.append("longitude", loc.longitude.toString());
     }
 
+<<<<<<< Updated upstream
     const baseUrl = getBaseApiUrl();
     const endpoint = baseUrl ? `${baseUrl}/api/v1/analyze` : "/api/v1/analyze";
     const token =
@@ -142,6 +144,61 @@ export const uploadImage = async (file, language = "hi") => {
     // Seamlessly fallback to 100% On-Device Swarm
     return await runOfflineSwarmPipeline(file, language, loc);
   }
+=======
+    // Generate a unique session ID for this specific upload
+    const sessionId = Math.random().toString(36).substring(2, 10);
+    if (typeof window !== 'undefined') {
+        window.__agrinexus_active_session = sessionId;
+    }
+
+    // 1. If device is explicitly offline, immediately run On-Device Swarm
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.log("[AGRINEXUS OFFLINE] Network is disconnected. Executing 100% On-Device Multi-Agent Swarm...");
+        return await runOfflineSwarmPipeline(file, language, loc, null, sessionId);
+    }
+
+    // 2. Online Mode: Attempt Cloud Swarm with automated On-Device Fallback
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('language', language);
+        formData.append('session_id', sessionId); // Send frontend session to backend
+
+        if (loc) {
+            formData.append('latitude', loc.latitude.toString());
+            formData.append('longitude', loc.longitude.toString());
+        }
+
+        const baseUrl = getBaseApiUrl();
+        const endpoint = baseUrl ? `${baseUrl}/api/v1/analyze` : '/api/v1/analyze';
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout to handle Render cold-start wakeups
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`Server returned status ${response.status}`);
+        }
+
+        const result = await response.json();
+        // Update the active session to the one the server generated
+        if (result.session_id && typeof window !== 'undefined') {
+            window.__agrinexus_active_session = result.session_id;
+        }
+        return result;
+    } catch (err) {
+        console.warn(`[AGRINEXUS HYBRID] Cloud server unreachable (${err.message}). Seamlessly engaging On-Device Multi-Agent Swarm...`);
+        // Seamlessly fallback to 100% On-Device Swarm
+        return await runOfflineSwarmPipeline(file, language, loc, null, sessionId);
+    }
+>>>>>>> Stashed changes
 };
 
 export const createTelemetrySocket = (onMessage, listenerId = "default") => {
@@ -196,9 +253,22 @@ export const createTelemetrySocket = (onMessage, listenerId = "default") => {
       }
     };
 
+<<<<<<< Updated upstream
     ws.onerror = (err) => {
       console.warn("Telemetry WebSocket offline/unreachable:", err);
     };
+=======
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        // Return a mock WebSocket-like object that supports onclose property binding
+        const mock = {
+            close: unregisterLocal,
+            onclose: null,
+            onmessage: null,
+            onerror: null
+        };
+        return mock;
+    }
+>>>>>>> Stashed changes
 
     const originalClose = ws.close.bind(ws);
     ws.close = () => {
@@ -206,6 +276,7 @@ export const createTelemetrySocket = (onMessage, listenerId = "default") => {
       originalClose();
     };
 
+<<<<<<< Updated upstream
     return ws;
   } catch {
     return { close: unregisterLocal };
@@ -249,4 +320,52 @@ export const deleteUserScan = async (scanId) => {
     throw new Error(`Failed to delete scan: ${response.status}`);
   }
   return await response.json();
+=======
+    if (apiUrl) {
+        const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
+        const host = apiUrl.replace(/^https?:\/\//, '');
+        wsUrl = `${wsProtocol}//${host}/ws/telemetry`;
+    } else {
+        const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
+        wsUrl = `${protocol}//${host}/ws/telemetry`;
+    }
+
+    try {
+        const ws = new WebSocket(wsUrl);
+        
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                onMessage(data);
+            } catch (err) {
+                console.error("Telemetry WebSocket message parse error:", err);
+            }
+        };
+
+        ws.onerror = (err) => {
+            console.warn("Telemetry WebSocket offline/unreachable:", err);
+        };
+
+        const originalClose = ws.close.bind(ws);
+        ws.close = () => {
+            unregisterLocal();
+            originalClose();
+        };
+
+        return ws;
+    } catch {
+        const mock = {
+            close: unregisterLocal,
+            onclose: null,
+            onmessage: null,
+            onerror: null
+        };
+        // If an onclose handler gets attached later, we trigger it asynchronously to simulate failure
+        setTimeout(() => {
+            if (typeof mock.onclose === 'function') mock.onclose();
+        }, 100);
+        return mock;
+    }
+>>>>>>> Stashed changes
 };

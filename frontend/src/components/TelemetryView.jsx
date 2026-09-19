@@ -47,7 +47,14 @@ export default function TelemetryView() {
             
             ws = createTelemetrySocket((data) => {
                 if (!isMounted) return;
-                const { node, state } = data;
+                const { node, state, session_id } = data;
+
+                // Strict isolation: Only process events if this specific browser tab initiated an upload,
+                // and the incoming event's session_id matches this tab's active session.
+                const activeSession = typeof window !== 'undefined' ? window.__agrinexus_active_session : null;
+                if (!activeSession || session_id !== activeSession) {
+                    return; // Ignore events from other devices / sessions, or if we haven't uploaded anything
+                }
 
                 setEvents((prev) => {
                     if (node === 'vision') {

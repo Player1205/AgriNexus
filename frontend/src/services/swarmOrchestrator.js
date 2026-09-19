@@ -10,7 +10,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * Executes the complete 5-Agent Multi-Agent Swarm (MAS) directly inside the mobile browser.
  * Emits real-time telemetry updates to notify visual laser paths and telemetry ledgers.
  */
-export const runOfflineSwarmPipeline = async (file, language = 'hi', location = null, onTelemetryUpdate = null) => {
+export const runOfflineSwarmPipeline = async (file, language = 'hi', location = null, onTelemetryUpdate = null, sessionId = '') => {
     console.log("[OFFLINE SWARM] Initiating On-Device Multi-Agent Swarm Execution...");
 
     const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
@@ -121,14 +121,15 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
 
     const broadcastLocal = (nodeName, stateUpdate) => {
         currentState = { ...currentState, ...stateUpdate };
+        const eventData = { node: nodeName, state: currentState, session_id: sessionId };
         if (typeof onTelemetryUpdate === 'function') {
-            onTelemetryUpdate({ node: nodeName, state: currentState });
+            onTelemetryUpdate(eventData);
         }
         // Also trigger any global window telemetry subscribers
         if (typeof window !== 'undefined' && window.__agrinexus_telemetry_listeners) {
             Object.values(window.__agrinexus_telemetry_listeners).forEach(listener => {
                 try {
-                    listener({ node: nodeName, state: currentState });
+                    listener(eventData);
                 } catch (e) {
                     console.error(e);
                 }

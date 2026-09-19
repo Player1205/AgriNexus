@@ -1510,3 +1510,73 @@ Each record explains:
 > </details>
 </details>
 
+
+
+---
+
+### ADR-073: Dual-Gate OOD Rejection & In-Browser Chlorophyll Heuristic Gatekeeper
+
+* **Context & Problem:** The system exhibited false-positive classifications on non-crop and out-of-distribution (OOD) inputs. Specifically:
+  1. *Non-Agricultural Document False Positives:* Uploading a text document, email screenshot, or Google Doc caused the Softmax output layer in the 38-class EfficientNet classifier to artificially concentrate probability onto a random crop class (e.g. 62% for Pepper), surpassing the baseline 60% confidence threshold and diagnosing a disease on text.
+  2. *Unsupported Plant Hallucinations:* Uploading an unsupported ornamental houseplant (e.g., Ficus/Areca Palm) produced ambiguous Softmax distributions where adjacent crop classes competed closely (e.g. 62% Pepper vs 35% Grape), yet bypassed the Tier 2 Gemini fallback.
+  3. *Unfiltered Edge Execution:* In edgeVisionAgent.js, the ONNX inference lacked confidence and margin floors, blindly mapping the argmax index to crop labels regardless of certainty.
+* **What Was Changed & How:**
+  1. *Backend Dual-Gate Verification (vision_agent.py):* Upgraded Tier 1 inference to require both an absolute confidence floor (top1 >= 0.85) AND a top-2 runner-up confidence margin (top1 - top2 >= 0.30). Ambiguous or out-of-distribution inputs immediately drop into Tier 2 (Gemini Vision).
+  2. *Gemini Multi-Modal Gatekeeper Hardening (vision_agent.py):* Explicitly instructed the Gemini prompt to detect text documents, email screenshots, screens, paper, and houseplants, strictly setting is_supported_crop = false and confidence = 0.0.
+  3. *In-Browser Chlorophyll & Pigment Bouncer (edgeVisionAgent.js):* Implemented a sub-2ms Canvas pixel heuristic (checkOrganicChlorophyllContent) prior to ONNX inference. Images with foliar organic ratio < 6% (documents, white screens, black text) are immediately intercepted as 'Non-Agricultural Image (Document/Screen Detected)'.
+  4. *Offline Confidence & Margin Floor (edgeVisionAgent.js):* Enforced a minimum confidence floor (top1 >= 0.80) and margin floor (margin >= 0.25) on in-browser ONNX probabilities, safely routing uncertain or unsupported plants to 'Unrecognized / Unsupported Plant' and triggering statutory KVK blocking.
+* **Architectural Rationale:** Pure Softmax classifiers suffer from the closed-world assumption, always summing to 1.0 even on white noise. Coupling high confidence thresholds with a top-2 margin metric and pre-neural organic pigment checks guarantees that non-crop images and unsupported plants are rejected with zero hallucinations, protecting downstream chemical safety interlocks.
+
+<details>
+<summary>?? <strong>Knowledge-Check Quiz: ADR-073</strong></summary>
+
+> **Question:** Why is a simple confidence threshold (e.g. 60%) insufficient to prevent false positives in a closed-world Softmax classifier when given a non-crop image (like a Google Doc)?
+>
+> 1. Because Softmax always outputs 100% on every class.
+> 2. Because Softmax forces probabilities across all classes to sum to 1.0; feature noise or background pixel biases on out-of-distribution inputs can easily elevate a single class above 60%, creating false certainty. Combining a higher threshold (85%) with a runner-up margin check and pre-neural pigment filtering eliminates this bias.
+> 3. Because Google Docs contain invisible green pixels.
+> 4. Because ONNX models only work on Linux servers.
+>
+> <details>
+> <summary>?? <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In closed-world classification, Softmax produces overconfident probability distributions for out-of-distribution inputs. Enforcing a substantial confidence gap between the top prediction and the second-highest guess, paired with domain-specific pigment verification, reliably flags uncertain or spurious classifications.
+> </details>
+</details>
+
+
+
+---
+
+### ADR-074: Session-Scoped Telemetry & Cross-Device Event Isolation
+
+* **Context & Problem:** The WebSocket telemetry broadcast system (/ws/telemetry) was a global broadcast channel. When any client (e.g. the user's phone) uploaded an image and triggered the 5-agent swarm, every telemetry event was broadcast to ALL connected WebSocket clients (including the laptop). This caused three issues:
+  1. *Ghost Agent Activation:* The laptop's TelemetryView showed WEB3 and VOICE agents as 'DONE' even though no image was uploaded from the laptop.
+  2. *Cross-Device Triggering:* Running the app on a phone automatically triggered animations on the laptop.
+  3. *Stale State:* The laptop sometimes displayed data from a previous phone session.
+* **What Was Changed & How:**
+  1. *Backend Session Tagging (routes.py):* Each /api/v1/analyze request now generates a unique session_id (uuid4[:8]). Every broadcast_telemetry() call includes this session_id in the JSON payload. The session_id is also returned in the final JSON response.
+  2. *Frontend Session Generation (api.js):* Before uploading, the frontend generates a local session_id and stores it on window.__agrinexus_active_session. After the server responds, it updates to the server's authoritative session_id.
+  3. *Offline Session Tagging (swarmOrchestrator.js):* The offline swarm pipeline now accepts and broadcasts session_id in every broadcastLocal() event.
+  4. *Session Filtering (TelemetryView.jsx + FarmerView.jsx):* Both components now check incoming telemetry events against window.__agrinexus_active_session. Events from foreign sessions are silently dropped.
+* **Architectural Rationale:** In a multi-client WebSocket broadcast architecture, session-scoping is mandatory to prevent cross-device state leakage. Each browser tab now operates as an isolated session, ensuring the laptop never renders phone events and vice versa.
+
+<details>
+<summary>?? <strong>Knowledge-Check Quiz: ADR-074</strong></summary>
+
+> **Question:** Why does a global WebSocket broadcast cause 'ghost agents' on idle clients?
+>
+> 1. Because WebSockets only work on localhost.
+> 2. Because the backend broadcasts every agent event to ALL connected clients without any session scoping, so idle browsers that never uploaded an image still receive and render those events as if they were their own.
+> 3. Because React re-renders all components on every WebSocket message.
+> 4. Because the Service Worker caches old telemetry events.
+>
+> <details>
+> <summary>?? <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Without session tagging, the WebSocket broadcast is a fan-out to every connected client. Tagging each event with a session_id and filtering on the client side ensures each browser tab only processes events from its own upload session.
+> </details>
+</details>
+

@@ -78,14 +78,22 @@ async def vision_node(state: AgriNexusState) -> dict:
             exp_out = np.exp(output[0] - np.max(output[0]))
             probabilities = exp_out / exp_out.sum()
             
-            winning_class_idx = int(np.argmax(probabilities))
+            sorted_indices = np.argsort(probabilities)[::-1]
+            winning_class_idx = int(sorted_indices[0])
+            runner_up_idx = int(sorted_indices[1]) if len(sorted_indices) > 1 else winning_class_idx
+            
             confidence = float(probabilities[winning_class_idx])
+            runner_up_confidence = float(probabilities[runner_up_idx]) if runner_up_idx != winning_class_idx else 0.0
+            confidence_margin = confidence - runner_up_confidence
+            
             disease_name = CLASS_LABELS.get(winning_class_idx, "Unknown Anomaly")
             
-            print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence.")
+            print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence (Margin: {round(confidence_margin * 100, 1)}%).")
             
-            # If your trained model is confident (>= 60%), return IMMEDIATELY! Zero Gemini calls.
-            if confidence >= 0.60:
+            # Stricter Dual-Gate Verification:
+            # 1. High absolute confidence (>= 85%) to prevent false positives on out-of-distribution noise / text documents.
+            # 2. Significant confidence margin (>= 30%) between top-1 and runner-up to reject ambiguous guesses.
+            if confidence >= 0.85 and confidence_margin >= 0.30:
                 detected_crop = disease_name.split()[0] if disease_name else "Crop"
                 return {
                     "vision_diagnosis": disease_name,
@@ -94,7 +102,7 @@ async def vision_node(state: AgriNexusState) -> dict:
                     "detected_subject": f"{detected_crop} Leaf"
                 }
             else:
-                print(f"[TIER 1 LOW CONFIDENCE] Confidence ({round(confidence * 100, 1)}%) < 60%. Engaging Tier 2 Fallback...")
+                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 85% or Margin ({round(confidence_margin * 100, 1)}%) < 30%. Engaging Tier 2 Gemini Gatekeeper...")
                 
         except Exception as e:
             print(f"[TIER 1 NOTE] {str(e)}. Falling back to Tier 2...")
@@ -126,10 +134,10 @@ async def vision_node(state: AgriNexusState) -> dict:
         [Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato]
         
         TASK:
-        1. Identify what the image actually depicts (e.g. 'Areca Palm Houseplant', 'Living Room / Furniture', 'Tomato Leaf', 'Weed', etc.).
+        1. Identify what the image actually depicts (e.g. 'Areca Palm Houseplant', 'Living Room / Furniture', 'Google Doc / Text Document / Email Screenshot', 'Tomato Leaf', 'Weed', etc.).
         2. STRICT DOMAIN CHECK:
            - Is this a recognized leaf of one of the 14 supported agricultural food crops?
-           - If it is an indoor houseplant, palm, ornamental flower, weed, human, furniture, or non-agricultural plant, set is_supported_crop = false.
+           - If it is a text document, email screenshot, paper, electronic screen, indoor houseplant, palm, ornamental flower, weed, human, furniture, or non-agricultural plant, set is_supported_crop = false.
         3. If is_supported_crop is true:
            - Diagnose the specific disease (e.g. 'Tomato Late blight', 'Corn Common rust', 'Apple Scab', etc.).
         4. If is_supported_crop is false:
@@ -139,7 +147,7 @@ async def vision_node(state: AgriNexusState) -> dict:
         Respond STRICTLY in JSON format:
         {
             "is_supported_crop": true or false,
-            "detected_subject": "Name of what is in the photo (e.g. Areca Palm, Tomato Leaf)",
+            "detected_subject": "Name of what is in the photo (e.g. Areca Palm, Text Document, Tomato Leaf)",
             "diagnosis": "Disease name or 'Unrecognized Plant / Non-Agricultural Subject'",
             "confidence": 0.0 to 1.0 float,
             "explanation": "Short reason"

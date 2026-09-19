@@ -62,6 +62,30 @@ const initSession = async () => {
     return cachedSession;
 };
 
+const checkOrganicChlorophyllContent = (imgData) => {
+    let organicPixels = 0;
+    let totalSampled = 0;
+
+    // Sample every 4th pixel (step by 16 in RGBA array) for sub-1ms speed
+    for (let i = 0; i < imgData.length; i += 16) {
+        const r = imgData[i];
+        const g = imgData[i + 1];
+        const b = imgData[i + 2];
+        totalSampled++;
+
+        // 1. Dominant green foliar chlorophyll
+        const isGreen = (g > r * 1.05 && g > b * 1.05 && g > 35);
+        // 2. Agricultural foliar necrosis / lesion / chlorosis tones (yellow/brown)
+        const isFoliarNecrotic = (r > 60 && g > 45 && b < 110 && (r + g) > (b * 2.0));
+
+        if (isGreen || isFoliarNecrotic) {
+            organicPixels++;
+        }
+    }
+
+    return totalSampled > 0 ? (organicPixels / totalSampled) : 0;
+};
+
 const preprocessImage = (imageElement) => {
     const canvas = document.createElement('canvas');
     const width = 380;
@@ -72,6 +96,8 @@ const preprocessImage = (imageElement) => {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(imageElement, 0, 0, width, height);
     const imgData = ctx.getImageData(0, 0, width, height).data;
+
+    const organicRatio = checkOrganicChlorophyllContent(imgData);
 
     const float32Data = new Float32Array(3 * width * height);
     const mean = [0.485, 0.456, 0.406];
@@ -91,7 +117,10 @@ const preprocessImage = (imageElement) => {
         }
     }
 
-    return new Tensor('float32', float32Data, [1, 3, height, width]);
+    return {
+        tensor: new Tensor('float32', float32Data, [1, 3, height, width]),
+        organicRatio
+    };
 };
 
 function softmax(arr) {
@@ -112,30 +141,59 @@ export const runEdgeVisionAgent = async (file) => {
                 const img = new Image();
                 img.onload = async () => {
                     try {
-                        const inputTensor = preprocessImage(img);
+                        const { tensor: inputTensor, organicRatio } = preprocessImage(img);
+                        console.log(`[EDGE AI] Foliar Organic Ratio: ${(organicRatio * 100).toFixed(1)}%`);
+
+                        // Gate 1: Non-agricultural image check (Document / Screenshot / White screen bouncer)
+                        if (organicRatio < 0.06) {
+                            console.warn("[EDGE AI] Non-agricultural image detected: negligible organic foliar pigment.");
+                            resolve({
+                                vision_diagnosis: "Non-Agricultural Image (Document/Screen Detected)",
+                                vision_confidence: 0.0,
+                                is_crop_supported: false,
+                                detected_subject: "Text Document / Screen / Non-Plant"
+                            });
+                            return;
+                        }
+
                         const inputName = session.inputNames[0];
                         const outputMap = await session.run({ [inputName]: inputTensor });
                         const outputData = outputMap[session.outputNames[0]].data;
 
                         const probabilities = softmax(Array.from(outputData));
                         
-                        let maxProb = 0;
-                        let maxIdx = 0;
-                        for (let i = 0; i < probabilities.length; i++) {
-                            if (probabilities[i] > maxProb) {
-                                maxProb = probabilities[i];
-                                maxIdx = i;
-                            }
+                        const sortedProbs = probabilities
+                            .map((prob, idx) => ({ prob, idx }))
+                            .sort((a, b) => b.prob - a.prob);
+
+                        const top1 = sortedProbs[0];
+                        const top2 = sortedProbs[1];
+                        const margin = top1.prob - (top2 ? top2.prob : 0);
+
+                        console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
+
+                        // Gate 2: Stricter Edge AI Validation (Confidence & Margin Floor)
+                        // Real PlantVillage/PlantDoc foliar diseases score >= 80% with high margin (>= 25%).
+                        // Out-of-distribution houseplants, furniture, or ambiguous leaves fail this check.
+                        if (top1.prob < 0.80 || margin < 0.25) {
+                            console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
+                            resolve({
+                                vision_diagnosis: "Unrecognized / Unsupported Plant",
+                                vision_confidence: top1.prob,
+                                is_crop_supported: false,
+                                detected_subject: "Unsupported Plant / Non-Crop"
+                            });
+                            return;
                         }
 
-                        const diseaseName = EFFICIENTNET_CLASSES[maxIdx];
+                        const diseaseName = EFFICIENTNET_CLASSES[top1.idx];
                         const detectedCrop = diseaseName.split(" ")[0];
 
-                        console.log(`[EDGE AI] REAL Prediction: ${diseaseName} at ${(maxProb * 100).toFixed(2)}%`);
+                        console.log(`[EDGE AI] REAL Prediction: ${diseaseName} at ${(top1.prob * 100).toFixed(2)}%`);
 
                         resolve({
                             vision_diagnosis: diseaseName,
-                            vision_confidence: maxProb,
+                            vision_confidence: top1.prob,
                             is_crop_supported: CERTIFIED_CROPS.includes(detectedCrop),
                             detected_subject: `${detectedCrop} Leaf`
                         });
