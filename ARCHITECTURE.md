@@ -10,9 +10,9 @@ The system is built on a **polyglot micro-monolith architecture** uniting:
 1. **Edge Computer Vision (C++ / ONNX Runtime):** Sub-100ms offline neural diagnosis on edge CPUs via `EfficientNet-B4`.
 2. **Deterministic Safety Core (ISO C++17 / `pybind11`):** A mathematical gatekeeper enforcing statutory pesticide thresholds and Indian CIB&RC banned lists.
 3. **Grounded Agronomic RAG (Vectorized ICAR Knowledge Base):** 38 verified research protocols from the Indian Council of Agricultural Research.
-4. **Real-Time Meteorological Intelligence (Open-Meteo & EXIF GPS):** Hyper-local rain-fastness forecasting and wind drift interlocks.
+4. **Real-Time Meteorological Intelligence (OpenWeatherMap & Air Pollution AQI API):** Hyper-local rain-fastness forecasting, wind drift interlocks, and ambient Air Quality Index (AQI 1-5 / PM2.5) atmospheric safety thresholds.
 5. **Decentralized Cryptographic Ledger (Ethereum Layer-2 / Base Sepolia):** Immutable, gasless crop health passports for export compliance and insurance.
-6. **Acoustic Neural Speech Engine (Sarvam AI Bulbul:v3):** High-depth voice advisories synthesized across 11 Indian regional languages.
+6. **Acoustic Neural Speech Engine (Sarvam AI Bulbul:v3):** High-depth voice advisories synthesized across 11 Indian regional languages with resilient deterministic fallback.
 
 ---
 
@@ -21,22 +21,26 @@ The system is built on a **polyglot micro-monolith architecture** uniting:
 ```mermaid
 flowchart TD
     subgraph FIELD ["🌾 Field Ingestion & Meteorological Ingestion Layer"]
-        A["📸 Leaf Image Capture\n(Mobile Browser / Camera)"] --> B["📍 3-Tier Geolocation Engine\n(Photo EXIF GPS -> Browser GPS -> Regional Baseline)"]
-        B --> C["⛅ Hyper-Local Weather Feed\n(Open-Meteo Live API: Temp, Humidity, Rain Risk, Wind)"]
+        A["📸 Leaf Image Capture\n(Mobile Browser / Camera / EXIF)"] --> B["📍 3-Tier Geolocation Engine\n(Photo EXIF GPS -> Browser GPS -> Interactive Map Pin)"]
+        B --> C["⛅ Hyper-Local Weather & Pollution Feed\n(OpenWeatherMap: Temp, Humidity, Rain, Wind + Air Pollution AQI & PM2.5)"]
         A --> D["🌐 Dialect Selector\n(1 of 11 Indic Languages)"]
     end
 
-    subgraph SWARM ["🤖 Autonomous 5-Agent Multi-Agent Swarm (MAS) — LangGraph Orchestration"]
+    subgraph SWARM ["🤖 Autonomous Multi-Agent Swarm (MAS) — LangGraph Orchestration"]
         direction TB
-        E["🧠 AGENT 1: Vision Pathology\n(Offline ONNX EfficientNet-B4 · 82ms CPU Inference · Fallback: Gemini Vision)"]
-        --> F["📚 AGENT 2: Grounded ICAR RAG\n(38 Certified ICAR Protocols · Zero-Guesswork Agronomy)"]
-        --> G["🛡️ AGENT 3: Deterministic C++ Safety Firewall\n(CIB&RC Gazette Banned List · Mathematical Dosage Clamping)"]
-        --> H["⛓️ AGENT 4: Web3 Crop Passport Relayer\n(Base Sepolia L2 Gasless Smart Contract · SHA-256 Hashes)"]
-        --> I["🎙️ AGENT 5: Vernacular Voice Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine)"]
+        E["🧠 AGENT 1: Vision Pathology & Dual Gate\n(Offline ONNX EfficientNet-B4 · Dual-Gate · Gemini 3.6 Vision Fallback)"]
+        
+        %% Conditional Early Exit Bypass
+        E -- "Certified Crop (14 ICAR Food Crops)" --> F["📚 AGENT 2: Grounded ICAR RAG\n(38 Certified ICAR Protocols · Zero-Guesswork Agronomy)"]
+        E -. "Uncertified Crop / OOD Bypass\n(Direct Jump · Zero Chemical Prescription)" .-> I
+        
+        F --> G["🛡️ AGENT 3: Deterministic C++ Safety Firewall\n(CIB&RC Gazette Banned List · Mathematical Clamping · AQI Interlock)"]
+        G --> H["⛓️ AGENT 4: Web3 Crop Passport Relayer\n(Base Sepolia L2 Gasless Smart Contract · SHA-256 Hashes)"]
+        H --> I["🎙️ AGENT 5: Vernacular Voice & KVK Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine · Localized Advisory)"]
     end
 
     subgraph DUAL_OUT ["⚡ Dual Output Interface"]
-        I --> J["🔊 Farmer Interface\n(Spoken Vernacular Audio + Verified Safe / Alert Card + Weather HUD)"]
+        I --> J["🔊 Farmer Interface\n(Spoken Vernacular Audio + Verified Safe / Uncertified Amber Card + AQI Weather HUD)"]
         H --> K["📊 3D Telemetry Control Room\n(Real-Time WebSocket Bus + Laser Edge Propagation + BaseScan Explorer)"]
     end
 

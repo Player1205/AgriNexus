@@ -687,16 +687,25 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                 {/* 6. Non-Actionable / Statutory KVK Referral or Non-Agricultural Card */}
                 {status === STATUS.ERROR && (
                     !isCropSupported ? (
-                        /* 🌿 Non-Agricultural Subject Intercept Card (Amber) */
+                        /* 🌿 Non-Target / Uncertified Crop Card (Amber) */
                         <div className="w-full bg-amber-50/95 p-4 rounded-2xl border-2 border-amber-300 shadow-md flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-300">
                             <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-sm">
                                 <AlertTriangle className="w-5 h-5 text-amber-600 animate-pulse" />
-                                <span>गैर-लक्षित / अनधिकृत विषय (Non-Target Subject)</span>
+                                <span>
+                                    {detectedSubject && !detectedSubject.includes('Non-Agricultural')
+                                        ? 'असमर्थित फसल (Uncertified Crop) • Gemini AI'
+                                        : 'गैर-कृषि विषय (Non-Agricultural Subject)'}
+                                </span>
                             </div>
                             
                             <div className="bg-amber-100/90 px-3 py-1.5 rounded-xl text-center w-full">
                                 <p className="text-[10px] text-amber-800 font-semibold uppercase tracking-wider">पहचाना गया विषय (Detected Subject)</p>
                                 <p className="text-amber-950 font-extrabold text-xs sm:text-sm">{detectedSubject || diagnosis || 'Non-Agricultural Subject'}</p>
+                                {diagnosis && !diagnosis.toLowerCase().includes('unrecognized') && diagnosis !== detectedSubject && (
+                                    <p className="text-[11px] text-amber-900 font-semibold mt-0.5">
+                                        लक्षण / रोग: <span className="font-bold">{diagnosis}</span>
+                                    </p>
+                                )}
                             </div>
                             
                             <p className="text-amber-900 text-center text-xs font-medium leading-relaxed">
@@ -714,6 +723,42 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Nearest KVK Center Card */}
+                            {nearestKvk && (
+                                <div className="w-full bg-white p-3 rounded-xl border border-amber-200 flex flex-col gap-2 mt-1">
+                                    <div className="flex items-center justify-between border-b pb-1.5 border-gray-100">
+                                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-950">
+                                            <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                                            {nearestKvk.name}
+                                        </span>
+                                        <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                            {nearestKvk.distance_km === 'Unknown' ? 'Location Disabled' : `${nearestKvk.distance_km} km away`}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-600 font-medium leading-tight">
+                                        {nearestKvk.address}
+                                    </p>
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <a
+                                            href={`tel:${nearestKvk.phone}`}
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                                        >
+                                            <Phone className="w-3.5 h-3.5" />
+                                            Call Agronomist ({nearestKvk.phone})
+                                        </a>
+                                        <a
+                                            href={nearestKvk.maps_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                            title="Open in Google Maps"
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
 
                             {translatedText && (
                                 <div className="w-full flex flex-col items-center gap-2 mt-1">
@@ -820,17 +865,15 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                             Offline Baseline
                                         </span>
                                     )}
-                                    {weather.aqi && (
-                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                                            weather.aqi === 1 ? 'bg-emerald-100 text-emerald-700' :
-                                            weather.aqi === 2 ? 'bg-green-100 text-green-700' :
-                                            weather.aqi === 3 ? 'bg-yellow-100 text-yellow-700' :
-                                            weather.aqi === 4 ? 'bg-orange-100 text-orange-700' :
-                                            'bg-red-100 text-red-700'
-                                        }`}>
-                                            AQI: {weather.aqi === 1 ? 'Good' : weather.aqi === 2 ? 'Fair' : weather.aqi === 3 ? 'Mod' : weather.aqi === 4 ? 'Poor' : 'Severe'}
-                                        </span>
-                                    )}
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border shadow-sm ${
+                                        (weather.aqi === 1) ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                                        (weather.aqi === 2) ? 'bg-green-100 text-green-800 border-green-300' :
+                                        (weather.aqi === 3) ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                                        (weather.aqi === 4) ? 'bg-orange-100 text-orange-900 border-orange-300 animate-pulse' :
+                                        'bg-red-100 text-red-900 border-red-300 animate-pulse'
+                                    }`}>
+                                        AQI: {weather.aqi || 2} ({weather.aqi_label || (weather.aqi === 1 ? 'Good' : weather.aqi === 2 ? 'Fair' : weather.aqi === 3 ? 'Mod' : weather.aqi === 4 ? 'Poor' : 'Severe')})
+                                    </span>
                                 </span>
                                 <span className="text-[10px] text-gray-600 font-medium">
                                     {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')

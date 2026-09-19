@@ -1614,13 +1614,57 @@ Each record explains:
 ### ADR-078: Gemini Cloud Fallback with Uncertified Crop Direct Voice Routing & KVK Handoff
 **Context & The Problem:** When edge CV model is uncertain or encounters out-of-distribution crops (e.g. Guava), AgriNexus must identify the plant without hallucinating hazardous chemical dosages for uncertified crops.
 **What Was Changed & How It Was Changed:** 
-1. In \ision_agent.py\, expanded Gemini fallback to detect any real agricultural plant while strictly verifying against the 14 certified ICAR crops.
-2. In \graph.py\, added a LangGraph conditional edge after \ision\ node to route directly to \oice\ (skipping RAG, Safety, and Web3) when \is_crop_supported = False\.
-3. In \oice_agent.py\, formulated a specialized vernacular advisory explicitly disclaiming Gemini AI identification vs on-device models, locking chemical spraying, providing organic sanitation actions, and referring the farmer to the nearest KVK center.
+1. In \ ision_agent.py\, expanded Gemini fallback to detect any real agricultural plant while strictly verifying against the 14 certified ICAR crops.
+2. In \graph.py\, added a LangGraph conditional edge after \ ision\ node to route directly to \ oice\ (skipping RAG, Safety, and Web3) when \is_crop_supported = False\.
+3. In \ oice_agent.py\, formulated a specialized vernacular advisory explicitly disclaiming Gemini AI identification vs on-device models, locking chemical spraying, providing organic sanitation actions, and referring the farmer to the nearest KVK center.
 4. Fixed Gemini response text parsing to safely unwrap dictionary/list content and eliminate raw JSON artifacts in audio and UI text.
 **Architectural Rationale:** Preserves zero-hallucination and biological safety invariants: uncertified crops never receive automated chemical recommendations, while still providing intelligent crop identification and official KVK referral.
 <details>
 <summary>💡 <strong>Knowledge-Check Quiz: ADR-078</strong></summary>
 **Q:** Why are RAG and Safety nodes bypassed when Gemini detects an uncertified crop like Guava?
 **A:** Because AgriNexus only maintains verified ICAR research protocols and statutory CIB&RC clearances for its 14 certified crops. Recommending unverified chemicals on other crops poses biological toxicity risks.
+</details>
+
+---
+
+### ADR-079: Air Quality Index (AQI) Telemetry Integration & Resilient Deterministic Voice Fallback
+**Context & The Problem:**
+1. *Air Pollution Hazards:* Farmers spraying agrochemicals during high particulate pollution (AQI >= 4) risk chemical-particulate binding, drift entrapment, and acute respiratory toxicity. Real-time AQI and PM2.5 metrics needed to be integrated into both the meteorological HUD and spoken vernacular advisories.
+2. *Local Variable Scoping Defect in Voice Agent:* When Google Gemini hit free-tier rate limits (429 `RESOURCE_EXHAUSTED`), an `UnboundLocalError` was triggered because `get_localized_fallback()` was defined inside an `else:` block that was out of scope during exception handling.
+3. *Actionable Extension Handoff for Uncertified Crops:* Farmers scanning uncertified crops (e.g. Guava) needed immediate access to their local KVK phone number and navigation coordinates rather than a dead-end message.
+
+**What Was Changed & How It Was Changed:**
+1. *OpenWeatherMap Air Pollution Engine (`backend/app/services/weather_service.py`):*
+   - Added asynchronous queries to OWM Air Pollution API (`https://api.openweathermap.org/data/2.5/air_pollution`).
+   - Mapped integer AQI (1-5) to standardized qualitative labels (`Good`, `Fair`, `Moderate`, `Poor`, `Severe`) and extracted `pm2_5` concentrations.
+   - Synchronized offline fallback baselines to always provide valid default AQI metrics.
+2. *Deterministic Indic Voice Fallback Scoping (`backend/app/agents/voice_agent.py`):*
+   - Lifted `get_localized_fallback()` and `clean_voice_text()` before the `try:` block to ensure they remain universally accessible during any network/LLM exceptions.
+   - Expanded localized dialect templates across all 11 supported Indic languages (Hindi, Punjabi, Telugu, Tamil, Malayalam, Marathi, Bengali, Gujarati, Kannada, Odia, English).
+   - Ensured automatic fallback to local KVK resolution (`kvk_service.find_nearest_kvk`) even when upstream Safety Agent is bypassed.
+3. *FarmerView Meteorological HUD & Actionable Amber Card (`frontend/src/components/FarmerView.jsx`):*
+   - Rendered permanent color-coded AQI pill badges (`bg-emerald-100` through `bg-red-100` with pulse animations on hazards) in the weather HUD bar.
+   - Integrated full KVK extension cards (with direct `tel:` dialing and Google Maps links) directly into the uncertified crop card.
+   - Sanitized all localized text display so raw JSON or dictionary markers (`{'type': 'text'}`) are never shown.
+
+**Architectural Rationale:**
+- Guarantees zero-crash resilience during upstream LLM throttling or cloud outages.
+- Upholds the core AgriNexus principle of actionable agricultural provenance: if a crop cannot be chemically prescribed by autonomous agents, the farmer is seamlessly handed off to accredited physical ICAR agronomists with one-tap telephone calling.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-079</strong></summary>
+
+> **Question:** Why is spraying agrochemicals prohibited when Air Quality Index (AQI) is Poor or Severe (AQI >= 4)?
+>
+> 1. Because rain always accompanies high air pollution.
+> 2. Because high ambient particulate matter (PM2.5/PM10) and thermal atmospheric inversions trap chemical droplets, preventing leaf deposition, increasing chemical drift, and creating hazardous toxic aerosols for farmers and livestock.
+> 3. Because the mobile app loses GPS signal during smog.
+> 4. Because smart contracts require clean air to sign transactions.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Under severe atmospheric particulate loads and stagnant inversions, droplet evaporation and particulate adsorption cause pesticide drift and acute inhalation risks, violating ICAR and international Good Agricultural Practices (GAP).
+> </details>
 </details>

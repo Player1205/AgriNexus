@@ -12,7 +12,7 @@
     <a href="https://github.com/Player1205/AgriNexus/actions"><img src="https://github.com/Player1205/AgriNexus/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline" /></a>
     <a href="https://sepolia.basescan.org/address/0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7"><img src="https://img.shields.io/badge/Base_Sepolia-Live_Contract-0052FF?style=for-the-badge&logo=ethereum&logoColor=white" alt="Base Sepolia" /></a>
     <a href="https://sarvam.ai"><img src="https://img.shields.io/badge/Voice_Engine-Sarvam_AI_Bulbul:v3-FF6F00?style=for-the-badge&logo=soundcharts&logoColor=white" alt="Sarvam AI" /></a>
-    <a href="https://open-meteo.com"><img src="https://img.shields.io/badge/Weather_API-Open--Meteo_Live_GPS-00A86B?style=for-the-badge&logo=icloud&logoColor=white" alt="Open-Meteo" /></a>
+    <a href="https://openweathermap.org"><img src="https://img.shields.io/badge/Weather_&_AQI-OpenWeatherMap_Live_GPS-00A86B?style=for-the-badge&logo=icloud&logoColor=white" alt="OpenWeatherMap" /></a>
     <a href="https://onnxruntime.ai"><img src="https://img.shields.io/badge/Edge_AI-ONNX_EfficientNet--B4-005CED?style=for-the-badge&logo=onnx&logoColor=white" alt="ONNX Runtime" /></a>
     <a href="https://isocpp.org"><img src="https://img.shields.io/badge/Safety_Core-C%2B%2B17%20%7C%20pybind11-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++" /></a>
     <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20LangGraph-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" /></a>

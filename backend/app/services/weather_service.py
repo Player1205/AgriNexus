@@ -82,8 +82,10 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
             "temperature_c": 25.0,
             "relative_humidity": 50.0,
             "precipitation_mm": 0.0,
-            "wind_speed_kmh": 5.0,
             "rain_risk_6h_percent": 0.0,
+            "wind_speed_kmh": 5.0,
+            "aqi": 2,
+            "aqi_label": "Fair",
             "is_spray_safe": False,  # Block spray when location is unknown
             "is_live_weather": False,
             "location_source": "UNKNOWN_LOCATION_RESTRICTED",
@@ -92,13 +94,34 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
             "warnings": ["GPS location blocked or unavailable. Weather metrics defaulted to static safety limits."]
         }
 
-    # Call OpenWeatherMap API
+    # Call OpenWeatherMap Weather and Air Pollution APIs in parallel
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lng}&appid=4e02b9f935a7ec6a7f6d6b92911f9634&units=metric"
+    aqi_url = f"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lng}&appid=4e02b9f935a7ec6a7f6d6b92911f9634"
+
+    import asyncio
 
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
-            resp = await client.get(url)
-            if resp.status_code == 200:
+            resp, aqi_resp = await asyncio.gather(
+                client.get(url),
+                client.get(aqi_url),
+                return_exceptions=True
+            )
+
+            aqi_val = 2
+            aqi_label = "Fair"
+            pm2_5_val = 25.0
+
+            if not isinstance(aqi_resp, Exception) and aqi_resp.status_code == 200:
+                aqi_data = aqi_resp.json()
+                aqi_list = aqi_data.get("list", [{}])
+                if aqi_list:
+                    aqi_val = int(aqi_list[0].get("main", {}).get("aqi", 2))
+                    pm2_5_val = float(aqi_list[0].get("components", {}).get("pm2_5", 25.0))
+                    label_map = {1: "Good", 2: "Fair", 3: "Moderate", 4: "Poor", 5: "Severe"}
+                    aqi_label = label_map.get(aqi_val, "Fair")
+
+            if not isinstance(resp, Exception) and resp.status_code == 200:
                 data = resp.json()
                 main_data = data.get("main", {})
                 wind_data = data.get("wind", {})
@@ -120,8 +143,8 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                     max_rain_risk = 20.0
 
                 # Agronomic Spray Safety Window calculation:
-                # Safe if wind < 15 km/h, rain risk < 35%, and temperature < 36°C
-                is_spray_safe = (wind_kmh <= 15.0) and (max_rain_risk < 35.0) and (temp_c <= 36.0)
+                # Safe if wind < 15 km/h, rain risk < 35%, temperature < 36°C, and AQI < 5 (not Hazardous)
+                is_spray_safe = (wind_kmh <= 15.0) and (max_rain_risk < 35.0) and (temp_c <= 36.0) and (aqi_val < 5)
 
                 return {
                     "temperature_c": round(temp_c, 1),
@@ -129,6 +152,9 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                     "precipitation_mm": 0.0,
                     "rain_risk_6h_percent": round(max_rain_risk, 0),
                     "wind_speed_kmh": round(wind_kmh, 1),
+                    "aqi": aqi_val,
+                    "aqi_label": aqi_label,
+                    "pm2_5": round(pm2_5_val, 1),
                     "is_spray_safe": is_spray_safe,
                     "latitude": lat,
                     "longitude": lng,
@@ -136,7 +162,7 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                     "is_live_weather": True
                 }
     except Exception as e:
-        print(f"[WEATHER SERVICE WARNING] Open-Meteo failed: {e}")
+        print(f"[WEATHER SERVICE WARNING] OpenWeatherMap failed: {e}")
 
     # Fallback Cascade 2: Met.no (Norwegian Meteorological Institute)
     metno_url = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
@@ -169,6 +195,8 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                         "precipitation_mm": round(precip, 1),
                         "rain_risk_6h_percent": round(rain_risk, 0),
                         "wind_speed_kmh": round(wind_kmh, 1),
+                        "aqi": 2,
+                        "aqi_label": "Fair",
                         "is_spray_safe": is_spray_safe,
                         "latitude": lat,
                         "longitude": lng,
@@ -205,6 +233,8 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                     "precipitation_mm": round(precip, 1),
                     "rain_risk_6h_percent": round(max_rain_risk, 0),
                     "wind_speed_kmh": round(wind_kmh, 1),
+                    "aqi": 2,
+                    "aqi_label": "Fair",
                     "is_spray_safe": is_spray_safe,
                     "latitude": lat,
                     "longitude": lng,
@@ -219,8 +249,10 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
         "temperature_c": 28.0,
         "relative_humidity": 75.0,
         "precipitation_mm": 0.0,
-        "rain_risk_6h_percent": 0.0,
-        "wind_speed_kmh": 6.0,
+        "rain_risk_6h_percent": 15.0,
+        "wind_speed_kmh": 5.0,
+        "aqi": 2,
+        "aqi_label": "Fair",
         "is_spray_safe": True,
         "latitude": lat,
         "longitude": lng,
