@@ -173,9 +173,9 @@ export const runEdgeVisionAgent = async (file) => {
                         console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
 
                         // Gate 2: Stricter Edge AI Validation (Confidence & Margin Floor)
-                        // Real PlantVillage/PlantDoc foliar diseases score >= 80% with high margin (>= 25%).
+                        // Real PlantVillage/PlantDoc foliar diseases score >= 95% with high margin (>= 40%).
                         // Out-of-distribution houseplants, furniture, or ambiguous leaves fail this check.
-                        if (top1.prob < 0.80 || margin < 0.25) {
+                        if (top1.prob < 0.92 || margin < 0.40) {
                             console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
                             resolve({
                                 vision_diagnosis: "Unrecognized / Unsupported Plant",
