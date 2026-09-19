@@ -80,10 +80,12 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
     if lat is None:
         return {
             "temperature_c": 25.0,
-            "humidity_percent": 50.0,
+            "relative_humidity": 50.0,
+            "precipitation_mm": 0.0,
             "wind_speed_kmh": 5.0,
-            "rain_probability_percent": 0.0,
-            "is_live": False,
+            "rain_risk_6h_percent": 0.0,
+            "is_spray_safe": False,  # Block spray when location is unknown
+            "is_live_weather": False,
             "location_source": "UNKNOWN_LOCATION_RESTRICTED",
             "latitude": None,
             "longitude": None,

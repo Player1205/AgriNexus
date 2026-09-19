@@ -1,7 +1,9 @@
 import { InferenceSession, Tensor, env } from 'onnxruntime-web';
 
-// CDN removed to prevent CORS/CSP blocking. Vite will bundle the WASM locally.
-// env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+// Configure ONNX Runtime to use CDN WASM files to prevent local SPA routing from returning index.html (404)
+env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+// Disable multithreading to prevent SharedArrayBuffer crashes without COOP/COEP headers
+env.wasm.numThreads = 1;
 
 export const CERTIFIED_CROPS = [
     "Tomato", "Potato", "Corn", "Apple", "Grape", "Strawberry",
