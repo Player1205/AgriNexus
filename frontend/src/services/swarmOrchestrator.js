@@ -25,15 +25,16 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
 
     // Fetch live satellite weather if phone has internet
     if (isOnline) {
+        // Cascade 1: Open-Meteo
         try {
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 6000);
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&hourly=precipitation_probability&forecast_hours=6`, { signal: controller.signal });
             clearTimeout(timer);
             if (res.ok) {
-                const wData = await res.json();
-                const curr = wData.current || {};
-                const hourly = wData.hourly || {};
+                const data = await res.json();
+                const curr = data.current || {};
+                const hourly = data.hourly || {};
                 const maxRain = hourly.precipitation_probability ? Math.max(...hourly.precipitation_probability) : 0;
                 currentTemp = Math.round((curr.temperature_2m ?? 28.0) * 10) / 10;
                 currentHumidity = Math.round((curr.relative_humidity_2m ?? 75.0) * 10) / 10;
@@ -41,9 +42,63 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                 windSpeed = Math.round((curr.wind_speed_10m ?? 5.0) * 10) / 10;
                 isLiveWeather = true;
                 locationSource = location ? "DEVICE_LIVE_GPS" : "REGIONAL_LIVE_WEATHER";
+            } else {
+                throw new Error("Open-Meteo failed");
             }
         } catch (e) {
-            console.warn("[SWARM WEATHER] Fallback to baseline weather:", e);
+            console.warn("[SWARM WEATHER] Open-Meteo failed, trying Met.no...", e);
+            // Cascade 2: Met.no (Norwegian Meteorological Institute)
+            try {
+                const controller2 = new AbortController();
+                const timer2 = setTimeout(() => controller2.abort(), 6000);
+                const res2 = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lng}`, {
+                    headers: { "User-Agent": "AgriNexus-App/1.0" },
+                    signal: controller2.signal
+                });
+                clearTimeout(timer2);
+                if (res2.ok) {
+                    const data2 = await res2.json();
+                    const current = data2.properties.timeseries[0].data.instant.details;
+                    const next6h = data2.properties.timeseries[0].data.next_1_hours?.details || {};
+                    
+                    currentTemp = Math.round((current.air_temperature ?? 28.0) * 10) / 10;
+                    currentHumidity = Math.round((current.relative_humidity ?? 75.0) * 10) / 10;
+                    windSpeed = Math.round(((current.wind_speed ?? 1.67) * 3.6) * 10) / 10; // m/s to km/h
+                    rainRisk = Math.round(next6h.probability_of_precipitation || 0.0);
+                    isLiveWeather = true;
+                    locationSource = location ? "DEVICE_LIVE_GPS" : "REGIONAL_LIVE_WEATHER";
+                } else {
+                    throw new Error("Met.no failed");
+                }
+            } catch (e2) {
+                console.warn("[SWARM WEATHER] Met.no failed, trying WTTR.in...", e2);
+                // Cascade 3: WTTR.in
+                try {
+                    const controller3 = new AbortController();
+                    const timer3 = setTimeout(() => controller3.abort(), 6000);
+                    const res3 = await fetch(`https://wttr.in/${lat},${lng}?format=j1`, { signal: controller3.signal });
+                    clearTimeout(timer3);
+                    if (res3.ok) {
+                        const data3 = await res3.json();
+                        const current = data3.current_condition[0];
+                        currentTemp = parseFloat(current.temp_C ?? 28.0);
+                        currentHumidity = parseFloat(current.humidity ?? 75.0);
+                        windSpeed = parseFloat(current.windspeedKmph ?? 6.0);
+                        
+                        const hourly = data3.weather[0]?.hourly || [];
+                        const rainProbs = hourly.slice(0, 2).map(h => parseFloat(h.chanceofrain || 0));
+                        rainRisk = Math.round(Math.max(...rainProbs, 0.0));
+                        isLiveWeather = true;
+                        locationSource = location ? "DEVICE_LIVE_GPS" : "REGIONAL_LIVE_WEATHER";
+                    } else {
+                        throw new Error("WTTR.in failed");
+                    }
+                } catch (e3) {
+                    console.warn("[SWARM WEATHER] All API Cascades failed. Falling back to offline baseline.", e3);
+                    isLiveWeather = false;
+                    locationSource = "OFFLINE_FALLBACK";
+                }
+            }
         }
     }
 

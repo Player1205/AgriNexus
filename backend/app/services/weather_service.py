@@ -81,7 +81,7 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
         lat, lng = DEFAULT_LAT, DEFAULT_LNG
         source = "REGIONAL_BASELINE"
 
-    # Call Open-Meteo Free Hyper-Local Weather API
+    # Call Open-Meteo Free Hyper-Local Weather API (Cascade 1)
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -125,9 +125,85 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                     "is_live_weather": True
                 }
     except Exception as e:
-        print(f"[WEATHER SERVICE WARNING] Fallback to standard metrics: {e}")
+        print(f"[WEATHER SERVICE WARNING] Open-Meteo failed: {e}")
 
-    # Safe fallback if internet offline
+    # Fallback Cascade 2: Met.no (Norwegian Meteorological Institute)
+    metno_url = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+    metno_params = {"lat": lat, "lon": lng}
+    headers = {"User-Agent": "AgriNexus-App/1.0 (Contact: admin@agrinexus.local)"}
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(metno_url, params=metno_params, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                timeseries = data.get("properties", {}).get("timeseries", [])
+                if timeseries:
+                    current = timeseries[0].get("data", {}).get("instant", {}).get("details", {})
+                    next_6h = timeseries[0].get("data", {}).get("next_1_hours", {}).get("details", {})
+                    # using next_1_hours probability for immediate rain risk if 6 hours is not easily iterable
+                    
+                    temp_c = float(current.get("air_temperature", 28.0))
+                    humidity = float(current.get("relative_humidity", 75.0))
+                    precip = float(next_6h.get("precipitation_amount", 0.0))
+                    wind_ms = float(current.get("wind_speed", 1.67)) # m/s to km/h
+                    wind_kmh = wind_ms * 3.6
+                    
+                    rain_risk = float(next_6h.get("probability_of_precipitation", 0.0))
+
+                    is_spray_safe = (wind_kmh <= 15.0) and (rain_risk < 35.0) and (temp_c <= 36.0)
+
+                    return {
+                        "temperature_c": round(temp_c, 1),
+                        "relative_humidity": round(humidity, 1),
+                        "precipitation_mm": round(precip, 1),
+                        "rain_risk_6h_percent": round(rain_risk, 0),
+                        "wind_speed_kmh": round(wind_kmh, 1),
+                        "is_spray_safe": is_spray_safe,
+                        "latitude": lat,
+                        "longitude": lng,
+                        "location_source": source,
+                        "is_live_weather": True
+                    }
+    except Exception as e:
+        print(f"[WEATHER SERVICE WARNING] Met.no failed: {e}")
+
+    # Fallback Cascade 3: WTTR.in
+    wttr_url = f"https://wttr.in/{lat},{lng}?format=j1"
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(wttr_url)
+            if resp.status_code == 200:
+                data = resp.json()
+                current = data.get("current_condition", [{}])[0]
+                weather_arr = data.get("weather", [{}])[0]
+                
+                temp_c = float(current.get("temp_C", 28.0))
+                humidity = float(current.get("humidity", 75.0))
+                wind_kmh = float(current.get("windspeedKmph", 6.0))
+                precip = float(current.get("precipMM", 0.0))
+                
+                hourly = weather_arr.get("hourly", [{}])
+                rain_probs = [float(h.get("chanceofrain", 0.0)) for h in hourly[:2]]
+                max_rain_risk = float(max(rain_probs)) if rain_probs else 0.0
+                
+                is_spray_safe = (wind_kmh <= 15.0) and (max_rain_risk < 35.0) and (temp_c <= 36.0)
+
+                return {
+                    "temperature_c": round(temp_c, 1),
+                    "relative_humidity": round(humidity, 1),
+                    "precipitation_mm": round(precip, 1),
+                    "rain_risk_6h_percent": round(max_rain_risk, 0),
+                    "wind_speed_kmh": round(wind_kmh, 1),
+                    "is_spray_safe": is_spray_safe,
+                    "latitude": lat,
+                    "longitude": lng,
+                    "location_source": source,
+                    "is_live_weather": True
+                }
+    except Exception as e:
+        print(f"[WEATHER SERVICE WARNING] Wttr.in failed: {e}")
+
+    # Safe Offline Fallback if all 3 APIs fail
     return {
         "temperature_c": 28.0,
         "relative_humidity": 75.0,

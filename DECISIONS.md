@@ -1434,6 +1434,38 @@ Each record explains:
 > </details>
 </details>
 
+---
+
+### ADR-071: Zero-Key Meteorological API Cascade & CI/CD Mock Alignment
+
+* **Context & Problem:** While Open-Meteo provides a generous free tier (10,000 requests/day without an API key), relying on a single upstream provider creates a single point of failure. If Open-Meteo experiences downtime or is blocked by an ISP, the system falls back to the static `OFFLINE_FALLBACK` despite having an active internet connection. Additionally, a recent change to the frontend weather rendering logic caused the CI/CD pipeline's Vitest `FarmerView.test.jsx` unit test to fail because the mocked API response lacked the newly utilized `is_live_weather` boolean.
+* **What Was Changed & How:**
+  1. *Tri-Tier Zero-Key Weather Cascade:* Implemented a robust fallback chain in both `backend/app/services/weather_service.py` and `frontend/src/services/swarmOrchestrator.js`:
+     * **Tier 1:** `api.open-meteo.com` (Primary, fastest).
+     * **Tier 2:** `api.met.no` (Norwegian Meteorological Institute, hyper-accurate, fully free, requires custom User-Agent).
+     * **Tier 3:** `wttr.in` (Global JSON weather router).
+     * **Tier 4:** Static Offline Baseline (Ultimate safety net).
+  2. *CI/CD Vitest Mock Rectification:* Updated the `uploadImage` mock inside `FarmerView.test.jsx` to correctly inject `is_live_weather: true` and `location_source: 'DEVICE_LIVE_GPS'`, ensuring the test rendering matches production runtime expectations and unblocking the GitHub Actions build pipeline.
+* **Architectural Rationale:** Chaining multiple key-less, free-tier APIs maximizes global uptime and fault tolerance for agricultural users without introducing external vendor lock-in or requiring developers to inject `.env` secrets for basic weather operations.
+
+<details>
+<summary>🧠 <strong>Knowledge-Check Quiz: ADR-071</strong></summary>
+
+> **Question:** Why was the `Met.no` API chosen as the primary fallback instead of popular alternatives like OpenWeatherMap or WeatherAPI?
+>
+> 1. Because it provides higher resolution satellite imagery.
+> 2. Because Met.no requires strictly zero API keys, aligning perfectly with the frictionless, open-source deployment ethos of AgriNexus.
+> 3. Because it runs natively inside the mobile browser.
+> 4. Because it is the only API that returns temperatures in Celsius.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Maintaining a "Zero-Key" requirement for core functionalities ensures that anyone can clone, run, and deploy the application instantly without registering for third-party developer portals or managing environment secrets.
+> </details>
+</details>
+
 
 
 

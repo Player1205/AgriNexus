@@ -65,7 +65,9 @@ describe('FarmerView UI Component Suite', () => {
                 precipitation_mm: 0.0,
                 rain_risk_6h_percent: 5.0,
                 wind_speed_kmh: 8.2,
-                is_spray_safe: true
+                is_spray_safe: true,
+                is_live_weather: true,
+                location_source: 'DEVICE_LIVE_GPS'
             }
         });
 
