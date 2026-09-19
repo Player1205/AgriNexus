@@ -193,14 +193,26 @@ async def voice_node(state: AgriNexusState) -> dict:
 
     is_crop_supported = state.get("is_crop_supported", True)
     detected_subj = state.get("detected_subject", "Non-Agricultural Subject")
+    is_gemini_fallback = state.get("identified_by") == "gemini_fallback"
 
     if not is_crop_supported:
-        english_text = (
-            f"Dear Farmer, the uploaded image appears to be {detected_subj}. "
-            f"AgriNexus is certified specifically for 14 commercial agricultural food crops (Tomato, Potato, Corn, Apple, Grape, Strawberry, Pepper, Soybean, etc.). "
-            f"Chemical application is strictly prohibited on non-target plants. "
-            f"Please upload a clear close-up photo of a supported crop leaf."
-        )
+        if is_gemini_fallback and detected_subj and "Non-Agricultural" not in detected_subj:
+            english_text = (
+                f"Dear Farmer, our on-device ICAR computer vision model was uncertain or this crop is uncertified. "
+                f"Via Gemini Cloud AI fallback, the crop was identified as {detected_subj}, showing signs of {vision_diagnosis}. "
+                f"Please note: AgriNexus is officially certified only for 14 commercial agricultural food crops "
+                f"(Tomato, Potato, Corn, Apple, Grape, Strawberry, Pepper, Orange, Soybean, Peach, Cherry, Squash, Raspberry, Blueberry). "
+                f"Because this crop is not within our 14 ICAR-certified databases, chemical recommendations are strictly locked to prevent crop damage. "
+                f"Recommended Action: Prune visibly affected foliage, ensure good field drainage, and maintain organic sanitation. "
+                f"For certified chemical specifications and diagnostic clarity, please consult your nearest extension center: {kvk_name_str} ({kvk_dist_str} away)."
+            )
+        else:
+            english_text = (
+                f"Dear Farmer, the uploaded image appears to be {detected_subj}. "
+                f"AgriNexus is certified specifically for 14 commercial agricultural food crops (Tomato, Potato, Corn, Apple, Grape, Strawberry, Pepper, Soybean, etc.). "
+                f"Chemical application is strictly prohibited on non-target plants. "
+                f"Please upload a clear close-up photo of a supported crop leaf."
+            )
     elif not is_safe:
         english_text = (
             f"Dear Farmer, your crop shows foliar symptoms of {vision_diagnosis}. "
@@ -248,25 +260,66 @@ async def voice_node(state: AgriNexusState) -> dict:
     try:
         api_key = os.environ.get("GOOGLE_API_KEY")
         if api_key and api_key != "your_google_api_key_here":
-            llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key)
+            llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", google_api_key=api_key)
             prompt = f"""You are an expert senior agricultural scientist (Agronomist) advising an Indian farmer in their native language.
             
-Translate and refine the following in-depth agricultural advisory into natural, fluent, and highly detailed colloquial {target_language} (written in {target_script} script).
+Translate and adapt the following agricultural advisory into natural, fluent, and highly detailed colloquial {target_language} (written in {target_script} script).
 
 IMPORTANT INSTRUCTIONS:
 1. Respectful Greeting (e.g. '{lang_meta["greeting"]}').
-2. Maintain all exact numbers: dosages ({safe_dosage} {unit}), rain probability ({rain_risk}%), wind speed ({wind_speed} km/h), and temperature ({temperature}°C).
-3. Weather Action: If instructed NOT to spray due to rain or wind, emphasize forcefully that the farmer MUST DELAY SPRAYING to prevent wasting costly chemicals. If instructed to spray only at dawn/dusk due to heat, state the warning clearly.
-4. Respond strictly with the translated speech text in {target_script} script with zero markdown headers or bullet points.
+2. Maintain all facts: mention the detected crop, diagnosis, practical cultural care steps, and note clearly that this identification is from Gemini AI fallback rather than on-device models, with a referral to {kvk_name_str}.
+3. Respond strictly with plain text in {target_script} script with zero markdown headers, bullet points, JSON, or code quotes.
 
 Advisory text: '{english_text}'"""
             
             response = llm.invoke(prompt)
-            translated_text = response.content.strip()
+            raw_content = response.content
+            if isinstance(raw_content, list):
+                parts = []
+                for part in raw_content:
+                    if isinstance(part, str):
+                        parts.append(part)
+                    elif isinstance(part, dict) and 'text' in part:
+                        parts.append(part['text'])
+                    elif hasattr(part, 'text'):
+                        parts.append(part.text)
+                    else:
+                        parts.append(str(part))
+                raw_content = "".join(parts)
+            
+            translated_text = str(raw_content).strip()
+            
+            # Robust unwrap if Gemini returned stringified dict or JSON
+            if translated_text.startswith("{") and "'text':" in translated_text:
+                import re
+                m = re.search(r"'text':\s*['\"](.*?)['\"](?:\s*,\s*'extras'|\s*})", translated_text, re.DOTALL)
+                if m:
+                    translated_text = m.group(1).replace("\\n", "\n").strip()
+            elif translated_text.startswith("{") and '"text":' in translated_text:
+                import json
+                try:
+                    parsed_json = json.loads(translated_text)
+                    if isinstance(parsed_json, dict) and 'text' in parsed_json:
+                        translated_text = parsed_json['text'].strip()
+                except Exception:
+                    pass
         else:
             # Dynamic high-depth, fully localized agronomic fallback templates with live weather and KVK
             if not is_crop_supported:
-                if language_code == "hi":
+                if is_gemini_fallback and detected_subj and "Non-Agricultural" not in detected_subj:
+                    if language_code == "hi":
+                        translated_text = (
+                            f"किसान भाई, हमारे ऑन-डिवाइस मॉडल द्वारा पहचान न होने पर Gemini AI द्वारा इस पौधे की पहचान '{detected_subj}' ({vision_diagnosis}) के रूप में की गई है। "
+                            f"कृपया ध्यान दें: AgriNexus केवल 14 प्रमाणित फसलों के लिए सत्यापित है। सुरक्षा कारणों से इसके लिए रासायनिक कीटनाशक लॉक हैं। "
+                            f"प्रभावित पत्तियों को छांटें और खेत साफ रखें। प्रमाणित विनिर्देशों और उपचार के लिए अपने नजदीकी कृषि विज्ञान केंद्र '{kvk_name_str}' ({kvk_dist_str}) से संपर्क करें।"
+                        )
+                    else:
+                        translated_text = (
+                            f"Dear Farmer, identified via Gemini AI fallback as {detected_subj} ({vision_diagnosis}). "
+                            f"AgriNexus is certified for 14 main crops; chemical recommendations are locked for safety. "
+                            f"Please maintain cultural sanitation and visit nearest KVK '{kvk_name_str}' ({kvk_dist_str}) for certified specifications."
+                        )
+                elif language_code == "hi":
                     translated_text = f"किसान भाई, यह फोटो {detected_subj} की प्रतीत होती है, जो AgriNexus की 14 समर्थित मुख्य कृषि फसलों (जैसे टमाटर, आलू, मक्का, सेब, स्ट्रॉबेरी) में से नहीं है। गैर-लक्षित पौधों पर रासायनिक दवाइयों का छिड़काव वर्जित है। कृपया समर्थित फसल की पत्ती का स्पष्ट फोटो अपलोड करें।"
                 elif language_code == "pa":
                     translated_text = f"ਕਿਸਾਨ ਵੀਰੋ, ਇਹ ਫੋਟੋ {detected_subj} ਦੀ ਜਾਪਦੀ ਹੈ, ਜੋ AgriNexus ਦੀਆਂ 14 ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਫਸਲਾਂ ਵਿੱਚੋਂ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕਿਸੇ ਵੀ ਰਸਾਇਣ ਦਾ ਛਿੜਕਾਅ ਨਾ ਕਰੋ ਅਤੇ ਪ੍ਰਮਾਣਿਤ ਫਸਲ ਦੇ ਪੱਤੇ ਦੀ ਫੋਟੋ ਅਪਲੋਡ ਕਰੋ।"
@@ -431,7 +484,15 @@ Advisory text: '{english_text}'"""
     # Synthesize natural human acoustic speech using Sarvam AI Bulbul:v3
     audio_path = await tts_client.synthesize_speech(translated_text, language_code)
 
-    return {
+    res = {
         "vernacular_audio_url": audio_path,
         "translated_text": translated_text
     }
+    if not is_crop_supported:
+        res["is_safe"] = False
+        res["safety_warning"] = (
+            f"Image identified as '{detected_subj}', which is not among AgriNexus's 14 certified agricultural food crops. "
+            f"Chemical pesticide prescription is strictly blocked for biological safety. "
+            f"For diagnostic assistance and certified specifications, visit nearest center: {kvk_name_str} ({kvk_dist_str} away)."
+        )
+    return res

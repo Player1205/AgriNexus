@@ -216,10 +216,10 @@ export const runEdgeVisionAgent = async (file) => {
         } catch (error) {
             console.error("[EDGE AI] Initialization Error:", error);
             resolve({
-                vision_diagnosis: `Error Loading Model: ${error.message || error}`,
+                vision_diagnosis: "Unverified Foliar Sample",
                 vision_confidence: 0,
                 is_crop_supported: false,
-                detected_subject: "Error"
+                detected_subject: "Unverified Foliar Sample"
             });
         }
     });

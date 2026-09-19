@@ -270,7 +270,14 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                 setWeather(result.weather_data);
             }
             if (result.translated_text) {
-                setTranslatedText(result.translated_text);
+                let cleanText = result.translated_text;
+                if (typeof cleanText === 'string' && cleanText.startsWith('{') && cleanText.includes("'text':")) {
+                    const match = cleanText.match(/'text':\s*['"](.*?)['"](?:\s*,\s*'extras'|\s*})/s);
+                    if (match && match[1]) cleanText = match[1].replace(/\\n/g, '\n');
+                } else if (typeof cleanText === 'object' && cleanText !== null && cleanText.text) {
+                    cleanText = cleanText.text;
+                }
+                setTranslatedText(cleanText);
             }
             if (result.dosage_unit) {
                 setDosageUnit(result.dosage_unit);
@@ -311,7 +318,10 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                 setIsCropSupported(true);
             }
             if (result.detected_subject) {
-                setDetectedSubject(result.detected_subject);
+                const cleanSubj = (result.detected_subject === 'Error' || String(result.detected_subject).toLowerCase().includes('error loading')) 
+                    ? 'Unverified Foliar Sample' 
+                    : result.detected_subject;
+                setDetectedSubject(cleanSubj);
             }
 
             if (result.is_spray_safe !== undefined) {

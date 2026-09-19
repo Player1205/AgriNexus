@@ -19,9 +19,20 @@ def build_agrinexus_graph():
     workflow.add_node("web3", web3_node)
     workflow.add_node("voice", voice_node)
     
-    # Define edges (sequential flow)
+    def route_after_vision(state: AgriNexusState):
+        """
+        Early Exit / Statutory Gate:
+        If the crop is not one of our 14 ICAR-certified crops or is non-agricultural,
+        bypass chemical RAG (Agent 2), Safety Engine (Agent 3), and Web3 Passport (Agent 4)
+        and jump DIRECTLY to Voice Agent (Agent 5) for safe advisory and KVK referral.
+        """
+        if not state.get("is_crop_supported", True):
+            return "voice"
+        return "rag"
+
+    # Define edges (conditional bypass for uncertified crops)
     workflow.set_entry_point("vision")
-    workflow.add_edge("vision", "rag")
+    workflow.add_conditional_edges("vision", route_after_vision, {"rag": "rag", "voice": "voice"})
     workflow.add_edge("rag", "safety")
     workflow.add_edge("safety", "web3")
     workflow.add_edge("web3", "voice")

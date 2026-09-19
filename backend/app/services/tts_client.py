@@ -53,8 +53,16 @@ class TTSClient:
                     "Content-Type": "application/json"
                 }
 
+                # Sarvam API has a 500-char limit per input chunk; truncate cleanly at sentence/word boundary
+                if len(text) > 490:
+                    truncated = text[:490]
+                    last_stop = max(truncated.rfind('।'), truncated.rfind('.'), truncated.rfind(','), truncated.rfind(' '))
+                    sarvam_text = truncated[:last_stop] if last_stop > 100 else truncated
+                else:
+                    sarvam_text = text
+
                 payload = {
-                    "inputs": [text],
+                    "inputs": [sarvam_text],
                     "target_language_code": target_lang,
                     "speaker": "shubh",
                     "pace": 1.0,

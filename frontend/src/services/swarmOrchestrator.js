@@ -153,45 +153,172 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
     await delay(700);
 
     // -------------------------------------------------------------------------
-    // EARLY EXIT STRATEGY (OOD / Low Confidence)
+    // HYBRID CLOUD FALLBACK & EARLY EXIT STRATEGY
     // -------------------------------------------------------------------------
     if (visionOutput.vision_confidence < 0.85 || visionOutput.is_crop_supported === false) {
-        console.log("[SWARM ORCHESTRATOR] 🛑 Low confidence or Non-Crop detected. Triggering Early Exit.");
-        
-        const earlyExitState = {
-            ...currentState,
-            vision_diagnosis: visionOutput.vision_diagnosis,
-            translated_text: "We could not identify this crop or disease with high confidence. Please visit the nearest Krishi Vigyan Kendra (KVK) for an expert opinion.",
-            is_spray_safe: false,
-            safety_warning: "Image unclear or non-agricultural. Fallback to KVK activated.",
-            nearest_kvk: {
-                name: "Nearest Krishi Vigyan Kendra (KVK)",
-                lat: currentState.client_latitude,
-                lng: currentState.client_longitude,
-                contact: "1800-180-1551"
+        let isCloudSuccess = false;
+
+        // 1. Try Gemini Cloud Fallback if Online
+        if (typeof navigator !== 'undefined' && navigator.onLine) {
+            console.log("[SWARM ORCHESTRATOR] ☁️ Edge AI Confidence Low. Triggering Gemini Cloud Fallback...");
+            broadcastLocal('vision', { ...visionOutput, vision_diagnosis: "Edge Low Confidence. Querying Cloud AI..." });
+
+            try {
+                const toBase64 = f => new Promise((res, rej) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(f);
+                    reader.onload = () => res(reader.result.split(',')[1]);
+                    reader.onerror = e => rej(e);
+                });
+                const base64Image = await toBase64(file);
+
+                const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY;
+
+                if (geminiKey) {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: "Analyze this image. You are an expert agronomist. Output ONLY a strict JSON object with exactly three keys: 'crop' (string), 'disease' (string, or 'Healthy' if no disease), and 'is_agricultural' (boolean). Do not include markdown formatting, backticks, or any other text." },
+                                    { inlineData: { mimeType: file.type || "image/jpeg", data: base64Image } }
+                                ]
+                            }]
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const textObj = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                        const cleanJson = textObj.replace(/```json/g, '').replace(/```/g, '').trim();
+                        const parsed = JSON.parse(cleanJson);
+
+                        const CERTIFIED_CROPS = ['Apple', 'Blueberry', 'Cherry', 'Corn', 'Grape', 'Orange', 'Peach', 'Pepper', 'Potato', 'Raspberry', 'Soybean', 'Squash', 'Strawberry', 'Tomato'];
+                        const isCertified = CERTIFIED_CROPS.some(c => c.toLowerCase() === String(parsed.crop).toLowerCase() || String(parsed.crop).toLowerCase().includes(c.toLowerCase()));
+
+                        if (parsed.is_agricultural && isCertified) {
+                            const fallbackDiagnosis = `${parsed.crop} ${parsed.disease || 'Healthy'}`;
+                            isCloudSuccess = true;
+                            console.log("[SWARM ORCHESTRATOR] ☁️ Gemini Success (Certified Crop):", fallbackDiagnosis);
+
+                            visionOutput.vision_diagnosis = fallbackDiagnosis;
+                            visionOutput.is_crop_supported = true;
+                            visionOutput.vision_confidence = 0.95;
+                            visionOutput.detected_subject = `${parsed.crop} Leaf`;
+                            broadcastLocal('vision', visionOutput);
+                        } else if (parsed.is_agricultural && !isCertified) {
+                            // Uncertified agricultural crop (e.g. Guava) -> Jump directly to Voice (Agent 5)
+                            const fallbackDiagnosis = `${parsed.crop} ${parsed.disease || 'Healthy'}`;
+                            console.log("[SWARM ORCHESTRATOR] ☁️ Gemini Identified Uncertified Crop:", fallbackDiagnosis);
+
+                            visionOutput.vision_diagnosis = fallbackDiagnosis;
+                            visionOutput.is_crop_supported = false;
+                            visionOutput.vision_confidence = 0.85;
+                            visionOutput.detected_subject = `${parsed.crop} Leaf`;
+                            broadcastLocal('vision', visionOutput);
+
+                            // Trigger Direct Bypass to Agent 5 (Voice)
+                            const uncertifiedState = {
+                                ...currentState,
+                                vision_diagnosis: fallbackDiagnosis,
+                                is_crop_supported: false,
+                                identified_by: 'gemini_fallback',
+                                detected_subject: `${parsed.crop} Leaf`,
+                                translated_text: language === 'hi' 
+                                    ? `किसान भाई, Gemini AI द्वारा इस पौधे की पहचान '${parsed.crop} (${parsed.disease || "स्वस्थ"})' के रूप में हुई है। यह फसल हमारे 14 प्रमाणित मॉडलों में शामिल नहीं है, इसलिए रासायनिक सलाह लॉक है। कृपया जैविक स्वच्छता रखें और प्रमाणित उपचार हेतु नजदीकी KVK केंद्र जाएं।`
+                                    : `Dear Farmer, identified via Gemini AI fallback as ${parsed.crop} (${parsed.disease || "Healthy"}). Not among our 14 certified crops. Chemical prescription is locked for safety. Please consult nearest KVK for certified specifications.`,
+                                is_spray_safe: false,
+                                safety_warning: `Crop '${parsed.crop}' identified via Gemini AI fallback (not in 14 ICAR certified crops). Chemical spray locked for safety.`,
+                                nearest_kvk: {
+                                    name: "District Krishi Vigyan Kendra (KVK)",
+                                    lat: currentState.client_latitude,
+                                    lng: currentState.client_longitude,
+                                    contact: "1800-180-1551"
+                                }
+                            };
+
+                            broadcastLocal('early_exit', { safety_warning: uncertifiedState.safety_warning });
+                            await delay(2500);
+
+                            console.log("[AGENT 5 - VOICE] Synthesizing Vernacular Spoken Advisory for Gemini Fallback Crop...");
+                            const voiceOutput = await runEdgeVoiceAgent(uncertifiedState);
+                            broadcastLocal('voice', voiceOutput);
+
+                            return {
+                                ...uncertifiedState,
+                                ...voiceOutput,
+                                translated_text: voiceOutput.translated_text || uncertifiedState.translated_text,
+                                vernacular_audio_url: voiceOutput.vernacular_audio_url || voiceOutput.audio_url || null,
+                                weather_data: {
+                                    temperature_c: currentState.current_temperature,
+                                    relative_humidity: currentState.current_humidity,
+                                    rain_risk_6h_percent: currentState.rain_risk_6h_percent,
+                                    wind_speed_kmh: currentState.wind_speed_kmh,
+                                    is_spray_safe: false,
+                                    location_source: currentState.location_source,
+                                    latitude: currentState.client_latitude,
+                                    longitude: currentState.client_longitude
+                                }
+                            };
+                        } else {
+                            console.log("[SWARM ORCHESTRATOR] ☁️ Gemini confirms Non-Agricultural Image.");
+                        }
+                    } else {
+                        console.error("[SWARM ORCHESTRATOR] Gemini API returned:", response.status);
+                    }
+                } else {
+                    console.warn("[SWARM ORCHESTRATOR] No Gemini API key found. Skipping Cloud Fallback.");
+                }
+            } catch (err) {
+                console.error("[SWARM ORCHESTRATOR] Gemini Fallback failed:", err);
             }
-        };
-        
-        broadcastLocal('early_exit', { safety_warning: earlyExitState.safety_warning });
-        await delay(3000);
-        
-        console.log("[AGENT 5 - VOICE] Synthesizing Vernacular Spoken Advisory for Early Exit...");
-        const voiceOutput = await runEdgeVoiceAgent(earlyExitState);
-        broadcastLocal('voice', voiceOutput);
-        
-        return {
-            ...earlyExitState,
-            weather_data: {
-                temperature_c: currentState.current_temperature,
-                relative_humidity: currentState.current_humidity,
-                rain_risk_6h_percent: currentState.rain_risk_6h_percent,
-                wind_speed_kmh: currentState.wind_speed_kmh,
+        }
+
+        // 2. If Cloud Failed or Offline -> KVK Early Exit
+        if (!isCloudSuccess) {
+            console.log("[SWARM ORCHESTRATOR] 🛑 Triggering Early Exit (KVK Fallback).");
+
+            const earlyExitState = {
+                ...currentState,
+                vision_diagnosis: visionOutput.vision_diagnosis,
+                translated_text: language === 'hi' 
+                    ? "किसान भाई, कम विश्वास या अप्रमाणित छवि के कारण रासायनिक सलाह रोकी गई है। सटीक मार्गदर्शन के लिए अपने नजदीकी कृषि विज्ञान केंद्र (KVK) से संपर्क करें।"
+                    : "We could not identify this crop or disease with high confidence. Please visit the nearest Krishi Vigyan Kendra (KVK) for an expert opinion.",
                 is_spray_safe: false,
-                location_source: currentState.location_source,
-                latitude: currentState.client_latitude,
-                longitude: currentState.client_longitude
-            }
-        };
+                safety_warning: "Image unclear or non-agricultural. Fallback to KVK activated.",
+                nearest_kvk: {
+                    name: "Nearest Krishi Vigyan Kendra (KVK)",
+                    lat: currentState.client_latitude,
+                    lng: currentState.client_longitude,
+                    contact: "1800-180-1551"
+                }
+            };
+
+            broadcastLocal('early_exit', { safety_warning: earlyExitState.safety_warning });
+            await delay(3000);
+
+            console.log("[AGENT 5 - VOICE] Synthesizing Vernacular Spoken Advisory for Early Exit...");
+            const voiceOutput = await runEdgeVoiceAgent(earlyExitState);
+            broadcastLocal('voice', voiceOutput);
+
+            return {
+                ...earlyExitState,
+                ...voiceOutput,
+                translated_text: voiceOutput.translated_text || earlyExitState.translated_text,
+                vernacular_audio_url: voiceOutput.vernacular_audio_url || voiceOutput.audio_url || null,
+                weather_data: {
+                    temperature_c: currentState.current_temperature,
+                    relative_humidity: currentState.current_humidity,
+                    rain_risk_6h_percent: currentState.rain_risk_6h_percent,
+                    wind_speed_kmh: currentState.wind_speed_kmh,
+                    is_spray_safe: false,
+                    location_source: currentState.location_source,
+                    latitude: currentState.client_latitude,
+                    longitude: currentState.client_longitude
+                }
+            };
+        }
     }
 
     // -------------------------------------------------------------------------

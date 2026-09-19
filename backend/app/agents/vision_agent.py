@@ -122,36 +122,27 @@ async def vision_node(state: AgriNexusState) -> dict:
             }
 
         print("[TIER 2 - GEMINI FALLBACK] Consulting Gemini Vision Gatekeeper to analyze unidentified subject...")
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key)
+        llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", google_api_key=api_key)
         
         with open(image_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
 
         prompt = """
-        You are an expert ICAR Agricultural Domain Gatekeeper and Computer Vision Pathologist acting as a SECONDARY FALLBACK.
-        
-        Supported 14 commercial food crops:
-        [Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato]
+        You are an expert Agricultural Computer Vision Pathologist.
         
         TASK:
-        1. Identify what the image actually depicts (e.g. 'Areca Palm Houseplant', 'Living Room / Furniture', 'Google Doc / Text Document / Email Screenshot', 'Tomato Leaf', 'Weed', etc.).
-        2. STRICT DOMAIN CHECK:
-           - Is this a recognized leaf of one of the 14 supported agricultural food crops?
-           - If it is a text document, email screenshot, paper, electronic screen, indoor houseplant, palm, ornamental flower, weed, human, furniture, or non-agricultural plant, set is_supported_crop = false.
-        3. If is_supported_crop is true:
-           - Diagnose the specific disease (e.g. 'Tomato Late blight', 'Corn Common rust', 'Apple Scab', etc.).
-        4. If is_supported_crop is false:
-           - Set diagnosis = 'Unrecognized Plant / Non-Agricultural Subject'.
-           - Set confidence = 0.0.
+        1. Determine if this image shows a real agricultural crop, plant leaf, or fruit.
+        2. If YES (any real crop/plant/fruit/vegetable/grain):
+           - Set is_agricultural = true
+           - Identify the crop name (e.g. "Guava", "Mango", "Rice", "Wheat", "Tomato")
+           - Diagnose the disease if any (e.g. "Leaf Spot", "Powdery Mildew", "Healthy")
+           - Set confidence between 0.7 and 1.0
+        3. If NO (text document, screenshot, furniture, human, animal, electronic device, random object):
+           - Set is_agricultural = false
+           - Set confidence = 0.0
            
-        Respond STRICTLY in JSON format:
-        {
-            "is_supported_crop": true or false,
-            "detected_subject": "Name of what is in the photo (e.g. Areca Palm, Text Document, Tomato Leaf)",
-            "diagnosis": "Disease name or 'Unrecognized Plant / Non-Agricultural Subject'",
-            "confidence": 0.0 to 1.0 float,
-            "explanation": "Short reason"
-        }
+        Respond ONLY in this exact JSON format, no extra text:
+        {"is_agricultural": true, "crop": "CropName", "disease": "DiseaseName or Healthy", "confidence": 0.85}
         """
 
         message = HumanMessage(
@@ -162,23 +153,84 @@ async def vision_node(state: AgriNexusState) -> dict:
         )
         
         response = llm.invoke([message])
-        content = response.content.replace("```json", "").replace("```", "").strip()
-        data = json.loads(content)
+        raw_content = response.content
+        if isinstance(raw_content, list):
+            parts = []
+            for part in raw_content:
+                if isinstance(part, str):
+                    parts.append(part)
+                elif isinstance(part, dict) and 'text' in part:
+                    parts.append(part['text'])
+                elif hasattr(part, 'text'):
+                    parts.append(part.text)
+                else:
+                    parts.append(str(part))
+            raw_content = "".join(parts)
         
-        is_supported = data.get("is_supported_crop", True)
-        detected_subject = data.get("detected_subject", "Unknown Plant")
-        diagnosis = data.get("diagnosis", "Unknown anomaly")
-        confidence = float(data.get("confidence", 0.0))
+        import re
+        print(f"[TIER 2 RAW RESPONSE] {repr(raw_content[:500])}")
         
-        if not is_supported:
-            diagnosis = "Unrecognized Plant / Non-Agricultural Subject"
-            confidence = 0.0
-            
+        content = raw_content.replace("```json", "").replace("```", "").strip()
+        
+        # Normalize LLM JSON quirks: single quotes -> double, True/False/None -> JSON
+        normalized = content.replace("'", '"').replace("True", "true").replace("False", "false").replace("None", "null")
+        
+        data = None
+        # Attempt 1: Direct parse
+        try:
+            data = json.loads(normalized)
+        except Exception:
+            pass
+        
+        # Attempt 2: Extract JSON object via regex
+        if data is None:
+            json_match = re.search(r'\{.*\}', normalized, re.DOTALL)
+            if json_match:
+                try:
+                    data = json.loads(json_match.group())
+                except Exception:
+                    pass
+        
+        # Attempt 3: Regex key extraction as last resort
+        if data is None:
+            print(f"[TIER 2] JSON parse failed. Extracting fields via regex...")
+            is_ag = bool(re.search(r'"is_agricultural"\s*:\s*true', normalized, re.IGNORECASE))
+            crop_m = re.search(r'"(?:crop|detected_subject)"\s*:\s*"([^"]+)"', normalized)
+            disease_m = re.search(r'"(?:disease|diagnosis)"\s*:\s*"([^"]+)"', normalized)
+            data = {
+                "is_supported_crop": is_ag,
+                "detected_subject": crop_m.group(1) if crop_m else "Unknown Plant",
+                "diagnosis": disease_m.group(1) if disease_m else "Unknown anomaly",
+                "confidence": 0.85 if is_ag else 0.0
+            }
+        
+        is_ag = data.get("is_agricultural", data.get("is_supported_crop", True))
+        crop_name = str(data.get("crop", data.get("detected_subject", "Unknown Plant"))).strip()
+        disease_name = str(data.get("disease", data.get("diagnosis", "Healthy"))).strip()
+        confidence = float(data.get("confidence", 0.85 if is_ag else 0.0))
+
+        if not is_ag:
+            return {
+                "vision_diagnosis": "Unrecognized Plant / Non-Agricultural Subject",
+                "vision_confidence": 0.0,
+                "is_crop_supported": False,
+                "detected_subject": "Non-Agricultural Subject",
+                "identified_by": "gemini_fallback"
+            }
+
+        # Check if the identified crop is one of our 14 ICAR Certified Crops
+        is_certified = any(c.lower() in crop_name.lower() for c in SUPPORTED_CROPS)
+        detected_subject = f"{crop_name} Leaf" if "leaf" not in crop_name.lower() else crop_name
+        full_diagnosis = f"{crop_name} {disease_name}" if crop_name.lower() not in disease_name.lower() else disease_name
+
+        print(f"[TIER 2 RESULT] Gemini: '{full_diagnosis}' | Certified: {is_certified} | Confidence: {confidence}")
+
         return {
-            "vision_diagnosis": diagnosis,
+            "vision_diagnosis": full_diagnosis,
             "vision_confidence": confidence,
-            "is_crop_supported": is_supported,
-            "detected_subject": detected_subject
+            "is_crop_supported": is_certified,
+            "detected_subject": detected_subject,
+            "identified_by": "gemini_fallback"
         }
         
     except Exception as e:

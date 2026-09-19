@@ -1610,3 +1610,17 @@ Each record explains:
 **Q:** Why must wind speed be multiplied by 3.6?
 **A:** OpenWeatherMap returns wind speed in m/s, but our agronomic logic and UI expect km/h.
 </details>
+
+### ADR-078: Gemini Cloud Fallback with Uncertified Crop Direct Voice Routing & KVK Handoff
+**Context & The Problem:** When edge CV model is uncertain or encounters out-of-distribution crops (e.g. Guava), AgriNexus must identify the plant without hallucinating hazardous chemical dosages for uncertified crops.
+**What Was Changed & How It Was Changed:** 
+1. In \ision_agent.py\, expanded Gemini fallback to detect any real agricultural plant while strictly verifying against the 14 certified ICAR crops.
+2. In \graph.py\, added a LangGraph conditional edge after \ision\ node to route directly to \oice\ (skipping RAG, Safety, and Web3) when \is_crop_supported = False\.
+3. In \oice_agent.py\, formulated a specialized vernacular advisory explicitly disclaiming Gemini AI identification vs on-device models, locking chemical spraying, providing organic sanitation actions, and referring the farmer to the nearest KVK center.
+4. Fixed Gemini response text parsing to safely unwrap dictionary/list content and eliminate raw JSON artifacts in audio and UI text.
+**Architectural Rationale:** Preserves zero-hallucination and biological safety invariants: uncertified crops never receive automated chemical recommendations, while still providing intelligent crop identification and official KVK referral.
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-078</strong></summary>
+**Q:** Why are RAG and Safety nodes bypassed when Gemini detects an uncertified crop like Guava?
+**A:** Because AgriNexus only maintains verified ICAR research protocols and statutory CIB&RC clearances for its 14 certified crops. Recommending unverified chemicals on other crops poses biological toxicity risks.
+</details>

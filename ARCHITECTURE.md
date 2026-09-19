@@ -321,3 +321,5 @@ AgriNexus uses a multi-stage **Production Dockerfile**:
 - **OOD Swarm Bypass:** If Agent 1 returns < 85% confidence, execution immediately skips to Agent 5 (Voice/KVK Referral).
 - **Geo-Tag Provenance:** Watermarking via EXIF/Leaflet Map added to all frontend interactions.
 - **Weather & AQI Interlock:** Switched to OpenWeatherMap. Added AQI = 5 as a hard block for agronomic spray safety.
+
+- **Gemini Fallback & Uncertified Crop Direct Routing:** When CV inference is uncertain or crop is uncertified (e.g. Guava), the swarm falls back to Gemini 3.6 Flash for domain classification. If uncertified, LangGraph conditional edges immediately route to Agent 5 (Voice/Advisory), bypassing RAG/Safety to lock chemical advice and issue official KVK referrals with practical organic care guidance.
