@@ -17,7 +17,8 @@ def get_mongo_client() -> MongoClient:
     """Returns a singleton MongoClient instance with connection pooling."""
     global _client
     if _client is None:
-        uri = os.getenv("MONGODB_URI", DEFAULT_URI)
+        raw_uri = os.getenv("MONGODB_URI")
+        uri = raw_uri.strip() if raw_uri and raw_uri.strip() else DEFAULT_URI
         _client = MongoClient(
             uri,
             serverSelectionTimeoutMS=7000,
@@ -32,7 +33,8 @@ def get_db() -> Database:
     global _db
     if _db is None:
         client = get_mongo_client()
-        db_name = os.getenv("MONGODB_DB_NAME", DEFAULT_DB)
+        raw_db = os.getenv("MONGODB_DB_NAME")
+        db_name = raw_db.strip() if raw_db and raw_db.strip() else DEFAULT_DB
         _db = client[db_name]
     return _db
 
