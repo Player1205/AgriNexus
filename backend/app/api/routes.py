@@ -126,18 +126,13 @@ async def analyze_image(
     language: str = Form("hi"),
     latitude: Optional[float] = Form(None),
     longitude: Optional[float] = Form(None),
-<<<<<<< Updated upstream
-    authorization: Optional[str] = Header(None)
+    authorization: Optional[str] = Header(None),
+    session_id: Optional[str] = Form(None)
 ):
     authenticated = _require_user(authorization)
     if not isinstance(authenticated, dict):
         return authenticated
-    # Save uploaded image temporarily
-=======
-    session_id: Optional[str] = Form(None)
-):
     # Save uploaded image temporarily (sanitize filename to prevent path traversal attacks)
->>>>>>> Stashed changes
     temp_dir = os.path.join(os.path.dirname(__file__), "..", "..", "temp")
     os.makedirs(temp_dir, exist_ok=True)
     safe_filename = os.path.basename(file.filename or "upload.jpg").replace("..", "").replace("/", "").replace("\\", "")
@@ -199,20 +194,17 @@ async def analyze_image(
             else:
                 safe_response[k] = str(v)
 
-<<<<<<< Updated upstream
+        safe_response["session_id"] = session_id
+
         # Automatically store scan in MongoDB Atlas under the authenticated user's account
         try:
             saved_scan = save_user_scan(authenticated["id"], {
                 **safe_response,
-                "filename": file.filename or "scan.jpg",
+                "filename": safe_filename,
             })
             safe_response["scan_id"] = saved_scan.get("id")
         except Exception as scan_err:
             print(f"[MONGODB ATLAS SCAN RECORD ERROR] {scan_err}")
-
-=======
-        safe_response["session_id"] = session_id
->>>>>>> Stashed changes
         return JSONResponse(content=safe_response)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
