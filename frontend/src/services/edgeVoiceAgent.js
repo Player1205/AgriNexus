@@ -139,7 +139,7 @@ export const generateLocalizedSpeechText = (state, languageCode = 'hi') => {
 };
 
 // Sarvam AI Bulbul:v3 Key Configuration (Loaded securely from environment with production fallback)
-const SARVAM_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SARVAM_API_KEY) || 'sk_heik8piz_TOtA0Fu2ledBo8eu2cnrES9q';
+const SARVAM_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SARVAM_API_KEY) || 'sk_fiajqbaw_UVQw2gdqHFZffaZ2jh4qXAQi';
 
 const SARVAM_LANG_MAP = {
     hi: 'hi-IN',
