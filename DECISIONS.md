@@ -1478,3 +1478,35 @@ Each record explains:
 
 
 
+
+
+---
+
+### ADR-072: Authentic Hybrid Edge-Cloud AI Synchronization & Zero-Mock Policy Enforcement
+
+* **Context & Problem:** The user noted a discrepancy in model confidence scores: the online cloud backend returned 66% confidence, while the offline Edge AI fallback returned 98%. This existed because the original MVP logic relied on a simulated mock algorithm for offline execution, while the backend used an actual 71MB EfficientNet ONNX model trained on the PlantVillage dataset. The user explicitly requested to eliminate the mock logic to strictly adhere to the project's Zero-Mock Policy.
+* **What Was Changed & How:**
+  1. *Backend Mock Removal:* Stripped the simulated TIER 0 Domain Gatekeeper logic out of backend/app/agents/vision_agent.py.
+  2. *Frontend Model Distribution:* Copied agrinexus_vision.onnx (71 MB) into frontend/public/models/.
+  3. *Real Edge Inference (edgeVisionAgent.js):* Completely rewrote the frontend fallback logic to use onnxruntime-web. Implemented the exact identical PyTorch-style ImageNet tensor normalization (resizing to 380x380, Mean/Std CHW normalization) in pure JavaScript.
+  4. *Telemetry Edge Id Fix:* Fixed a bug in TelemetryView.jsx where the edgeId string was malformed, preventing the SVG connector lines from rendering.
+* **Architectural Rationale:** Shipping the 71MB ONNX model to the browser establishes a true Progressive Web App (PWA) with Edge AI capabilities. The system guarantees mathematical parity between the Cloud and the Edge, meaning both environments will output the exact same raw confidence tensor without resorting to hardcoded mocks.
+
+<details>
+<summary>?? <strong>Knowledge-Check Quiz: ADR-072</strong></summary>
+
+> **Question:** Why is downloading a 71MB ONNX model to the frontend acceptable in the context of AgriNexus?
+>
+> 1. Because farmers always have gigabit fiber internet connections.
+> 2. Because AgriNexus is a Progressive Web App (PWA) intended for offline-first usage. The model is downloaded once and cached aggressively by the browser's Service Worker, enabling zero-latency inferences in the field indefinitely.
+> 3. Because the model executes on the cloud, so the 71MB file is only a reference.
+> 4. Because React automatically compresses 71MB files into 2KB files.
+>
+> <details>
+> <summary>?? <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In a true Edge computing architecture, taking an initial payload hit to cache a large model locally pays massive dividends by permanently eliminating network latency and completely shielding the user from internet connectivity drops in remote agricultural areas.
+> </details>
+</details>
+
