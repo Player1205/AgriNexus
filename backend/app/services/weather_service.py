@@ -92,32 +92,32 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
             "warnings": ["GPS location blocked or unavailable. Weather metrics defaulted to static safety limits."]
         }
 
-    # Call Open-Meteo Free Hyper-Local Weather API (Cascade 1)
-    url = "https://api.open-meteo.com/v1/forecast"
-    params = {
-        "latitude": lat,
-        "longitude": lng,
-        "current": "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m",
-        "hourly": "precipitation_probability",
-        "forecast_hours": 6
-    }
+    # Call OpenWeatherMap API
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lng}&appid=4e02b9f935a7ec6a7f6d6b92911f9634&units=metric"
 
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
-            resp = await client.get(url, params=params)
+            resp = await client.get(url)
             if resp.status_code == 200:
                 data = resp.json()
-                current = data.get("current", {})
-                hourly = data.get("hourly", {})
+                main_data = data.get("main", {})
+                wind_data = data.get("wind", {})
+                weather_arr = data.get("weather", [{}])
                 
-                temp_c = float(current.get("temperature_2m", 28.0))
-                humidity = float(current.get("relative_humidity_2m", 75.0))
-                precip = float(current.get("precipitation", 0.0))
-                wind_kmh = float(current.get("wind_speed_10m", 6.0))
+                temp_c = float(main_data.get("temp", 28.0))
+                humidity = float(main_data.get("humidity", 75.0))
+                
+                # OWM gives wind in m/s, convert to km/h
+                wind_ms = float(wind_data.get("speed", 1.67))
+                wind_kmh = wind_ms * 3.6
 
-                # Max rain probability in next 6 hours
-                rain_probs = hourly.get("precipitation_probability", [0])
-                max_rain_risk = float(max(rain_probs)) if rain_probs else 0.0
+                # Estimate rain risk based on current weather condition
+                condition = weather_arr[0].get("main", "").lower()
+                max_rain_risk = 0.0
+                if condition in ["rain", "drizzle", "thunderstorm"]:
+                    max_rain_risk = 90.0
+                elif condition == "clouds":
+                    max_rain_risk = 20.0
 
                 # Agronomic Spray Safety Window calculation:
                 # Safe if wind < 15 km/h, rain risk < 35%, and temperature < 36°C
@@ -126,7 +126,7 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
                 return {
                     "temperature_c": round(temp_c, 1),
                     "relative_humidity": round(humidity, 1),
-                    "precipitation_mm": round(precip, 1),
+                    "precipitation_mm": 0.0,
                     "rain_risk_6h_percent": round(max_rain_risk, 0),
                     "wind_speed_kmh": round(wind_kmh, 1),
                     "is_spray_safe": is_spray_safe,

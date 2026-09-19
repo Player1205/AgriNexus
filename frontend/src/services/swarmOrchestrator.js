@@ -102,6 +102,12 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
         }
     }
 
+    // AQI Scale: 1=Good, 2=Fair, 3=Moderate, 4=Poor, 5=Very Poor/Hazardous
+    let currentAqi = 1;
+    try { 
+        if (typeof fetchedAqi !== 'undefined') currentAqi = fetchedAqi; 
+    } catch(e) {}
+
     const initialState = {
         image_path: file ? file.name : 'offline_capture.jpg',
         language_code: language,
@@ -109,7 +115,8 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
         current_humidity: currentHumidity,
         rain_risk_6h_percent: rainRisk,
         wind_speed_kmh: windSpeed,
-        is_spray_safe: (windSpeed <= 15.0) && (rainRisk < 35.0) && (currentTemp <= 36.0),
+        aqi: currentAqi,
+        is_spray_safe: (windSpeed <= 15.0) && (rainRisk < 35.0) && (currentTemp <= 36.0) && (currentAqi < 5),
         location_source: locationSource,
         is_live_weather: isLiveWeather,
         client_latitude: lat,
@@ -144,6 +151,48 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
     const visionOutput = await runEdgeVisionAgent(file);
     broadcastLocal('vision', visionOutput);
     await delay(700);
+
+    // -------------------------------------------------------------------------
+    // EARLY EXIT STRATEGY (OOD / Low Confidence)
+    // -------------------------------------------------------------------------
+    if (visionOutput.vision_confidence < 0.85 || visionOutput.is_crop_supported === false) {
+        console.log("[SWARM ORCHESTRATOR] 🛑 Low confidence or Non-Crop detected. Triggering Early Exit.");
+        
+        const earlyExitState = {
+            ...currentState,
+            vision_diagnosis: visionOutput.vision_diagnosis,
+            translated_text: "We could not identify this crop or disease with high confidence. Please visit the nearest Krishi Vigyan Kendra (KVK) for an expert opinion.",
+            is_spray_safe: false,
+            safety_warning: "Image unclear or non-agricultural. Fallback to KVK activated.",
+            nearest_kvk: {
+                name: "Nearest Krishi Vigyan Kendra (KVK)",
+                lat: currentState.client_latitude,
+                lng: currentState.client_longitude,
+                contact: "1800-180-1551"
+            }
+        };
+        
+        broadcastLocal('early_exit', { safety_warning: earlyExitState.safety_warning });
+        await delay(3000);
+        
+        console.log("[AGENT 5 - VOICE] Synthesizing Vernacular Spoken Advisory for Early Exit...");
+        const voiceOutput = await runEdgeVoiceAgent(earlyExitState);
+        broadcastLocal('voice', voiceOutput);
+        
+        return {
+            ...earlyExitState,
+            weather_data: {
+                temperature_c: currentState.current_temperature,
+                relative_humidity: currentState.current_humidity,
+                rain_risk_6h_percent: currentState.rain_risk_6h_percent,
+                wind_speed_kmh: currentState.wind_speed_kmh,
+                is_spray_safe: false,
+                location_source: currentState.location_source,
+                latitude: currentState.client_latitude,
+                longitude: currentState.client_longitude
+            }
+        };
+    }
 
     // -------------------------------------------------------------------------
     // AGENT 2: In-Memory ICAR Agronomy RAG
@@ -185,6 +234,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
             relative_humidity: currentState.current_humidity,
             rain_risk_6h_percent: currentState.rain_risk_6h_percent,
             wind_speed_kmh: currentState.wind_speed_kmh,
+            aqi: currentState.aqi,
             is_spray_safe: currentState.is_spray_safe,
             location_source: currentState.location_source,
             latitude: currentState.client_latitude,

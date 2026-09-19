@@ -85,12 +85,14 @@ export const getClientLocation = () => {
  * Automatically runs 100% On-Device when offline or if server is unreachable.
  * Each upload generates a unique session_id to scope telemetry events.
  */
-export const uploadImage = async (file, language = "hi") => {
-  let loc = null;
-  try {
-    loc = await getClientLocation();
-  } catch {
-    // Fallback safely
+export const uploadImage = async (file, language = "hi", locOverride = null) => {
+  let loc = locOverride;
+  if (!loc) {
+      try {
+        loc = await getClientLocation();
+      } catch {
+        // Fallback safely
+      }
   }
 
   // Generate a unique session ID for this specific upload

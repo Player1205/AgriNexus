@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { uploadImage, createTelemetrySocket, getBaseApiUrl } from '../services/api';
+import { uploadImage, createTelemetrySocket, getBaseApiUrl, getClientLocation } from '../services/api';
 import { synthesizeSarvamSpeech } from '../services/edgeVoiceAgent';
 import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon, Database } from 'lucide-react';
 import LaptopWebcamModal from './LaptopWebcamModal';
+import MapModal from './MapModal';
+import exifr from 'exifr';
 
 const LANGUAGES = [
     { code: 'hi', name: 'हिन्दी', label: 'Hindi' },
@@ -45,7 +47,8 @@ const NODE_STYLES = {
     rag: { text: "Matching certified ICAR protocol...", size: "text-lg sm:text-xl", color: "text-purple-600" },
     safety: { text: "Evaluating C++ safety & MIC therapeutic floor...", size: "text-lg sm:text-xl", color: "text-emerald-600" },
     web3: { text: "Minting immutable passport on Base L2...", size: "text-xl sm:text-2xl", color: "text-amber-500" },
-    voice: { text: "Synthesizing voice via Sarvam AI...", size: "text-base sm:text-lg", color: "text-green-600" }
+    voice: { text: "Synthesizing voice via Sarvam AI...", size: "text-base sm:text-lg", color: "text-green-600" },
+    early_exit: { text: "Low Confidence: Bypassing RAG & Safety...", size: "text-lg sm:text-xl", color: "text-red-600" }
 };
 
 export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
@@ -58,6 +61,13 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     const [translatedText, setTranslatedText] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [nearestKvk, setNearestKvk] = useState(null);
+    
+    // New Location States
+    const [locationSource, setLocationSource] = useState('device'); // 'device', 'exif', 'map'
+    const [mapCoordinates, setMapCoordinates] = useState(null);
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [finalLocationData, setFinalLocationData] = useState(null); // stores source & lat/lon for watermark
+    const [exifError, setExifError] = useState(null);
     const [dosageUnit, setDosageUnit] = useState('g');
     const [isMicProtected, setIsMicProtected] = useState(false);
     const [isCropSupported, setIsCropSupported] = useState(true);
@@ -196,6 +206,38 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
         setIsSpraySafe(true);
         setWeatherWarnings([]);
         setActiveNode(null);
+        setExifError(null);
+        setFinalLocationData(null); // Clear stale watermark
+
+        let finalLoc = null;
+        let finalSourceString = 'Device GPS';
+
+        if (locationSource === 'device') {
+            try {
+                finalLoc = await getClientLocation();
+            } catch (err) {}
+        } else if (locationSource === 'exif') {
+            try {
+                const exifData = await exifr.gps(file);
+                if (exifData && exifData.latitude && exifData.longitude) {
+                    finalLoc = { latitude: exifData.latitude, longitude: exifData.longitude };
+                    finalSourceString = 'Photo EXIF';
+                } else {
+                    setExifError('No GPS found in image. Please use Map or Phone GPS.');
+                    setStatus(STATUS.IDLE);
+                    return; // Early exit on EXIF fail
+                }
+            } catch (err) {
+                setExifError('Failed to read image EXIF data. It might not be a valid image or lacks GPS.');
+                setStatus(STATUS.IDLE);
+                return;
+            }
+        } else if (locationSource === 'map' && mapCoordinates) {
+            finalLoc = { latitude: mapCoordinates.lat, longitude: mapCoordinates.lng };
+            finalSourceString = 'Manual Map Pin';
+        }
+        
+        setFinalLocationData({ source: finalSourceString, lat: finalLoc?.latitude, lng: finalLoc?.longitude });
 
         try {
             setStatus(STATUS.PROCESSING);
@@ -217,7 +259,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                 localStorage.setItem('agrinexus_offline_queue', JSON.stringify(existing));
             }
 
-            const result = await uploadImage(file, selectedLang);
+            const result = await uploadImage(file, selectedLang, finalLoc);
 
             if (onAnalysisComplete) {
                 onAnalysisComplete(result);
@@ -387,6 +429,29 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                     </div>
                 </div>
 
+                                {/* Location Source Selector */}
+                <div className="w-full bg-white p-3 rounded-2xl shadow-sm border border-green-100 flex flex-col gap-2">
+                    <div className="text-[11px] font-semibold text-gray-500">Where is this crop located?</div>
+                    <div className="flex flex-wrap gap-2">
+                        <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all ${locationSource === 'device' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>
+                            <input type="radio" name="locSource" value="device" checked={locationSource === 'device'} onChange={() => setLocationSource('device')} className="hidden" />
+                            📍 Device GPS
+                        </label>
+                        <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all ${locationSource === 'exif' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>
+                            <input type="radio" name="locSource" value="exif" checked={locationSource === 'exif'} onChange={() => setLocationSource('exif')} className="hidden" />
+                            📸 Photo EXIF
+                        </label>
+                        <button type="button" onClick={() => setIsMapModalOpen(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${locationSource === 'map' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>
+                            🗺️ Map Pin
+                        </button>
+                    </div>
+                    {exifError && (
+                        <div className="text-xs text-red-600 bg-red-50 p-2 rounded-lg font-bold border border-red-200 mt-1">
+                            ⚠️ {exifError}
+                        </div>
+                    )}
+                </div>
+
                 {/* 3. Dual Photo Capture Options (Camera & Gallery) */}
                 <div className="w-full grid grid-cols-2 gap-3">
                     {/* 📸 Take Photo (Direct Camera) */}
@@ -443,11 +508,20 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                     />
                 </div>
 
-                {/* Image Preview with Bounding Box Overlay */}
+                {/* Image Preview with Geo-Tag and Bounding Box Overlay */}
                 {previewUrl && (
                     <div className="w-full relative mt-2 mb-2 rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black/5 flex justify-center">
                         <div className="relative inline-block max-w-full">
                             <img src={previewUrl} alt="Uploaded Crop" className="max-w-full h-auto max-h-64 object-contain" />
+                            
+                            {/* Geo-Tag Watermark */}
+                            {finalLocationData && (
+                                <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[10px] font-mono px-2 py-1 rounded shadow-md pointer-events-none z-10 border border-white/20">
+                                    📍 {finalLocationData.lat ? `Lat: ${finalLocationData.lat.toFixed(4)}, Lon: ${finalLocationData.lng.toFixed(4)}` : "Location Unknown / GPS Blocked"} <br/>
+                                    <span className={finalLocationData.lat ? "text-emerald-300" : "text-amber-400"}>({finalLocationData.source})</span>
+                                </div>
+                            )}
+
                             {boundingBox && (
                                 <div 
                                     className="absolute border-2 border-red-500 bg-red-500/20 pointer-events-none transition-all duration-500"
@@ -469,17 +543,65 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
 
                 {/* 4. Status Indicator */}
                 {status === STATUS.PROCESSING && (
-                    <div className="flex flex-col items-center h-10 justify-center overflow-visible">
+                    <div className="w-full flex flex-col items-center py-2 gap-4 mt-2 mb-2 animate-in fade-in duration-300">
+                        {/* The Text */}
                         <span 
                             key={activeNode} 
-                            className={`font-bold tracking-wide animate-bounce transition-all duration-500 ease-in-out ${
+                            className={`font-bold tracking-wide transition-all duration-300 ease-in-out text-center ${
                                 activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].size : "text-sm"
                             } ${
                                 activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].color : "text-amber-600"
-                            }`}
+                            } ${activeNode !== 'early_exit' ? 'animate-bounce' : 'animate-pulse'}`}
                         >
                             {activeNode && NODE_STYLES[activeNode] ? NODE_STYLES[activeNode].text : "Initiating Multi-Agent Swarm..."}
                         </span>
+
+                        {/* The Visual Pipeline */}
+                        <div className="relative flex items-center justify-between w-full max-w-[280px] px-2 mt-4">
+                            {/* Base Line */}
+                            <div className="absolute top-1/2 left-4 right-4 h-1 bg-gray-200 -z-10 -translate-y-1/2 rounded-full"></div>
+                            
+                            {/* Early Exit Arch (Red Line bypassing middle agents) */}
+                            {activeNode === 'early_exit' && (
+                                <div className="absolute w-[70%] h-8 border-t-2 border-r-2 border-l-2 border-dashed border-red-500 rounded-t-xl left-[15%] top-[-24px] animate-pulse -z-0">
+                                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-red-100 text-red-600 text-[8px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm border border-red-200">
+                                        OOD BYPASS
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Nodes */}
+                            {[
+                                { id: 'vision', label: 'V', name: 'Vision' },
+                                { id: 'rag', label: 'R', name: 'RAG' },
+                                { id: 'safety', label: 'S', name: 'Safe' },
+                                { id: 'web3', label: 'W', name: 'Web3' },
+                                { id: 'voice', label: '🔊', name: 'Voice' }
+                            ].map((n) => {
+                                let isActive = activeNode === n.id;
+                                let isBypassed = activeNode === 'early_exit' && (n.id === 'rag' || n.id === 'safety' || n.id === 'web3');
+                                let isError = activeNode === 'early_exit' && n.id === 'vision';
+                                
+                                return (
+                                    <div key={n.id} className="flex flex-col items-center gap-1 relative z-10 px-1 group">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300 ${
+                                            isActive 
+                                                ? 'border-green-500 bg-green-100 text-green-700 scale-110 shadow-md ring-2 ring-green-200' 
+                                                : isError
+                                                    ? 'border-red-500 bg-red-100 text-red-700 shadow-md ring-2 ring-red-200'
+                                                    : isBypassed 
+                                                        ? 'border-gray-300 bg-gray-100 text-gray-400 opacity-40 grayscale' 
+                                                        : 'border-blue-200 bg-white text-blue-600'
+                                        }`}>
+                                            {n.label}
+                                        </div>
+                                        <span className={`text-[9px] font-bold absolute -bottom-4 transition-opacity ${isActive || isError ? 'opacity-100 text-gray-800' : 'opacity-0 text-gray-400 group-hover:opacity-100'}`}>
+                                            {n.name}
+                                        </span>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 )}
 
@@ -688,6 +810,17 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                             Offline Baseline
                                         </span>
                                     )}
+                                    {weather.aqi && (
+                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                            weather.aqi === 1 ? 'bg-emerald-100 text-emerald-700' :
+                                            weather.aqi === 2 ? 'bg-green-100 text-green-700' :
+                                            weather.aqi === 3 ? 'bg-yellow-100 text-yellow-700' :
+                                            weather.aqi === 4 ? 'bg-orange-100 text-orange-700' :
+                                            'bg-red-100 text-red-700'
+                                        }`}>
+                                            AQI: {weather.aqi === 1 ? 'Good' : weather.aqi === 2 ? 'Fair' : weather.aqi === 3 ? 'Mod' : weather.aqi === 4 ? 'Poor' : 'Severe'}
+                                        </span>
+                                    )}
                                 </span>
                                 <span className="text-[10px] text-gray-600 font-medium">
                                     {(!weather.is_live_weather || weather.location_source.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source.toUpperCase() === 'OFFLINE_FALLBACK')
@@ -750,6 +883,17 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
 
             </div>
 
+            <MapModal 
+                isOpen={isMapModalOpen} 
+                onClose={() => setIsMapModalOpen(false)} 
+                onSelectLocation={(lat, lng) => {
+                    setMapCoordinates({ lat, lng });
+                    setLocationSource('map');
+                    setExifError(null);
+        setFinalLocationData(null); // Clear stale watermark
+                }} 
+            />
+            
             {/* Laptop Webcam Modal (Fallback for Desktop) */}
             <LaptopWebcamModal 
                 isOpen={showLaptopWebcam} 

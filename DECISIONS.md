@@ -1580,3 +1580,33 @@ Each record explains:
 > </details>
 </details>
 
+
+### ADR-075: Interactive Geo-Tag Watermarking & 3-Tier Location Architecture (EXIF/Device/Map)
+**Context & The Problem:** Hackathon judges require visual proof that photos are geolocated to prevent fraud, and device GPS often fails indoors/on laptops.
+**What Was Changed & How It Was Changed:** Added \exifr\ for EXIF extraction, eact-leaflet\ for an interactive map modal, and a radio selector in \FarmerView.jsx\. Rendered a real-time HUD watermark directly onto the image preview containing Lat/Lon coordinates and source.
+**Architectural Rationale:** Provides 100% locational provenance by surfacing hidden metadata as a visible watermark. The interactive map serves as a robust fallback for desktop demonstrations.
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-075</strong></summary>
+**Q:** Why does the UI clear the location state before each upload?
+**A:** To prevent 'stale state' bugs where a failed EXIF extraction might erroneously display the GPS coordinates from a previously uploaded photo.
+</details>
+
+### ADR-076: Swarm Orchestrator Early Exit (OOD Bypass)
+**Context & The Problem:** Running Agents 2 (RAG), 3 (Safety), and 4 (Web3) on non-agricultural or low-confidence images wastes compute and pollutes the blockchain with junk records.
+**What Was Changed & How It Was Changed:** Injected a \< 85%\ confidence and \is_crop_supported = false\ bypass trigger in \swarmOrchestrator.js\ immediately after Agent 1 (Vision). The UI renders a dashed red laser arching over the middle agents.
+**Architectural Rationale:** Computes efficiently. A direct jump to Agent 5 routes the farmer directly to the nearest KVK center instead of hallucinating chemical treatments for Out-of-Distribution (OOD) photos.
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-076</strong></summary>
+**Q:** Why does the UI show a red dashed line when this executes?
+**A:** To provide clear visual feedback to the user/judge that compute resources were conserved by deliberately bypassing the mid-tier agents.
+</details>
+
+### ADR-077: Weather Engine Swap to OpenWeatherMap + AQI Safety Floor
+**Context & The Problem:** The user requested OpenWeatherMap integration, and hackathon judges required Air Quality Index (AQI) as an additional spray safety constraint.
+**What Was Changed & How It Was Changed:** Replaced Open-Meteo with OpenWeatherMap in both \ackend/app/services/weather_service.py\ and \rontend/src/services/swarmOrchestrator.js\. Added parallel fetching for the OWM Air Pollution API. Enforced \is_spray_safe\ = False if AQI reaches 5 (Hazardous).
+**Architectural Rationale:** Enhances farmer safety by blocking pesticide applications during severe smog, preventing particulate binding and toxic inhalation.
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-077</strong></summary>
+**Q:** Why must wind speed be multiplied by 3.6?
+**A:** OpenWeatherMap returns wind speed in m/s, but our agronomic logic and UI expect km/h.
+</details>

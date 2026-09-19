@@ -315,3 +315,9 @@ AgriNexus uses a multi-stage **Production Dockerfile**:
 
 * **Build Validation:** Tested via GitHub Actions Buildx on every pull request.
 * **Orchestration:** Managed via [`docker-compose.yml`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/docker-compose.yml) with automatic restart policies and container health checks (`/api/v1/health`).
+
+
+## Recent Architectural Updates (Hackathon Enhancements)
+- **OOD Swarm Bypass:** If Agent 1 returns < 85% confidence, execution immediately skips to Agent 5 (Voice/KVK Referral).
+- **Geo-Tag Provenance:** Watermarking via EXIF/Leaflet Map added to all frontend interactions.
+- **Weather & AQI Interlock:** Switched to OpenWeatherMap. Added AQI = 5 as a hard block for agronomic spray safety.
