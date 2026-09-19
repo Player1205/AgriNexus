@@ -17,6 +17,20 @@ const LANGUAGES = [
     { code: 'en', name: 'English', label: 'English' }
 ];
 
+const UI_TRANSLATIONS = {
+    hi: { camera: "फोटो खींचें", gallery: "गैलरी से चुनें" },
+    pa: { camera: "ਫੋਟੋ ਖਿੱਚੋ", gallery: "ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ" },
+    te: { camera: "ఫోటో తీయండి", gallery: "గ్యాలరీ నుండి ఎంచుకోండి" },
+    ta: { camera: "புகைப்படம் எடுக்கவும்", gallery: "கேலரியில் இருந்து தேர்ந்தெடுக்கவும்" },
+    ml: { camera: "ഫോട്ടോ എടുക്കുക", gallery: "ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക" },
+    kn: { camera: "ಫೋಟೋ ತೆಗೆದುಕೊಳ್ಳಿ", gallery: "ಗ್ಯಾಲರಿಯಿಂದ ಆರಿಸಿ" },
+    bn: { camera: "ছবি তুলুন", gallery: "গ্যালারি থেকে বেছে নিন" },
+    mr: { camera: "फोटो काढा", gallery: "गॅलरीतून निवडा" },
+    gu: { camera: "ફોટો લો", gallery: "ગેલેરીમાંથી પસંદ કરો" },
+    od: { camera: "ଫଟୋ ନିଅନ୍ତୁ", gallery: "ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ" },
+    en: { camera: "Take Photo", gallery: "Choose from Gallery" }
+};
+
 const STATUS = {
     IDLE: 'idle',
     UPLOADING: 'uploading',
@@ -376,7 +390,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                             <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <span className="text-green-900 font-bold text-xs sm:text-sm tracking-wide">
-                            फोटो खींचें
+                            {UI_TRANSLATIONS[selectedLang]?.camera || UI_TRANSLATIONS['en'].camera}
                         </span>
                         <span className="text-[10px] text-green-700 font-medium">
                             (Camera)
@@ -394,7 +408,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                             <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <span className="text-emerald-900 font-bold text-xs sm:text-sm tracking-wide">
-                            गैलरी से चुनें
+                            {UI_TRANSLATIONS[selectedLang]?.gallery || UI_TRANSLATIONS['en'].gallery}
                         </span>
                         <span className="text-[10px] text-emerald-700 font-medium">
                             (Gallery)
