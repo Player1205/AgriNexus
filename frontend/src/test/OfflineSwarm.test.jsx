@@ -6,6 +6,24 @@ import { runEdgeWeb3Agent } from '../services/edgeWeb3Agent';
 import { generateLocalizedSpeechText } from '../services/edgeVoiceAgent';
 import { runOfflineSwarmPipeline } from '../services/swarmOrchestrator';
 
+// Mock ONNX Vision Agent for Node (Vitest) environment
+vi.mock('../services/edgeVisionAgent', () => ({
+    runEdgeVisionAgent: vi.fn().mockImplementation(async (file) => {
+        if (file && file.name === 'indoor_areca_palm.jpg') {
+            return {
+                is_crop_supported: false,
+                vision_diagnosis: 'Unrecognized Plant / Non-Agricultural Subject',
+                vision_confidence: 0.0
+            };
+        }
+        return {
+            is_crop_supported: true,
+            vision_diagnosis: 'Tomato Late blight',
+            vision_confidence: 0.95
+        };
+    })
+}));
+
 describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
     it('Agent 1 (Vision): Detects non-agricultural houseplant and triggers Domain Gatekeeper', async () => {
         const mockFile = new File(['mock'], 'indoor_areca_palm.jpg', { type: 'image/jpeg' });
