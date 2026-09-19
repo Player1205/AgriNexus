@@ -2,11 +2,13 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.api.routes import router
 from dotenv import load_dotenv
 
 # Load env variables
 load_dotenv()
+from app.api.routes import router
+from app.services.auth_service import init_auth_db
+init_auth_db()
 
 app = FastAPI(title="AgriNexus Backend", version="1.0.0")
 
@@ -30,7 +32,13 @@ app.include_router(router)
 @app.get("/health")
 @app.get("/api/v1/health")
 def health_check():
-    return {"status": "ok"}
+    from app.services.mongodb_service import get_mongo_client
+    mongo_status = "connected"
+    try:
+        get_mongo_client().admin.command("ping")
+    except Exception as e:
+        mongo_status = f"error: {str(e)}"
+    return {"status": "ok", "database": "mongodb_atlas", "mongo_status": mongo_status}
 
 if __name__ == "__main__":
     import uvicorn

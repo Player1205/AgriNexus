@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadImage, createTelemetrySocket, getBaseApiUrl } from '../services/api';
 import { synthesizeSarvamSpeech } from '../services/edgeVoiceAgent';
-import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon } from 'lucide-react';
+import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon, Database } from 'lucide-react';
 
 const LANGUAGES = [
     { code: 'hi', name: 'हिन्दी', label: 'Hindi' },
@@ -33,7 +33,7 @@ const NODE_STYLES = {
     voice: { text: "Synthesizing voice via Sarvam AI...", size: "text-base sm:text-lg", color: "text-green-600" }
 };
 
-export default function FarmerView({ onAnalysisComplete }) {
+export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     const [status, setStatus] = useState(STATUS.IDLE);
     const [selectedLang, setSelectedLang] = useState('hi');
     const [activeNode, setActiveNode] = useState(null);
@@ -497,6 +497,23 @@ export default function FarmerView({ onAnalysisComplete }) {
                                 </button>
                             </div>
                         )}
+
+                        {/* MongoDB Atlas Saved Record Indicator */}
+                        <div className="w-full flex items-center justify-between bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-xl text-xs text-emerald-800 mt-1">
+                            <span className="flex items-center gap-1.5 font-medium">
+                                <Database className="w-3.5 h-3.5 text-emerald-600" />
+                                Stored in your MongoDB Atlas account
+                            </span>
+                            {onOpenScans && (
+                                <button
+                                    type="button"
+                                    onClick={onOpenScans}
+                                    className="font-bold text-emerald-700 hover:text-emerald-950 underline ml-2 text-[11px]"
+                                >
+                                    My Scans &rarr;
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
