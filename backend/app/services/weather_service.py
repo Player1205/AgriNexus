@@ -95,8 +95,28 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
         }
 
     # Call OpenWeatherMap Weather and Air Pollution APIs in parallel
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lng}&appid=4e02b9f935a7ec6a7f6d6b92911f9634&units=metric"
-    aqi_url = f"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lng}&appid=4e02b9f935a7ec6a7f6d6b92911f9634"
+    owm_key = os.environ.get("OPENWEATHER_API_KEY", "").strip()
+    if not owm_key:
+        print("[WEATHER WARNING] OPENWEATHER_API_KEY not configured. Using baseline weather.")
+        return {
+            "temperature_c": 28.0,
+            "relative_humidity": 65.0,
+            "precipitation_mm": 0.0,
+            "rain_risk_6h_percent": 0.0,
+            "wind_speed_kmh": 6.0,
+            "aqi": 2,
+            "aqi_label": "Fair",
+            "pm2_5": 25.0,
+            "is_spray_safe": True,
+            "is_live_weather": False,
+            "location_source": "REGIONAL_BASELINE",
+            "latitude": lat,
+            "longitude": lng,
+            "warnings": ["OPENWEATHER_API_KEY missing. Weather defaulted to regional baseline."]
+        }
+
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lng}&appid={owm_key}&units=metric"
+    aqi_url = f"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lng}&appid={owm_key}"
 
     import asyncio
 
