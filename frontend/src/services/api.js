@@ -93,12 +93,18 @@ export const uploadImage = async (file, language = "hi") => {
     // Fallback safely
   }
 
+  // Generate a unique session ID for this specific upload
+  const sessionId = Math.random().toString(36).substring(2, 10);
+  if (typeof window !== 'undefined') {
+      window.__agrinexus_active_session = sessionId;
+  }
+
   // 1. If device is explicitly offline, immediately run On-Device Swarm
   if (typeof navigator !== "undefined" && !navigator.onLine) {
     console.log(
       "[AGRINEXUS OFFLINE] Network is disconnected. Executing 100% On-Device Multi-Agent Swarm...",
     );
-    return await runOfflineSwarmPipeline(file, language, loc);
+    return await runOfflineSwarmPipeline(file, language, loc, null, sessionId);
   }
 
   // 2. Online Mode: Attempt Cloud Swarm with automated On-Device Fallback
@@ -106,6 +112,7 @@ export const uploadImage = async (file, language = "hi") => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("language", language);
+    formData.append("session_id", sessionId);
 
     if (loc) {
       formData.append("latitude", loc.latitude.toString());
@@ -144,7 +151,7 @@ export const uploadImage = async (file, language = "hi") => {
   } catch (err) {
     console.warn(`[AGRINEXUS HYBRID] Cloud server unreachable (${err.message}). Seamlessly engaging On-Device Multi-Agent Swarm...`);
     // Seamlessly fallback to 100% On-Device Swarm
-    return await runOfflineSwarmPipeline(file, language, loc, null, formData.get("session_id"));
+    return await runOfflineSwarmPipeline(file, language, loc, null, sessionId);
   }
 };
 
