@@ -18,13 +18,13 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
     let currentHumidity = 75.0;
     let rainRisk = 15.0;
     let windSpeed = 5.0;
-    let isLiveWeather = isOnline;
-    let locationSource = location ? "DEVICE_LIVE_GPS" : "REGIONAL_BASELINE";
-    const lat = location ? location.latitude : 30.9010;
-    const lng = location ? location.longitude : 75.8573;
+    let isLiveWeather = isOnline && location !== null;
+    let locationSource = location ? "DEVICE_LIVE_GPS" : "UNKNOWN_LOCATION_RESTRICTED";
+    const lat = location ? location.latitude : null;
+    const lng = location ? location.longitude : null;
 
-    // Fetch live satellite weather if phone has internet
-    if (isOnline) {
+    // Fetch live satellite weather if phone has internet AND we have coordinates
+    if (isOnline && lat !== null && lng !== null) {
         // Cascade 1: Open-Meteo
         try {
             const controller = new AbortController();

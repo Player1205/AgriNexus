@@ -614,7 +614,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                             {nearestKvk.name}
                                         </span>
                                         <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                            {nearestKvk.distance_km} km away
+                                            {nearestKvk.distance_km === 'Unknown' ? 'Location Disabled' : `${nearestKvk.distance_km} km away`}
                                         </span>
                                     </div>
                                     <p className="text-[11px] text-gray-600 font-medium leading-tight">

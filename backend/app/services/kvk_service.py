@@ -40,20 +40,19 @@ class KVKService:
     def find_nearest_kvk(self, latitude: Optional[float], longitude: Optional[float]) -> Dict[str, Any]:
         """
         Finds the nearest certified ICAR KVK center from the given latitude and longitude.
-        Falls back to Regional Northern Hub (PAU Ludhiana) if coordinates are unavailable.
+        Falls back to a generic National Kisan Call Center if coordinates are unavailable (GPS OFF).
         """
-        if not self.kvk_directory:
+        if not self.kvk_directory or latitude is None or longitude is None:
             return {
-                "name": "District Krishi Vigyan Kendra (KVK)",
-                "distance_km": 0.0,
-                "phone": "1800-180-1551",  # National Kisan Call Center Helpline
-                "address": "Nearest District Agriculture Department / KVK",
-                "maps_url": "https://maps.google.com"
+                "name": "Local District Krishi Vigyan Kendra (KVK)",
+                "distance_km": "Unknown",
+                "phone": "1800-180-1551 (Kisan Call Center)",
+                "address": "Location Unknown (GPS Off) - Nearest District Agriculture Dept",
+                "maps_url": "https://maps.google.com/?q=Krishi+Vigyan+Kendra"
             }
 
-        # Default fallback to central agrarian baseline if coordinates missing
-        lat = latitude if latitude is not None else 30.9010
-        lon = longitude if longitude is not None else 75.8573
+        lat = latitude
+        lon = longitude
 
         nearest_kvk = None
         min_distance = float('inf')

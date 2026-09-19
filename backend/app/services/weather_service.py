@@ -76,10 +76,19 @@ async def fetch_live_weather(image_path: str = None, client_lat: float = None, c
         except (ValueError, TypeError):
             pass
 
-    # Tier 3: Fallback Baseline
+    # Tier 3: Fallback if NO location found
     if lat is None:
-        lat, lng = DEFAULT_LAT, DEFAULT_LNG
-        source = "REGIONAL_BASELINE"
+        return {
+            "temperature_c": 25.0,
+            "humidity_percent": 50.0,
+            "wind_speed_kmh": 5.0,
+            "rain_probability_percent": 0.0,
+            "is_live": False,
+            "location_source": "UNKNOWN_LOCATION_RESTRICTED",
+            "latitude": None,
+            "longitude": None,
+            "warnings": ["GPS location blocked or unavailable. Weather metrics defaulted to static safety limits."]
+        }
 
     # Call Open-Meteo Free Hyper-Local Weather API (Cascade 1)
     url = "https://api.open-meteo.com/v1/forecast"

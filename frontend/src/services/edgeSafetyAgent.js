@@ -20,8 +20,18 @@ const calculateHaversineKm = (lat1, lon1, lat2, lon2) => {
 };
 
 export const findNearestKvkOffline = (lat, lon) => {
-    const targetLat = lat !== undefined && lat !== null ? Number(lat) : 30.9010;
-    const targetLon = lon !== undefined && lon !== null ? Number(lon) : 75.8573;
+    if (lat === undefined || lat === null || lon === undefined || lon === null) {
+        return {
+            name: "Local District Krishi Vigyan Kendra (KVK)",
+            distance_km: "Unknown",
+            phone: "1800-180-1551 (Kisan Call Center)",
+            address: "Location Unknown (GPS Off) - Nearest District Agriculture Dept",
+            maps_url: "https://maps.google.com/?q=Krishi+Vigyan+Kendra"
+        };
+    }
+
+    const targetLat = Number(lat);
+    const targetLon = Number(lon);
 
     let nearest = null;
     let minDistance = Infinity;
