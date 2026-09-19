@@ -58,3 +58,4 @@ Thumbs.db
 # Temp Files & Audio Uploads
 backend/temp/
 backend/static/audio/
+backend/data/*.db

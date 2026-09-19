@@ -2,14 +2,79 @@ import os
 import shutil
 import asyncio
 from typing import Optional
-from fastapi import APIRouter, UploadFile, File, Form, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Header, UploadFile, File, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from app.agents.graph import agrinexus_app
-from app.state import AgriNexusState
-from app.services.weather_service import fetch_live_weather
+from pydantic import BaseModel
+from app.services.auth_service import authenticate, create_user, get_user_for_token, revoke_token
+from app.services.scan_service import save_user_scan, get_user_scans, delete_user_scan
 import json
 
 router = APIRouter()
+
+class AuthPayload(BaseModel):
+    email: str
+    password: str
+
+class RegisterPayload(AuthPayload):
+    name: str
+
+def _token_from_header(authorization: Optional[str]):
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
+    return None
+
+def _require_user(authorization: Optional[str]):
+    token = _token_from_header(authorization)
+    user = get_user_for_token(token) if token else None
+    return user or JSONResponse(status_code=401, content={"error": "Authentication required"})
+
+@router.post("/api/v1/auth/register")
+async def register(payload: RegisterPayload):
+    if len(payload.name.strip()) < 2 or len(payload.password) < 8:
+        return JSONResponse(status_code=400, content={"error": "Name and an 8-character password are required"})
+    try:
+        user = create_user(payload.name, payload.email, payload.password)
+        token, _ = authenticate(payload.email, payload.password)
+        return {"token": token, "user": user}
+    except ValueError as error:
+        return JSONResponse(status_code=409, content={"error": str(error)})
+
+@router.post("/api/v1/auth/login")
+async def login(payload: AuthPayload):
+    try:
+        token, user = authenticate(payload.email, payload.password)
+        return {"token": token, "user": user}
+    except ValueError as error:
+        return JSONResponse(status_code=401, content={"error": str(error)})
+
+@router.get("/api/v1/auth/me")
+async def current_user(authorization: Optional[str] = Header(None)):
+    return _require_user(authorization)
+
+@router.post("/api/v1/auth/logout")
+async def logout(authorization: Optional[str] = Header(None)):
+    token = _token_from_header(authorization)
+    if token:
+        revoke_token(token)
+    return {"status": "ok"}
+
+@router.get("/api/v1/user/scans")
+async def get_my_scans(authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict):
+        return user
+    scans = get_user_scans(user["id"])
+    return {"scans": scans, "count": len(scans)}
+
+@router.delete("/api/v1/user/scans/{scan_id}")
+async def delete_my_scan(scan_id: str, authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict):
+        return user
+    deleted = delete_user_scan(user["id"], scan_id)
+    if not deleted:
+        return JSONResponse(status_code=404, content={"error": "Scan record not found"})
+    return {"status": "ok", "deleted_id": scan_id}
 
 # Thread-safe set of active websocket connections for telemetry
 active_connections: set[WebSocket] = set()
@@ -58,8 +123,12 @@ async def analyze_image(
     file: UploadFile = File(...),
     language: str = Form("hi"),
     latitude: Optional[float] = Form(None),
-    longitude: Optional[float] = Form(None)
+    longitude: Optional[float] = Form(None),
+    authorization: Optional[str] = Header(None)
 ):
+    authenticated = _require_user(authorization)
+    if not isinstance(authenticated, dict):
+        return authenticated
     # Save uploaded image temporarily
     temp_dir = os.path.join(os.path.dirname(__file__), "..", "..", "temp")
     os.makedirs(temp_dir, exist_ok=True)
@@ -69,6 +138,9 @@ async def analyze_image(
         shutil.copyfileobj(file.file, buffer)
 
     # 1. Fetch Real-Time Hyper-Local Agricultural Weather (EXIF GPS -> Device GPS -> Regional Base)
+    from app.services.weather_service import fetch_live_weather
+    from app.agents.graph import agrinexus_app
+
     weather = await fetch_live_weather(image_path=temp_path, client_lat=latitude, client_lng=longitude)
     print(f"[WEATHER LIVE] {weather['temperature_c']}°C | Humidity: {weather['relative_humidity']}% | Rain Risk (6h): {weather['rain_risk_6h_percent']}% | Source: {weather['location_source']}")
 
@@ -112,12 +184,19 @@ async def analyze_image(
             else:
                 safe_response[k] = str(v)
 
+        # Automatically store scan in MongoDB Atlas under the authenticated user's account
+        try:
+            saved_scan = save_user_scan(authenticated["id"], {
+                **safe_response,
+                "filename": file.filename or "scan.jpg",
+            })
+            safe_response["scan_id"] = saved_scan.get("id")
+        except Exception as scan_err:
+            print(f"[MONGODB ATLAS SCAN RECORD ERROR] {scan_err}")
+
         return JSONResponse(content=safe_response)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
-
-from app.services.tts_client import tts_client
-from pydantic import BaseModel
 
 class TTSPayload(BaseModel):
     text: str
@@ -125,6 +204,7 @@ class TTSPayload(BaseModel):
 
 @router.post("/api/v1/tts")
 async def synthesize_speech_endpoint(payload: TTSPayload):
+    from app.services.tts_client import tts_client
     audio_path = await tts_client.synthesize_speech(payload.text, payload.language_code)
     if audio_path:
         return {"audio_url": audio_path}
