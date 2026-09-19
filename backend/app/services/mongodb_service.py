@@ -7,7 +7,7 @@ from pymongo.database import Database
 
 logger = logging.getLogger("agrinexus.mongodb")
 
-DEFAULT_URI = "mongodb+srv://AgriAdmin:AgriAdmin1234@cluster0.myce50a.mongodb.net/agrinexus?retryWrites=true&w=majority&appName=Cluster0"
+DEFAULT_URI = "mongodb://localhost:27017"
 DEFAULT_DB = "agrinexus"
 
 _client: Optional[MongoClient] = None
