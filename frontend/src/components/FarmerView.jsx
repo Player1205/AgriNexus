@@ -864,14 +864,9 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                 <span className="text-xl select-none">
                                     {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK') ? '⚠️' : '⛅'}
                                 </span>
-                                <div className="flex items-baseline gap-1.5">
-                                    <span className="text-sm font-black text-gray-900 tracking-tight">
-                                        {weather.temperature_c}°C
-                                    </span>
-                                    <span className="text-xs font-semibold text-gray-600">
-                                        · {weather.relative_humidity}% Humidity
-                                    </span>
-                                </div>
+                                <span className="text-sm font-black text-gray-900 tracking-tight">
+                                    {weather.temperature_c}°C · {weather.relative_humidity}% Humidity
+                                </span>
                             </div>
 
                             <div className="flex items-center gap-1.5 ml-auto">

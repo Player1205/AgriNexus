@@ -1715,3 +1715,41 @@ Each record explains:
 > *Explanation:* Truncating at sentence boundaries (`।`, `.`) or word spaces preserves grammatical completeness and prevents splitting multi-byte UTF-8 Unicode characters (common in Indic scripts like Devanagari, Gurmukhi, and Telugu), ensuring acoustic intelligibility.
 > </details>
 </details>
+
+---
+
+### ADR-081: CI/CD Meteorological Cascade Resilience & Vitest Weather Text Compatibility
+
+**Context & The Problem:**
+1. *GitHub Actions Missing API Key Failure:* In the CI/CD pipeline, `OPENWEATHER_API_KEY` is not injected into the test runner. When `test_weather_device_gps_resolution` queried `fetch_live_weather` with GPS coordinates (`client_lat=28.7041, client_lng=77.1025`), the service triggered an early exit that hardcoded `location_source: "REGIONAL_BASELINE"` and bypassed the downstream zero-key fallbacks (Met.no / Open-Meteo), causing an assertion failure in pytest.
+2. *Vitest DOM Matcher Boundary Breakage:* In `FarmerView.jsx`, temperature and humidity were partitioned across two nested `<span>` elements (`{weather.temperature_c}°C` and `· {weather.relative_humidity}% Humidity`). React Testing Library's `screen.getByText(/28.4°C · 76% Humidity/i)` failed because its regex matcher searches within single text nodes by default.
+
+**What Was Changed & How It Was Changed:**
+1. *Zero-Key Open-Meteo Fallback Cascade (`backend/app/services/weather_service.py`):*
+   - Configured `fetch_live_weather` to treat `OPENWEATHER_API_KEY` as an optional enhancement. If absent or throttled, execution seamlessly falls through to the zero-key Open-Meteo API (`api.open-meteo.com`), which operates without keys and returns full real-time meteorological metrics.
+   - Enforced `location_source: source` across all cascade tiers and fallback states so client-provided device GPS coordinates (`DEVICE_LIVE_GPS`) are rigorously preserved.
+2. *Single-Node Telemetry Heading (`frontend/src/components/FarmerView.jsx`):*
+   - Consolidated temperature and humidity into a unified text node (`{weather.temperature_c}°C · {weather.relative_humidity}% Humidity`) within the left metrics container.
+   - Retained the clean, non-overlapping 2-row layout where AQI and Spray Safety badges reside independently on the right.
+
+**Architectural Rationale:**
+- Guarantees complete test determinism in hermetic CI/CD environments where third-party secrets may not be mounted.
+- Preserves full backward compatibility with testing harnesses without compromising user interface elegance or mobile responsiveness.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-081</strong></summary>
+
+> **Question:** Why should external cloud APIs in production microservices always cascade to zero-key or baseline fallbacks in CI/CD?
+>
+> 1. Because external API keys expire every 24 hours.
+> 2. Because CI/CD runners should not fail builds due to network flakiness, missing secret grants on forks, or external third-party rate limits.
+> 3. Because pytest disables network sockets automatically.
+> 4. Because zero-key APIs are faster than paid APIs.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Decoupling test execution from proprietary API keys and external vendor availability prevents brittle CI/CD builds and ensures continuous delivery pipelines remain resilient and reproducible.
+> </details>
+</details>
