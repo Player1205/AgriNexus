@@ -1,7 +1,7 @@
 import { InferenceSession, Tensor, env } from 'onnxruntime-web';
 
-// Configure ONNX Runtime to use local WASM files
-env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+// CDN removed to prevent CORS/CSP blocking. Vite will bundle the WASM locally.
+// env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
 
 export const CERTIFIED_CROPS = [
     "Tomato", "Potato", "Corn", "Apple", "Grape", "Strawberry",
@@ -214,7 +214,7 @@ export const runEdgeVisionAgent = async (file) => {
         } catch (error) {
             console.error("[EDGE AI] Initialization Error:", error);
             resolve({
-                vision_diagnosis: "Error Loading Model",
+                vision_diagnosis: `Error Loading Model: ${error.message || error}`,
                 vision_confidence: 0,
                 is_crop_supported: false,
                 detected_subject: "Error"
