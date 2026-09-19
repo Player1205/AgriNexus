@@ -145,10 +145,10 @@ export const runEdgeVisionAgent = async (file) => {
                         console.log(`[EDGE AI] Foliar Organic Ratio: ${(organicRatio * 100).toFixed(1)}%`);
 
                         // Gate 1: Non-agricultural image check (Document / Screenshot / White screen bouncer)
-                        if (organicRatio < 0.06) {
-                            console.warn("[EDGE AI] Non-agricultural image detected: negligible organic foliar pigment.");
+                        if (organicRatio < 0.15) {
+                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 15% required).`);
                             resolve({
-                                vision_diagnosis: "Non-Agricultural Image (Document/Screen Detected)",
+                                vision_diagnosis: "Non-Agricultural Image (Low Foliar Pigment)",
                                 vision_confidence: 0.0,
                                 is_crop_supported: false,
                                 detected_subject: "Text Document / Screen / Non-Plant"
@@ -173,9 +173,9 @@ export const runEdgeVisionAgent = async (file) => {
                         console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
 
                         // Gate 2: Stricter Edge AI Validation (Confidence & Margin Floor)
-                        // Real PlantVillage/PlantDoc foliar diseases score >= 95% with high margin (>= 40%).
-                        // Out-of-distribution houseplants, furniture, or ambiguous leaves fail this check.
-                        if (top1.prob < 0.92 || margin < 0.40) {
+                        // Real PlantVillage/PlantDoc foliar diseases score >= 98% with high margin (>= 60%).
+                        // Deep Neural Networks are overconfident. An image of a poster with green leaves might trigger 95% confidence on Edge.
+                        if (top1.prob < 0.97 || margin < 0.60) {
                             console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
                             resolve({
                                 vision_diagnosis: "Unrecognized / Unsupported Plant",

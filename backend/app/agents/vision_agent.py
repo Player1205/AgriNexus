@@ -91,9 +91,9 @@ async def vision_node(state: AgriNexusState) -> dict:
             print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence (Margin: {round(confidence_margin * 100, 1)}%).")
             
             # Stricter Dual-Gate Verification:
-            # 1. High absolute confidence (>= 92%) to prevent false positives on out-of-distribution noise / text documents.
-            # 2. Significant confidence margin (>= 40%) between top-1 and runner-up to reject ambiguous guesses.
-            if confidence >= 0.92 and confidence_margin >= 0.40:
+            # 1. High absolute confidence (>= 97%) to prevent false positives on out-of-distribution noise / text documents.
+            # 2. Significant confidence margin (>= 60%) between top-1 and runner-up to reject ambiguous guesses.
+            if confidence >= 0.97 and confidence_margin >= 0.60:
                 detected_crop = disease_name.split()[0] if disease_name else "Crop"
                 return {
                     "vision_diagnosis": disease_name,
