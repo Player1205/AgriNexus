@@ -91,7 +91,14 @@ export default function UserScansModal({ isOpen, onClose, user }) {
       tableData.push(["Farm Weather", `${w.temperature_c || w.temperature || "N/A"}°C, ${w.relative_humidity || w.humidity || "N/A"}% Humidity`]);
     }
     
-    if (scan.tx_hash) tableData.push(["Blockchain Tx", scan.tx_hash]);
+    if (scan.tx_hash) tableData.push(["Blockchain", "Verified On-Chain (Base Sepolia)"]);
+    if (scan.nearest_kvk) {
+      const kvkName = typeof scan.nearest_kvk === "object" ? scan.nearest_kvk.Name || scan.nearest_kvk.name : scan.nearest_kvk;
+      if (kvkName) tableData.push(["Nearest KVK", kvkName]);
+    }
+    if (scan.vernacular_audio_url) {
+      tableData.push(["Audio Advisory", "Scan QR or visit AgriNexus app to listen to localized vernacular audio"]);
+    }
 
     autoTable(doc, {
       startY: currentY + 12,

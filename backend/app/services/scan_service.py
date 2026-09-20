@@ -25,6 +25,10 @@ def _scan_dict(doc: Dict[str, Any]) -> Dict[str, Any]:
         "translated_text": doc.get("translated_text", ""),
         "vernacular_audio_url": doc.get("vernacular_audio_url", ""),
         "filename": doc.get("filename", ""),
+        "image_url": doc.get("image_url", ""),
+        "treatment": doc.get("treatment", ""),
+        "tx_hash": doc.get("tx_hash", ""),
+        "safety_warning": doc.get("safety_warning", ""),
     }
 
 def save_user_scan(user_id: str, scan_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -51,6 +55,10 @@ def save_user_scan(user_id: str, scan_data: Dict[str, Any]) -> Dict[str, Any]:
         "translated_text": scan_data.get("translated_text", ""),
         "vernacular_audio_url": scan_data.get("vernacular_audio_url", ""),
         "filename": scan_data.get("filename", ""),
+        "image_url": scan_data.get("image_url", ""),
+        "treatment": scan_data.get("disease_treatment") or scan_data.get("rag_treatment_plan", ""),
+        "tx_hash": scan_data.get("transaction_hash") or scan_data.get("tx_hash", ""),
+        "safety_warning": scan_data.get("safety_warning", ""),
     }
 
     try:
