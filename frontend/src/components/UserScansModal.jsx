@@ -62,17 +62,48 @@ export default function UserScansModal({ isOpen, onClose, user }) {
     doc.setFont("helvetica", "bold");
     doc.text("AgriNexus Scan Report", 14, 25);
     
-    // Sub-header metadata
-    doc.setTextColor(50, 50, 50);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
+    // Sub-header section
+    doc.setTextColor(15, 23, 42); // Slate-900
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Field Assessment Details", 14, 52);
     
-    let currentY = 55;
-    doc.text(`Date: ${new Date(scan.created_at || scan.timestamp || Date.now()).toLocaleString()}`, 14, currentY);
+    doc.setDrawColor(226, 232, 240); // Slate-200
+    doc.line(14, 55, 196, 55);
+
+    let currentY = 65;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(71, 85, 105); // Slate-500
+    
+    // Date
+    doc.setFont("helvetica", "bold");
+    doc.text("Date:", 14, currentY);
+    doc.setFont("helvetica", "normal");
+    doc.text(new Date(scan.created_at || scan.timestamp || Date.now()).toLocaleString(), 48, currentY);
+    
+    // Crop & Diagnosis
     currentY += 8;
-    doc.text(`Crop & Diagnosis: ${scan.vision_diagnosis || scan.diagnosis || "Unknown"}`, 14, currentY);
+    doc.setFont("helvetica", "bold");
+    doc.text("Diagnosis:", 14, currentY);
+    doc.setFont("helvetica", "normal");
+    doc.text(scan.vision_diagnosis || scan.diagnosis || "Unknown", 48, currentY);
+    
+    // Safety Status
     currentY += 8;
-    doc.text(`Safety Status: ${scan.is_spray_safe ? "Safe to Spray" : "Not Safe / Delay"}`, 14, currentY);
+    doc.setFont("helvetica", "bold");
+    doc.text("Safety Status:", 14, currentY);
+    doc.setFont("helvetica", "bold");
+    if (scan.is_spray_safe) {
+        doc.setTextColor(16, 185, 129); // Emerald-500
+        doc.text("Safe to Spray (Favorable Conditions)", 48, currentY);
+    } else {
+        doc.setTextColor(239, 68, 68); // Red-500
+        doc.text("Not Safe / Delay Spraying", 48, currentY);
+    }
+    
+    // Reset for table
+    doc.setTextColor(50, 50, 50);
 
     const tableData = [];
     
@@ -105,15 +136,19 @@ export default function UserScansModal({ isOpen, onClose, user }) {
       head: [['Metric', 'Details']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [16, 185, 129] }, // Emerald green
-      styles: { cellPadding: 5, fontSize: 10, overflow: 'linebreak', cellWidth: 'wrap' },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 40 },
-        1: { cellWidth: 140 }
-      }
+      headStyles: { fillColor: [22, 163, 74], textColor: [255, 255, 255] },
+      columnStyles: { 0: { cellWidth: 40, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
+      styles: { fontSize: 10, cellPadding: 6 }
     });
-    
-    doc.save(`AgriNexus_Report_${scan.id || "scan"}.pdf`);
+
+    // Add a professional footer
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184); // Slate-400
+    doc.setFont("helvetica", "italic");
+    doc.text("Generated autonomously by AgriNexus Multi-Agent Diagnosis Engine.", 14, 282);
+    doc.text("For official verification, please contact your nearest ICAR Krishi Vigyan Kendra (KVK).", 14, 287);
+
+    doc.save(`AgriNexus_Scan_${scan.id || "scan"}.pdf`);
   };
 
   const handleDelete = async (scanId) => {
