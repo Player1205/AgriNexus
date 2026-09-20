@@ -49,7 +49,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
     }
   }, [isOpen]);
 
-  const generatePDF = (scan) => {
+  const generatePDF = async (scan) => {
     const doc = new jsPDF();
     
     // Header background
@@ -62,6 +62,16 @@ export default function UserScansModal({ isOpen, onClose, user }) {
     doc.setFont("helvetica", "bold");
     doc.text("AgriNexus Scan Report", 14, 25);
     
+    // Add user details to top right of header
+    if (user?.name || user?.email) {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Farmer: ${user.name || user.email}`, 196, 20, { align: "right" });
+      if (user.name && user.email) {
+        doc.text(user.email, 196, 25, { align: "right" });
+      }
+    }
+    
     // Sub-header section
     doc.setTextColor(15, 23, 42); // Slate-900
     doc.setFontSize(14);
@@ -70,6 +80,27 @@ export default function UserScansModal({ isOpen, onClose, user }) {
     
     doc.setDrawColor(226, 232, 240); // Slate-200
     doc.line(14, 55, 196, 55);
+
+    // Try to load and embed the crop image on the right side
+    if (scan.image_url) {
+      try {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = scan.image_url;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        
+        // Fit within 45x45 box, aligned to the right
+        const ratio = Math.min(45 / img.width, 45 / img.height);
+        const w = img.width * ratio;
+        const h = img.height * ratio;
+        doc.addImage(img, "JPEG", 196 - w, 60, w, h);
+      } catch (e) {
+        console.error("Failed to embed image in PDF:", e);
+      }
+    }
 
     let currentY = 65;
     
@@ -128,7 +159,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
       if (kvkName) tableData.push(["Nearest KVK", kvkName]);
     }
     if (scan.vernacular_audio_url) {
-      tableData.push(["Audio Advisory", "Scan QR or visit AgriNexus app to listen to localized vernacular audio"]);
+      tableData.push(["Audio Advisory", "Visit 'My Scans' on the AgriNexus app to listen to localized vernacular audio"]);
     }
 
     autoTable(doc, {
