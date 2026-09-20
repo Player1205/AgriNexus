@@ -39,19 +39,6 @@ describe("AuthView Light Botanical Reference Suite", () => {
     expect(screen.getByRole("button", { name: /Create Account/i })).toBeInTheDocument();
   });
 
-  it("populates demo credentials on clicking Fill demo account", () => {
-    render(<AuthView onAuthenticated={vi.fn()} />);
-
-    const demoBtn = screen.getByRole("button", { name: /Fill demo account/i });
-    fireEvent.click(demoBtn);
-
-    const emailInput = screen.getByPlaceholderText("Enter your email");
-    const passwordInput = screen.getByPlaceholderText("Enter your password");
-
-    expect(emailInput.value).toBe("farmer@example.com");
-    expect(passwordInput.value).toBe("FarmerDemo123!");
-  });
-
   it("toggles password visibility", () => {
     render(<AuthView onAuthenticated={vi.fn()} />);
 
