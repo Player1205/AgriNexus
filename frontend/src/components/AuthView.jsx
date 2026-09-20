@@ -189,15 +189,6 @@ export default function AuthView({ onAuthenticated }) {
 
   const t = AUTH_LANGUAGES.find((l) => l.code === selectedLang) || AUTH_LANGUAGES[0];
 
-  const handleDemoFill = () => {
-    setError("");
-    setEmail("farmer@example.com");
-    setPassword("FarmerDemo123!");
-    if (isRegistering) {
-      setName("Ramesh Patel");
-    }
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -389,22 +380,12 @@ export default function AuthView({ onAuthenticated }) {
             </button>
           </div>
 
-          {/* Forgot Password & Demo Fill Row */}
-          <div className="flex items-center justify-between text-xs px-1 pt-0.5">
-            <button
-              type="button"
-              onClick={handleDemoFill}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 transition hover:underline cursor-pointer"
-              title="Auto-fill demo credentials"
-            >
-              <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-              <span>{t.demoFill}</span>
-            </button>
-
+          {/* Forgot Password Row */}
+          <div className="flex items-center justify-end text-xs px-1 pt-0.5">
             {!isRegistering && (
               <button
                 type="button"
-                className="font-semibold text-[#1e6b37] hover:underline cursor-pointer ml-auto text-xs"
+                className="font-semibold text-[#1e6b37] hover:underline cursor-pointer text-xs"
               >
                 {t.forgotPassword}
               </button>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Users, Activity, Image as ImageIcon, ShieldCheck, Mail, Calendar, MapPin, Search, User } from "lucide-react";
-import { getAdminUsers, getAdminScans } from "../services/api";
+import { Users, Activity, Image as ImageIcon, ShieldCheck, Mail, Calendar, MapPin, Search, User, Trash2 } from "lucide-react";
+import { getAdminUsers, getAdminScans, adminDeleteUser, adminDeleteScan } from "../services/api";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -20,13 +20,39 @@ export default function AdminDashboard() {
         setUsers(usersData.users || []);
         setScans(scansData.scans || []);
       } catch (err) {
-        console.error("Failed to load admin data", err);
+        console.error("Failed to load admin data:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchAdminData();
   }, []);
+
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to delete user ${userName} and all their scans? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await adminDeleteUser(userId);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      // Also manually remove their scans from the UI to reflect backend cascade
+      setScans(prev => prev.filter(s => s.user_id !== userId));
+    } catch (err) {
+      alert("Failed to delete user: " + err.message);
+    }
+  };
+
+  const handleDeleteScan = async (scanId) => {
+    if (!window.confirm("Are you sure you want to delete this scan?")) {
+      return;
+    }
+    try {
+      await adminDeleteScan(scanId);
+      setScans(prev => prev.filter(s => s.id !== scanId));
+    } catch (err) {
+      alert("Failed to delete scan: " + err.message);
+    }
+  };
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -152,7 +178,7 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-bold text-green-900">{s.crop || "Unknown Crop"}</p>
+                          <p className="text-sm font-bold text-green-900">{s.crop || (s.vision_diagnosis ? s.vision_diagnosis.split(' ')[0] : "Field Scan")}</p>
                           <p className={`text-xs font-semibold ${s.is_spray_safe ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {s.is_spray_safe ? "Safe" : "Warning"}
                           </p>
@@ -191,6 +217,7 @@ export default function AdminDashboard() {
                     <th className="px-6 py-4">Email</th>
                     <th className="px-6 py-4">Joined</th>
                     <th className="px-6 py-4">ID</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-green-100">
@@ -213,11 +240,20 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs font-mono text-gray-400">{u.id}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={() => handleDeleteUser(u.id, u.name)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete User"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500">No users found.</td>
+                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">No users found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -246,17 +282,26 @@ export default function AdminDashboard() {
                 <div className="p-4 flex flex-col gap-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-black text-green-900">{scan.crop || "Unknown Crop"}</h3>
+                      <h3 className="text-lg font-black text-green-900">{scan.crop || (scan.vision_diagnosis ? scan.vision_diagnosis.split(' ')[0] : "Field Scan")}</h3>
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 font-medium">
                         <User className="h-3 w-3" />
                         {users.find(u => u.id === scan.user_id)?.name || <span className="font-mono">{scan.user_id.slice(-6)}</span>}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
-                      scan.is_spray_safe ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-rose-100 text-rose-800 border-rose-300'
-                    }`}>
-                      {scan.is_spray_safe ? "Safe" : "Unsafe"}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                        scan.is_spray_safe ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                      }`}>
+                        {scan.is_spray_safe ? "Safe" : "Warning"}
+                      </span>
+                      <button 
+                        onClick={() => handleDeleteScan(scan.id)}
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                        title="Delete Scan"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                   
                   {scan.vision_diagnosis && (

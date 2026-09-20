@@ -104,3 +104,29 @@ def get_all_scans(limit: int = 200) -> List[Dict[str, Any]]:
     scans = get_scans_collection()
     cursor = scans.find({}).sort("created_at", DESCENDING).limit(limit)
     return [_scan_dict(doc) for doc in cursor]
+
+def delete_all_user_scans(user_id: str) -> int:
+    """
+    Deletes all scans belonging to a user (used for cascade deletes).
+    """
+    if not user_id:
+        return 0
+    scans = get_scans_collection()
+    result = scans.delete_many({"user_id": str(user_id)})
+    return result.deleted_count
+
+def delete_scan(scan_id: str) -> bool:
+    """
+    Deletes a specific scan document (Admin).
+    """
+    if not scan_id:
+        return False
+    scans = get_scans_collection()
+    query: Dict[str, Any] = {}
+    try:
+        query["_id"] = ObjectId(scan_id)
+    except Exception:
+        query["_id"] = scan_id
+
+    result = scans.delete_one(query)
+    return result.deleted_count > 0

@@ -95,6 +95,34 @@ async def admin_get_scans(authorization: Optional[str] = Header(None)):
     scans = get_all_scans(limit=200)
     return {"scans": scans, "count": len(scans)}
 
+@router.delete("/api/v1/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict) or not user.get("is_admin"):
+        return JSONResponse(status_code=403, content={"error": "Admin access required"})
+    
+    from app.services.scan_service import delete_all_user_scans
+    from app.services.auth_service import delete_user as svc_delete_user
+    
+    scans_deleted = delete_all_user_scans(user_id)
+    deleted = svc_delete_user(user_id)
+    
+    if not deleted:
+        return JSONResponse(status_code=404, content={"error": "User not found"})
+    return {"status": "ok", "deleted_user_id": user_id, "scans_deleted": scans_deleted}
+
+@router.delete("/api/v1/admin/scans/{scan_id}")
+async def admin_delete_scan(scan_id: str, authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict) or not user.get("is_admin"):
+        return JSONResponse(status_code=403, content={"error": "Admin access required"})
+    
+    from app.services.scan_service import delete_scan
+    deleted = delete_scan(scan_id)
+    if not deleted:
+        return JSONResponse(status_code=404, content={"error": "Scan not found"})
+    return {"status": "ok", "deleted_scan_id": scan_id}
+
 # Thread-safe set of active websocket connections for telemetry
 active_connections: set[WebSocket] = set()
 
