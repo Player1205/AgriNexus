@@ -88,3 +88,11 @@ def delete_user_scan(user_id: str, scan_id: str) -> bool:
 
     result = scans.delete_one(query)
     return result.deleted_count > 0
+
+def get_all_scans(limit: int = 200) -> List[Dict[str, Any]]:
+    """
+    Fetches all scans across the platform, sorted latest first.
+    """
+    scans = get_scans_collection()
+    cursor = scans.find({}).sort("created_at", DESCENDING).limit(limit)
+    return [_scan_dict(doc) for doc in cursor]

@@ -185,6 +185,7 @@ export default function AuthView({ onAuthenticated }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en");
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const t = AUTH_LANGUAGES.find((l) => l.code === selectedLang) || AUTH_LANGUAGES[0];
 
@@ -200,11 +201,18 @@ export default function AuthView({ onAuthenticated }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    if (!email.toLowerCase().endsWith("@gmail.com")) {
+      setError("Only @gmail.com emails are allowed.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const user = isRegistering
         ? await register(name, email, password)
-        : await login(email, password);
+        : await login(email, password, isAdmin);
+      
       onAuthenticated(user);
     } catch (submitError) {
       setError(submitError.message || "Authentication failed. Please check your credentials.");
@@ -402,6 +410,22 @@ export default function AuthView({ onAuthenticated }) {
               </button>
             )}
           </div>
+          
+          {/* Admin Checkbox */}
+          {!isRegistering && (
+            <div className="flex items-center gap-2 mt-1 px-1">
+              <input
+                type="checkbox"
+                id="adminCheck"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-[#1e6b37] focus:ring-[#1e6b37]"
+              />
+              <label htmlFor="adminCheck" className="text-xs text-gray-600 font-medium select-none cursor-pointer">
+                Login as Admin
+              </label>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (

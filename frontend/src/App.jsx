@@ -4,8 +4,9 @@ import TelemetryView from "./components/TelemetryView";
 import PwaInstallBanner from "./components/PwaInstallBanner";
 import AuthView from "./components/AuthView";
 import UserScansModal from "./components/UserScansModal";
+import AdminDashboard from "./components/AdminDashboard";
 import { getCurrentUser, logout } from "./services/auth";
-import { Sprout, Cpu, Download, LogOut, Database, User as UserIcon } from "lucide-react";
+import { Sprout, Cpu, Download, LogOut, Database, User as UserIcon, ShieldCheck } from "lucide-react";
 
 export default function App() {
   const [lastResult, setLastResult] = useState(null);
@@ -111,6 +112,22 @@ export default function App() {
             </button>
           )}
 
+          {/* Admin Button */}
+          {user?.is_admin && (
+            <button
+              onClick={() => setActiveTab(activeTab === "admin" ? "farmer" : "admin")}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border font-bold text-xs shadow-sm transition ${
+                activeTab === "admin" 
+                  ? "border-emerald-500 bg-emerald-600 text-white" 
+                  : "border-gray-700 bg-gray-900/90 hover:border-emerald-500/50 hover:text-emerald-400 text-gray-300"
+              }`}
+              title="Nexus Command (Admin)"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Admin</span>
+            </button>
+          )}
+
           {/* User History Button */}
           <button
             onClick={() => setIsScansModalOpen(true)}
@@ -145,28 +162,34 @@ export default function App() {
       </header>
 
       {/* Main Dual Panels: Farmer View and Telemetry View */}
-      <div className="flex flex-1 min-h-0 w-full flex-col lg:flex-row overflow-hidden">
-        {/* Farmer View Panel */}
-        <div
-          className={`${
-            activeTab === "farmer" ? "flex" : "hidden"
-          } lg:flex w-full lg:w-1/2 h-full min-h-0 overflow-y-auto overflow-x-hidden lg:border-r border-gray-800/80 bg-white`}
-        >
-          <FarmerView 
-            onAnalysisComplete={setLastResult}
-            onOpenScans={() => setIsScansModalOpen(true)}
-          />
+      {activeTab === "admin" ? (
+        <div className="flex-1 w-full min-h-0 overflow-hidden">
+          <AdminDashboard />
         </div>
+      ) : (
+        <div className="flex flex-1 min-h-0 w-full flex-col lg:flex-row overflow-hidden">
+          {/* Farmer View Panel */}
+          <div
+            className={`${
+              activeTab === "farmer" ? "flex" : "hidden"
+            } lg:flex w-full lg:w-1/2 h-full min-h-0 overflow-y-auto overflow-x-hidden lg:border-r border-gray-800/80 bg-white`}
+          >
+            <FarmerView 
+              onAnalysisComplete={setLastResult}
+              onOpenScans={() => setIsScansModalOpen(true)}
+            />
+          </div>
 
-        {/* Telemetry Panel */}
-        <div
-          className={`${
-            activeTab === "telemetry" ? "flex" : "hidden"
-          } lg:flex w-full lg:w-1/2 h-full min-h-0 overflow-y-auto overflow-x-hidden bg-[#020612]`}
-        >
-          <TelemetryView />
+          {/* Telemetry Panel */}
+          <div
+            className={`${
+              activeTab === "telemetry" ? "flex" : "hidden"
+            } lg:flex w-full lg:w-1/2 h-full min-h-0 overflow-y-auto overflow-x-hidden bg-[#020612]`}
+          >
+            <TelemetryView />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MongoDB Atlas User Scans Modal */}
       <UserScansModal

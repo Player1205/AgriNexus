@@ -20,10 +20,10 @@ const authRequest = async (path, options = {}) => {
 
 export const getAuthToken = () => localStorage.getItem(TOKEN_KEY);
 
-export const login = async (email, password) => {
+export const login = async (email, password, isAdmin = false) => {
   const result = await authRequest("/api/v1/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, is_admin: isAdmin }),
   });
   localStorage.setItem(TOKEN_KEY, result.token);
   localStorage.setItem(USER_KEY, JSON.stringify(result.user));

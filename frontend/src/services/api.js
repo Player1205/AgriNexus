@@ -273,3 +273,31 @@ export const deleteUserScan = async (scanId) => {
   }
   return await response.json();
 };
+
+export const getAdminUsers = async () => {
+  const baseUrl = getBaseApiUrl();
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("agrinexus_auth_token") : null;
+  if (!token) return { users: [], count: 0 };
+
+  const response = await fetch(`${baseUrl}/api/v1/admin/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to load admin users: ${response.status}`);
+  }
+  return await response.json();
+};
+
+export const getAdminScans = async () => {
+  const baseUrl = getBaseApiUrl();
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("agrinexus_auth_token") : null;
+  if (!token) return { scans: [], count: 0 };
+
+  const response = await fetch(`${baseUrl}/api/v1/admin/scans`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to load admin scans: ${response.status}`);
+  }
+  return await response.json();
+};
