@@ -152,7 +152,7 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-bold text-green-900">{s.crop || "Unknown Crop"}</p>
+                          <p className="text-sm font-bold text-green-900">{s.crop || (s.vision_diagnosis ? s.vision_diagnosis.split(' ')[0] : "Field Scan")}</p>
                           <p className={`text-xs font-semibold ${s.is_spray_safe ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {s.is_spray_safe ? "Safe" : "Warning"}
                           </p>
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
                 <div className="p-4 flex flex-col gap-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-black text-green-900">{scan.crop || "Unknown Crop"}</h3>
+                      <h3 className="text-lg font-black text-green-900">{scan.crop || (scan.vision_diagnosis ? scan.vision_diagnosis.split(' ')[0] : "Field Scan")}</h3>
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 font-medium">
                         <User className="h-3 w-3" />
                         {users.find(u => u.id === scan.user_id)?.name || <span className="font-mono">{scan.user_id.slice(-6)}</span>}
