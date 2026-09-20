@@ -40,6 +40,7 @@ def _user_dict(doc: Dict[str, Any]) -> Dict[str, Any]:
         "id": str(doc.get("_id")),
         "name": doc.get("name", ""),
         "email": doc.get("email", ""),
+        "is_admin": doc.get("is_admin", False),
         "created_at": doc.get("created_at", ""),
     }
 
@@ -54,6 +55,8 @@ def create_user(name: str, email: str, password: str) -> Dict[str, Any]:
         raise ValueError("Password must be at least 8 characters long")
     if not clean_email or "@" not in clean_email:
         raise ValueError("A valid email address is required")
+    if not clean_email.endswith("@gmail.com"):
+        raise ValueError("Only @gmail.com emails are allowed")
 
     users = get_users_collection()
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -62,6 +65,7 @@ def create_user(name: str, email: str, password: str) -> Dict[str, Any]:
         "name": clean_name,
         "email": clean_email,
         "password_hash": _password_hash(password),
+        "is_admin": False,
         "created_at": now_iso,
         "updated_at": now_iso,
     }
@@ -73,7 +77,7 @@ def create_user(name: str, email: str, password: str) -> Dict[str, Any]:
     except DuplicateKeyError as error:
         raise ValueError("An account with that email already exists") from error
 
-def authenticate(email: str, password: str) -> Tuple[str, Dict[str, Any]]:
+def authenticate(email: str, password: str, is_admin_login: bool = False) -> Tuple[str, Dict[str, Any]]:
     """Authenticates user against MongoDB Atlas and issues a 7-day session token."""
     clean_email = email.strip().lower()
     users = get_users_collection()
@@ -82,6 +86,13 @@ def authenticate(email: str, password: str) -> Tuple[str, Dict[str, Any]]:
     user = users.find_one({"email": clean_email})
     if not user or not _password_matches(password, user.get("password_hash", "")):
         raise ValueError("Invalid email or password")
+    
+    if not clean_email.endswith("@gmail.com"):
+        raise ValueError("Only @gmail.com emails are allowed")
+
+    is_user_admin = user.get("is_admin", False)
+    if is_admin_login and not is_user_admin:
+        raise ValueError("You do not have administrator privileges")
 
     token = secrets.token_urlsafe(32)
     now = datetime.now(timezone.utc)
@@ -139,3 +150,9 @@ def revoke_all_user_tokens(user_id: str) -> int:
     sessions = get_sessions_collection()
     result = sessions.delete_many({"user_id": str(user_id)})
     return result.deleted_count
+
+def get_all_users(limit: int = 100) -> list[Dict[str, Any]]:
+    """Retrieves all users for the admin dashboard."""
+    users = get_users_collection()
+    cursor = users.find({}).sort("created_at", -1).limit(limit)
+    return [_user_dict(doc) for doc in cursor]
