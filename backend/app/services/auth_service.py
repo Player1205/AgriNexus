@@ -156,3 +156,29 @@ def get_all_users(limit: int = 100) -> list[Dict[str, Any]]:
     users = get_users_collection()
     cursor = users.find({}).sort("created_at", -1).limit(limit)
     return [_user_dict(doc) for doc in cursor]
+
+def delete_user(user_id: str) -> bool:
+    """
+    Deletes a user and all their associated sessions.
+    (Note: The caller is responsible for deleting their scans/data).
+    """
+    if not user_id:
+        return False
+    users = get_users_collection()
+    sessions = get_sessions_collection()
+    
+    # Try converting to ObjectId if possible
+    from bson import ObjectId
+    query: Dict[str, Any] = {}
+    try:
+        query["_id"] = ObjectId(user_id)
+    except Exception:
+        query["_id"] = user_id
+        
+    # Delete user
+    result = users.delete_one(query)
+    
+    # Delete sessions
+    sessions.delete_many({"user_id": str(user_id)})
+    
+    return result.deleted_count > 0
