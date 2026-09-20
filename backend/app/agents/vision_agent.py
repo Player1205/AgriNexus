@@ -56,9 +56,9 @@ async def vision_node(state: AgriNexusState) -> dict:
     Agent 1: Vision Pathology
     
     TIER 1 (PRIMARY): Runs YOUR trained ML model (agrinexus_vision.onnx).
-    If confidence >= 60%, returns immediately with ZERO external API calls.
+    If confidence >= 97% and margin >= 60%, returns immediately with ZERO external API calls.
     
-    TIER 2 (FALLBACK): ONLY if your trained model is uncertain (<60%) or unable
+    TIER 2 (FALLBACK): ONLY if your trained model is uncertain (<97% or margin <60%) or unable
     to identify the crop, Gemini Vision API is consulted to identify the anomaly/subject.
     """
     image_path = state.get("image_path", "")
@@ -91,9 +91,9 @@ async def vision_node(state: AgriNexusState) -> dict:
             print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence (Margin: {round(confidence_margin * 100, 1)}%).")
             
             # Dual-Gate Mathematical Verification:
-            # 1. Decisive 85% confidence floor for trained neural network classification.
-            # 2. Significant confidence margin (>= 20%) between top-1 and runner-up to reject ambiguous guesses.
-            if confidence >= 0.85 and confidence_margin >= 0.20:
+            # 1. Decisive 97% confidence floor for trained neural network classification.
+            # 2. Significant confidence margin (>= 60%) between top-1 and runner-up to reject ambiguous guesses.
+            if confidence >= 0.97 and confidence_margin >= 0.60:
                 detected_crop = disease_name.split()[0] if disease_name else "Crop"
                 return {
                     "vision_diagnosis": disease_name,
@@ -102,7 +102,7 @@ async def vision_node(state: AgriNexusState) -> dict:
                     "detected_subject": f"{detected_crop} Leaf"
                 }
             else:
-                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 85% or Margin ({round(confidence_margin * 100, 1)}%) < 20%. Engaging Tier 2 Gemini Gatekeeper...")
+                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 97% or Margin ({round(confidence_margin * 100, 1)}%) < 60%. Engaging Tier 2 Gemini Gatekeeper...")
                 
         except Exception as e:
             print(f"[TIER 1 NOTE] {str(e)}. Falling back to Tier 2...")

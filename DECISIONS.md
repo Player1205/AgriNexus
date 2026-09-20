@@ -1843,3 +1843,60 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* In high-stakes agricultural systems, downstream agronomic prescription and blockchain ledgering must be gated at the perceptual boundary (Agent 1). If confidence is below 85% or uncertified, jumping directly to Agent 5 prevents hazardous chemical calculations and ledger pollution.
 > </details>
 </details>
+
+---
+
+### ADR-084: 97% Vision Diagnostic Confidence & 60% Margin Floor with Architectural Cataloging of Idea 1 (Dual-Confirmation Crop Species Pre-Verification)
+
+**Context & The Problem:**
+1. *Out-of-Distribution Foliar Misclassification:* When non-target ornamental plants (e.g. *Hibiscus rosa-sinensis*) or wild foliage are scanned, closed-set 38-class convolutional neural networks (such as EfficientNet-B4) are forced to map the image into one of their 38 pre-defined categories. In testing with actual field images (`WhatsApp Image 2026-09-19 at 14.44.11.jpeg`), the ONNX model assigned class 19 (`Pepper, bell healthy`) with a 91.15% confidence score and an 86.94% margin.
+2. *Premature Downstream Propagation:* Because the previous confidence floor was 85% (`0.85`), this 91.15% prediction was accepted by Agent 1 as a valid "Pepper" diagnosis. The pipeline subsequently executed Agent 2 (RAG) to search for Pepper treatments, Agent 3 (Safety) for dosage clamping, and Agent 4 (Web3) for blockchain passporting. If a client failover or timeout subsequently occurred, the fallback reset to Agent 1, causing Gemini to run and identify the image correctly as Hibiscus with Leaf Spot.
+3. *Requirement for 97% Confidence Floor:* To immediately prevent 91.15% false positives on uncertified or out-of-distribution foliage from bypassing Gemini in Agent 1, the confidence floor must be raised to 97% (`0.97`) and the margin floor to 60% (`0.60`). Any prediction below 97% confidence immediately invokes Tier 2 Gemini right inside Agent 1.
+4. *Cataloging of Idea 1:* The user requested formal documentation of "Idea 1" (lightweight botanical crop genus verification before allowing ONNX closed-set classification to proceed downstream) for future system iterations.
+
+**What Was Changed & How It Was Changed:**
+1. *Backend Vision Gatekeeper (`backend/app/agents/vision_agent.py`):*
+   - Elevated Tier 1 ONNX acceptance condition to:
+     $$\text{confidence} \ge 0.97 \quad \text{AND} \quad \text{confidence\_margin} \ge 0.60$$
+   - Any inference score below 97% or margin below 60% immediately logs:
+     `[TIER 1 UNCERTAIN / OOD] Confidence < 97% or Margin < 60%. Engaging Tier 2 Gemini Gatekeeper...`
+   - Tier 2 Gemini identifies the exact botanical genus/species (e.g. Hibiscus) and flags uncertified flora with `is_crop_supported = False`.
+2. *LangGraph Routing Edge (`backend/app/agents/graph.py`):*
+   - In `route_after_vision`, updated the conditional routing check:
+     $$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{vision\_confidence} < 0.97 \implies \text{Jump directly to Voice (Agent 5)}$$
+   - Guaranteed that Agents 2 (RAG), 3 (Safety), and 4 (Web3) are unconditionally bypassed whenever confidence is below 97% or the crop is uncertified.
+3. *In-Browser Edge AI Gatekeeper (`frontend/src/services/edgeVisionAgent.js`):*
+   - Updated Gate 2 to `if (top1.prob < 0.97 || margin < 0.60)` to reject any ambiguous or sub-97% classification as unsupported.
+4. *Frontend Swarm Orchestrator (`frontend/src/services/swarmOrchestrator.js`):*
+   - Updated cloud fallback trigger to `if (visionOutput.vision_confidence < 0.97 || visionOutput.is_crop_supported === false)`.
+5. *Comprehensive Test Suite Validation:*
+   - Updated `backend/tests/test_vision_gatekeeper.py` to assert the 97% confidence floor and test sub-97% rejection (all 35 backend tests passing).
+   - Updated `frontend/src/test/OfflineSwarm.test.jsx` with 98% mock confidence for confident tests (all 24 frontend tests passing).
+   - Verified clean production build with Vite (`npm run build`).
+6. *Cataloging of "Idea 1" (Dual-Confirmation Crop Species Pre-Verification):*
+   - Formalized Idea 1 in [`ARCHITECTURE.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/ARCHITECTURE.md) and [`DECISIONS.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/DECISIONS.md):
+     - *Concept:* Before accepting any closed-set ONNX classification, a lightweight botanical verification check (Stage 1A) confirms that the plant's genus/family matches the target crop (e.g. "Is this leaf Solanaceae/Capsicum?").
+     - *Action:* If botanical genus verification fails, the closed-set label is invalidated, preventing OOD plants from polluting downstream agronomic RAG or safety engines.
+
+**Architectural Rationale:**
+- In closed-set multi-class networks, high-confidence (90-95%) false positives on out-of-distribution flora are a known mathematical vulnerability. Raising the threshold to $\ge 97\%$ and margin to $\ge 60\%$ forces out-of-distribution foliage to consult Gemini Vision right inside Agent 1.
+- Guarantees that uncertified crops like Hibiscus are immediately recognized at Agent 1, setting `is_crop_supported = false` and routing directly to Agent 5 for safe organic guidance and KVK referral, with zero execution of chemical RAG, safety clamping, or blockchain passporting.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-084</strong></summary>
+
+> **Question:** Why did the 38-class EfficientNet-B4 model classify an out-of-distribution Hibiscus leaf as "Pepper, bell healthy" with 91.15% confidence, and how does the 97% threshold resolve this?
+>
+> 1. Because Hibiscus is an official ICAR food crop.
+> 2. Because closed-set neural classifiers normalize logits via Softmax across only their 38 trained classes, so an unmodeled leaf with similar green foliar pigmentation and smooth margins concentrates probability mass into the closest visual class; setting the threshold to 97% ensures such OOD misclassifications fall below the acceptance floor and trigger Gemini Vision right inside Agent 1.
+> 3. Because ONNX models only work on Windows machines.
+> 4. Because the browser camera downsampled the image resolution.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In a closed-set classifier, Softmax probabilities must sum to 1.0. When an unmodeled species (Hibiscus) is provided, the network has no "None of the above" class, leading it to output 91.15% on Pepper bell healthy. The 97% confidence floor and 60% margin floor safely reject this prediction in Tier 1, forcing Agent 1 to consult Gemini Vision and identify Hibiscus as an uncertified crop before downstream agents can ever run.
+> </details>
+</details>
+

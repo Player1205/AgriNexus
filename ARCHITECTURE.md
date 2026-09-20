@@ -89,15 +89,15 @@ AgriNexus adheres to strict separation of concerns, choosing the optimal runtime
   $$\text{Input Image} \xrightarrow{\text{Numpy Normalization}} \mathbf{X} \in \mathbb{R}^{1 \times 3 \times 380 \times 380} \xrightarrow{\text{ONNX CPU Engine}} \mathbf{z} \in \mathbb{R}^{38}$$
   $$\mathbf{p} = \text{Softmax}(\mathbf{z}) = \frac{\exp(z_i - \max(\mathbf{z}))}{\sum_{j=1}^{38} \exp(z_j - \max(\mathbf{z}))}$$
 * **Tier 1 (Trained ML Priority) & Tier 2 (Gemini Fallback) Pipeline:**
-  1. *Tier 1 (Primary - Trained Neural Network with Dual-Gate Verification):* Runs the custom-trained `agrinexus_vision.onnx` model (EfficientNet-B4) directly in memory. To prevent false-positive classifications on out-of-distribution inputs (e.g. text documents, emails, indoor houseplants) while accurately identifying certified foliar pathology, the model enforces a strict **Dual-Gate mathematical criterion**:
-     $$\text{Confidence}(p_{(1)}) \ge 0.85 \quad \text{AND} \quad \Delta_{\text{margin}} = p_{(1)} - p_{(2)} \ge 0.20$$
+  1. *Tier 1 (Primary - Trained Neural Network with Dual-Gate Verification):* Runs the custom-trained `agrinexus_vision.onnx` model (EfficientNet-B4) directly in memory. To prevent false-positive classifications on out-of-distribution inputs (e.g. text documents, emails, indoor houseplants, non-target ornamental flora like Hibiscus) while accurately identifying certified foliar pathology, the model enforces a strict **Dual-Gate mathematical criterion**:
+     $$\text{Confidence}(p_{(1)}) \ge 0.97 \quad \text{AND} \quad \Delta_{\text{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
      If both conditions are satisfied, the node returns immediately in $\approx 40\text{ms}$ with **zero external API calls**.
-  2. *Tier 2 (Secondary Fallback - Multi-Modal LLM Domain Gatekeeper):* Engaged right inside Agent 1 whenever $p_{(1)} < 0.85$ or $\Delta_{\text{margin}} < 0.20$, invoking Google Gemini Flash Vision cascade (`gemini-flash-latest`, `gemini-3.6-flash`, `gemini-flash-lite-latest`). The gatekeeper detects out-of-distribution subjects, setting `is_crop_supported = false` and `confidence = 0.0`. Real uncertified agricultural crops (e.g. Guava, Mango) or crops with confidence $< 0.85$ are flagged with `is_crop_supported = false`.
+  2. *Tier 2 (Secondary Fallback - Multi-Modal LLM Domain Gatekeeper):* Engaged right inside Agent 1 whenever $p_{(1)} < 0.97$ or $\Delta_{\text{margin}} < 0.60$, invoking Google Gemini Flash Vision cascade (`gemini-flash-latest`, `gemini-3.6-flash`, `gemini-flash-lite-latest`). The gatekeeper detects out-of-distribution subjects, setting `is_crop_supported = false` and `confidence = 0.0`. Real uncertified agricultural crops (e.g. Guava, Mango, Hibiscus) or crops with confidence $< 0.97$ are flagged with `is_crop_supported = false`.
   3. *StateGraph Early Exit Routing Gate (`graph.py`):* The LangGraph routing function `route_after_vision` strictly verifies both conditions:
-     $$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{Confidence} < 0.85 \implies \text{Route directly to Agent 5 (Voice)}$$
+     $$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{Confidence} < 0.97 \implies \text{Route directly to Agent 5 (Voice)}$$
      Downstream nodes—Agent 2 (Chemical RAG), Agent 3 (Dosage Safety Engine), and Agent 4 (Web3 Cryptographic Passport)—are **unconditionally bypassed**, eliminating invalid chemical prescriptions and conserving execution budget.
-  4. *In-Browser Edge AI Organic Pigment & Margin Filter (`edgeVisionAgent.js`):* Offline execution in the browser performs a sub-2ms Canvas chlorophyll pigment heuristic before inference. Images with foliar organic ratio $< 4\%$ (documents, white screens, text) are immediately intercepted. ONNX inference enforces the 85% confidence floor ($p_{(1)} \ge 0.85$) and margin floor ($\Delta \ge 0.20$) to cleanly reject unsupported plants without server dependencies, and allows confident detections to bypass cloud fallback entirely.
-  5. *Domain Gatekeeper & Uncertainty Interlock:* If the subject is not one of the 14 certified food crops or confidence remains $< 0.85$, chemical prescriptions are unconditionally locked to $0.0\text{ ml/g}$ and the farmer is routed to their nearest ICAR KVK center.
+  4. *In-Browser Edge AI Organic Pigment & Margin Filter (`edgeVisionAgent.js`):* Offline execution in the browser performs a sub-2ms Canvas chlorophyll pigment heuristic before inference. Images with foliar organic ratio $< 4\%$ (documents, white screens, text) are immediately intercepted. ONNX inference enforces the 97% confidence floor ($p_{(1)} \ge 0.97$) and margin floor ($\Delta \ge 0.60$) to cleanly reject unsupported plants without server dependencies, and allows confident detections to bypass cloud fallback entirely.
+  5. *Domain Gatekeeper & Uncertainty Interlock:* If the subject is not one of the 14 certified food crops or confidence remains $< 0.97$, chemical prescriptions are unconditionally locked to $0.0\text{ ml/g}$ and the farmer is routed to their nearest ICAR KVK center.
 
 ---
 
@@ -325,9 +325,23 @@ AgriNexus uses a multi-stage **Production Dockerfile**:
 
 
 ## Recent Architectural Updates (Hackathon Enhancements)
-- **OOD Swarm Bypass:** If Agent 1 returns < 85% confidence, execution immediately skips to Agent 5 (Voice/KVK Referral).
+- **97% Diagnostic Confidence & 60% Margin Floor:** Raised on-device and backend ONNX vision diagnostic confidence floor to 97% (`0.97`) and margin to 60% (`0.60`) to completely eliminate out-of-distribution false positives (such as non-target ornamental plants like Hibiscus being falsely classified under closed-set crop labels like Pepper bell).
+- **OOD Swarm Early Exit:** If Agent 1 returns < 97% confidence or identifies an uncertified crop, execution immediately bypasses Agents 2 (RAG), 3 (Safety), and 4 (Web3), routing directly to Agent 5 (Voice/KVK Referral).
 - **Geo-Tag Provenance:** Watermarking via EXIF/Leaflet Map added to all frontend interactions.
 - **Weather & AQI Interlock:** Switched to OpenWeatherMap. Added AQI = 5 as a hard block for agronomic spray safety.
-
-- **Gemini Multi-Model Fallback & Uncertified Crop Direct Routing:** When CV inference is uncertain or crop is uncertified (e.g. Guava), the swarm cascades across `gemini-flash-latest`, `gemini-3.6-flash`, and `gemini-flash-lite-latest` for zero-quota failure domain classification. If uncertified, LangGraph conditional edges immediately route to Agent 5 (Voice/Advisory), bypassing RAG/Safety to lock chemical advice and issue official KVK referrals with practical organic care guidance.
+- **Gemini Multi-Model Fallback & Uncertified Crop Direct Routing:** When CV inference is uncertain (< 97% confidence or < 60% margin) or crop is uncertified (e.g. Guava, Hibiscus), the swarm cascades across `gemini-flash-latest`, `gemini-3.6-flash`, and `gemini-flash-lite-latest` right inside Agent 1. If uncertified, LangGraph conditional edges immediately route to Agent 5 (Voice/Advisory), bypassing RAG/Safety to lock chemical advice and issue official KVK referrals with practical organic care guidance.
 - **Acoustic Resilience & Weather HUD Telemetry:** Client-side Sarvam AI Bulbul:v3 payload clamping (< 490 chars) with seamless Web Speech API fallbacks; redesigned 2-row responsive meteorological HUD with real-time AQI pills and spray hazard interlocks.
+
+---
+
+## 🔮 Future Architectural Initiatives: Idea 1 (Dual-Confirmation Crop Species Pre-Verification)
+
+### Architecture Context
+Closed-set 38-class convolutional/vision-transformer models are inherently susceptible to out-of-distribution (OOD) foliage misclassifications when presented with unmodeled ornamental plants (e.g. *Hibiscus rosa-sinensis*, houseplants, wild weeds). Even with temperature scaling, softmax over 38 classes can produce 90%+ confidence when foliar color, vein texture, and lighting closely mirror a target class (e.g., Pepper bell healthy).
+
+### Proposed Design ("Idea 1")
+Implement a two-stage botanical verification pipeline directly inside Agent 1:
+1. **Stage 1A (Lightweight Genus/Species Confirmation):** Prior to allowing the 38-class ONNX classifier's output to finalize, run a lightweight multimodal botanical verification check using Gemini Vision or a dedicated binary crop verifier:
+   - *"Is the botanical subject in this image actually a member of the predicted crop genus (e.g., Capsicum / Solanaceae for Pepper)?"*
+2. **Stage 1B (Discrepancy Invalidation):** If the verified botanical genus does not match the ONNX predicted crop class, the ONNX result is invalidated immediately, preventing any OOD plant from ever entering the agronomic RAG or safety pipeline under a false crop identity.
+3. **Execution Boundary:** This pre-verification is strictly encapsulated within Agent 1, preserving the invariant that downstream agents (Agents 2–5) receive only 100% verified, ground-truth agricultural subjects.

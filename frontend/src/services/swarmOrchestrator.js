@@ -155,7 +155,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
     // -------------------------------------------------------------------------
     // HYBRID CLOUD FALLBACK & EARLY EXIT STRATEGY
     // -------------------------------------------------------------------------
-    if (visionOutput.vision_confidence < 0.85 || visionOutput.is_crop_supported === false) {
+    if (visionOutput.vision_confidence < 0.97 || visionOutput.is_crop_supported === false) {
         let isCloudSuccess = false;
 
         // 1. Try Gemini Cloud Fallback if Online

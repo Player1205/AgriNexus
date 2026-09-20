@@ -19,7 +19,7 @@ vi.mock('../services/edgeVisionAgent', () => ({
         return {
             is_crop_supported: true,
             vision_diagnosis: 'Tomato Late blight',
-            vision_confidence: 0.95
+            vision_confidence: 0.98
         };
     })
 }));
@@ -37,7 +37,7 @@ describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
     it('Agent 2 (RAG): Queries 38 ICAR protocols in-memory and matches Tomato Late Blight', async () => {
         const state = {
             vision_diagnosis: 'Tomato Late blight',
-            vision_confidence: 0.95,
+            vision_confidence: 0.98,
             is_crop_supported: true
         };
         const rag = await runEdgeRagAgent(state);
@@ -54,7 +54,7 @@ describe('100% On-Device Multi-Agent Swarm (Offline MAS)', () => {
             min_mic_dosage: 120.0,
             max_statutory_dosage: 195.0,
             current_humidity: 85.0,
-            vision_confidence: 0.95,
+            vision_confidence: 0.98,
             is_crop_supported: true,
             client_latitude: 30.9010,
             client_longitude: 75.8573

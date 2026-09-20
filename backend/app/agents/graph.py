@@ -23,10 +23,10 @@ def build_agrinexus_graph():
         """
         Early Exit / Statutory Gate:
         If the crop is not one of our 14 ICAR-certified crops, is non-agricultural,
-        or confidence is below 85%, bypass chemical RAG (Agent 2), Safety Engine (Agent 3),
+        or confidence is below 97%, bypass chemical RAG (Agent 2), Safety Engine (Agent 3),
         and Web3 Passport (Agent 4) and jump DIRECTLY to Voice Agent (Agent 5) for safe advisory and KVK referral.
         """
-        if not state.get("is_crop_supported", True) or float(state.get("vision_confidence", 0.0)) < 0.85:
+        if not state.get("is_crop_supported", True) or float(state.get("vision_confidence", 0.0)) < 0.97:
             return "voice"
         return "rag"
 
