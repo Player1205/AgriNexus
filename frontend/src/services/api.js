@@ -306,9 +306,9 @@ export const adminDeleteUser = async (userId) => {
   const baseUrl = getBaseApiUrl();
   const token = typeof localStorage !== "undefined" ? localStorage.getItem("agrinexus_auth_token") : null;
   if (!token) return false;
-  const response = await fetch(${baseUrl}/api/v1/admin/users/, {
+  const response = await fetch(`${baseUrl}/api/v1/admin/users/${userId}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error("Failed to delete user");
   return await response.json();
@@ -318,9 +318,9 @@ export const adminDeleteScan = async (scanId) => {
   const baseUrl = getBaseApiUrl();
   const token = typeof localStorage !== "undefined" ? localStorage.getItem("agrinexus_auth_token") : null;
   if (!token) return false;
-  const response = await fetch(${baseUrl}/api/v1/admin/scans/, {
+  const response = await fetch(`${baseUrl}/api/v1/admin/scans/${scanId}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error("Failed to delete scan");
   return await response.json();
