@@ -174,10 +174,9 @@ export const runEdgeVisionAgent = async (file) => {
 
                         console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
 
-                        // Gate 2: Edge AI Validation (Confidence & Margin Floor)
-                        // Across 38 classes (random chance = 2.63%), top-1 confidence >= 55% with margin >= 12%
-                        // represents statistically sound crop disease identification on edge mobile devices.
-                        if (top1.prob < 0.55 || margin < 0.12) {
+                        // Gate 2: Edge AI Validation (85% Confidence & Margin Floor)
+                        // Requires top-1 confidence >= 85% with margin >= 20% before proceeding to automated agronomic recommendation.
+                        if (top1.prob < 0.85 || margin < 0.20) {
                             console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
                             resolve({
                                 vision_diagnosis: "Unrecognized / Unsupported Plant",

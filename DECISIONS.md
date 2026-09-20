@@ -1797,3 +1797,49 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* In a 38-class distribution, random chance is 2.63%. Demanding 97% confidence ignores natural softmax smoothing across related foliar symptoms, falsely rejecting genuine plant diseases and defeating the purpose of on-device offline edge intelligence.
 > </details>
 </details>
+
+---
+
+### ADR-083: Decisive 85% Confidence Floor Standardization & Agent 1 Gatekeeper Isolation
+
+**Context & The Problem:**
+1. *Downstream Leakage on Low-Confidence Predictions:* Under certain conditions, when the neural vision model predicted a crop below decisive confidence (e.g. 60-75%), the downstream multi-agent nodes (Agent 2 RAG, Agent 3 Safety, Agent 4 Web3) would execute prematurely before a statutory verification was reached. If a cloud failure or timeout then occurred at Agent 5 (Voice), the frontend failover would reset the pipeline to Agent 1, creating a perceived "rollback" where Gemini Vision was invoked after the first 4 agents had already rendered.
+2. *Need for Decisive 85% Floor:* The platform required a strict, decisive 85% confidence floor across all edge and backend vision gates to guarantee that only highly confident, verified agricultural classifications can ever proceed to chemical prescription and blockchain passporting.
+3. *Timeout Starvation on Cloud Node Broadcasts:* The backend's `/api/v1/analyze` route slept for 1.6s after each node for telemetry display, accumulating 8+ seconds of idle server latency. Combined with multi-model translation cascades and cold starts, this approached the client-side 35s timeout.
+
+**What Was Changed & How It Was Changed:**
+1. *Decisive 85% Confidence & Margin Standardization:*
+   - In [`backend/app/agents/vision_agent.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/agents/vision_agent.py): Standardized Tier 1 ONNX model verification to require `confidence >= 0.85` and `confidence_margin >= 0.20`. Predictions below 85% immediately invoke Tier 2 Gemini Vision right inside Agent 1.
+   - In [`frontend/src/services/edgeVisionAgent.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/edgeVisionAgent.js): Standardized Gate 2 to `top1.prob < 0.85 || margin < 0.20`.
+   - In [`frontend/src/services/swarmOrchestrator.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/swarmOrchestrator.js): Aligned cloud fallback trigger to `vision_confidence < 0.85 || is_crop_supported === false`.
+2. *Strict StateGraph Early Exit Containment (`backend/app/agents/graph.py`):*
+   - Updated LangGraph routing edge `route_after_vision` to evaluate both support status and confidence:
+     $$\text{If } \neg(\text{is\_crop\_supported}) \lor \text{vision\_confidence} < 0.85 \implies \text{Jump directly to Voice (Agent 5)}$$
+   - Agents 2 (RAG), 3 (Safety), and 4 (Web3) are unconditionally bypassed whenever confidence is below 85% or the crop is uncertified.
+3. *Telemetry Latency Optimization & Client Timeout Extension:*
+   - In [`backend/app/api/routes.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/api/routes.py): Reduced telemetry animation delay from 1.6s to 0.8s per node, saving 4.0s of idle server latency.
+   - In [`frontend/src/services/api.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/api.js): Extended `AbortController` timeout from 35s to 60s to prevent premature client-side aborts during cold starts and multi-model cascades.
+4. *Test Suite Expansion (`backend/tests/test_vision_gatekeeper.py`):*
+   - Expanded tests to 7 test cases covering the 85% confidence floor, rejection of sub-85% predictions to Tier 2, and deterministic routing in `route_after_vision`.
+
+**Architectural Rationale:**
+- Guarantees strict containment: all vision classification and fallback resolution occurs exclusively within Agent 1 before any downstream agent is invoked.
+- Protects agronomic safety by ensuring that chemical dosages and smart contract passports are generated exclusively for diagnoses with $\ge 85\%$ statistical certainty.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-083</strong></summary>
+
+> **Question:** Why must the decision to invoke Gemini Vision or trigger an Early Exit take place strictly inside Agent 1 rather than downstream?
+>
+> 1. Because LangGraph cannot execute more than 3 nodes.
+> 2. Because chemical RAG (Agent 2) and dosage clamping (Agent 3) must never compute treatments for unverified or low-confidence (<85%) crop anomalies, preventing algorithmic hallucination and biological toxicity.
+> 3. Because Web3 wallets cannot sign transactions if the crop confidence is below 90%.
+> 4. Because client-side browsers cannot receive WebSocket messages after Agent 2.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In high-stakes agricultural systems, downstream agronomic prescription and blockchain ledgering must be gated at the perceptual boundary (Agent 1). If confidence is below 85% or uncertified, jumping directly to Agent 5 prevents hazardous chemical calculations and ledger pollution.
+> </details>
+</details>

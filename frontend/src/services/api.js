@@ -129,7 +129,7 @@ export const uploadImage = async (file, language = "hi", locOverride = null) => 
         : null;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout to handle Render cold-start wakeups
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout to handle multi-model cascades and Render cold-start wakeups
 
     const response = await fetch(endpoint, {
         method: 'POST',

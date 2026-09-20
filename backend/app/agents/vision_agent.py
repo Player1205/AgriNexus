@@ -91,9 +91,9 @@ async def vision_node(state: AgriNexusState) -> dict:
             print(f"[TIER 1 RESULT] Your Trained Model: '{disease_name}' with {round(confidence * 100, 1)}% confidence (Margin: {round(confidence_margin * 100, 1)}%).")
             
             # Dual-Gate Mathematical Verification:
-            # 1. Statistical significance floor (>= 55% vs uniform prior of 2.63% across 38 classes).
-            # 2. Significant confidence margin (>= 12%) between top-1 and runner-up to reject ambiguous guesses.
-            if confidence >= 0.55 and confidence_margin >= 0.12:
+            # 1. Decisive 85% confidence floor for trained neural network classification.
+            # 2. Significant confidence margin (>= 20%) between top-1 and runner-up to reject ambiguous guesses.
+            if confidence >= 0.85 and confidence_margin >= 0.20:
                 detected_crop = disease_name.split()[0] if disease_name else "Crop"
                 return {
                     "vision_diagnosis": disease_name,
@@ -102,7 +102,7 @@ async def vision_node(state: AgriNexusState) -> dict:
                     "detected_subject": f"{detected_crop} Leaf"
                 }
             else:
-                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 55% or Margin ({round(confidence_margin * 100, 1)}%) < 12%. Engaging Tier 2 Gemini Gatekeeper...")
+                print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 85% or Margin ({round(confidence_margin * 100, 1)}%) < 20%. Engaging Tier 2 Gemini Gatekeeper...")
                 
         except Exception as e:
             print(f"[TIER 1 NOTE] {str(e)}. Falling back to Tier 2...")
@@ -232,17 +232,18 @@ async def vision_node(state: AgriNexusState) -> dict:
                 "identified_by": "gemini_fallback"
             }
 
-        # Check if the identified crop is one of our 14 ICAR Certified Crops
+        # Check if the identified crop is one of our 14 ICAR Certified Crops and meets 85% confidence floor
         is_certified = any(c.lower() in crop_name.lower() for c in SUPPORTED_CROPS)
+        is_supported = is_certified and (confidence >= 0.85)
         detected_subject = f"{crop_name} Leaf" if "leaf" not in crop_name.lower() else crop_name
         full_diagnosis = f"{crop_name} {disease_name}" if crop_name.lower() not in disease_name.lower() else disease_name
 
-        print(f"[TIER 2 RESULT] Gemini: '{full_diagnosis}' | Certified: {is_certified} | Confidence: {confidence}")
+        print(f"[TIER 2 RESULT] Gemini: '{full_diagnosis}' | Certified: {is_certified} | Supported (>=85%): {is_supported} | Confidence: {confidence}")
 
         return {
             "vision_diagnosis": full_diagnosis,
             "vision_confidence": confidence,
-            "is_crop_supported": is_certified,
+            "is_crop_supported": is_supported,
             "detected_subject": detected_subject,
             "identified_by": "gemini_fallback"
         }

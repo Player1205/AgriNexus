@@ -184,8 +184,8 @@ async def analyze_image(
                 
                 # Broadcast the node execution to all active dashboards, tagged with session_id
                 await broadcast_telemetry(node_name, current_state, session_id)
-                # 1.6s delay per node to clearly showcase the laser path animations in Telemetry
-                await asyncio.sleep(1.6)
+                # 0.8s delay per node to showcase laser path animations without incurring request timeouts
+                await asyncio.sleep(0.8)
                 
         # Clean numpy types for final JSONResponse
         safe_response = {}
