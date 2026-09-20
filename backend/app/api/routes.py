@@ -140,8 +140,28 @@ async def analyze_image(
         safe_filename = f"{uuid.uuid4().hex[:8]}.jpg"
     temp_path = os.path.join(temp_dir, safe_filename)
     
+    import cloudinary
+    import cloudinary.uploader
+    from cloudinary.utils import cloudinary_url
+    
+    # Configure cloudinary if keys are present
+    cloudinary.config( 
+        cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME", ""), 
+        api_key = os.environ.get("CLOUDINARY_API_KEY", ""), 
+        api_secret = os.environ.get("CLOUDINARY_API_SECRET", ""),
+        secure=True
+    )
+    
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    cloudinary_url = None
+    try:
+        if os.environ.get("CLOUDINARY_CLOUD_NAME"):
+            upload_result = cloudinary.uploader.upload(temp_path, folder="agrinexus_scans")
+            cloudinary_url = upload_result.get("secure_url")
+    except Exception as e:
+        print(f"[CLOUDINARY UPLOAD ERROR] {e}")
 
     # 1. Fetch Real-Time Hyper-Local Agricultural Weather (EXIF GPS -> Device GPS -> Regional Base)
     from app.services.weather_service import fetch_live_weather
@@ -198,6 +218,8 @@ async def analyze_image(
                 safe_response[k] = str(v)
 
         safe_response["session_id"] = session_id
+        if cloudinary_url:
+            safe_response["image_url"] = cloudinary_url
 
         # Automatically store scan in MongoDB Atlas under the authenticated user's account
         try:

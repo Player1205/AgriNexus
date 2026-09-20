@@ -901,8 +901,10 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                                 <span className="text-xl select-none">
                                     {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK') ? '⚠️' : '⛅'}
                                 </span>
-                                <span className="text-sm font-black text-gray-900 tracking-tight">
-                                    {weather.temperature_c}°C · {weather.relative_humidity}% Humidity
+                                <span className="font-black text-gray-900 text-sm sm:text-base tracking-tight">
+                                    {(!weather.is_live_weather || weather.location_source?.toUpperCase() === 'REGIONAL_BASELINE' || weather.location_source?.toUpperCase() === 'OFFLINE_FALLBACK' || weather.location_source === 'UNKNOWN_LOCATION_RESTRICTED') 
+                                        ? "Unable to fetch weather" 
+                                        : `${weather.temperature_c}°C · ${weather.relative_humidity}% Humidity`}
                                 </span>
                             </div>
 

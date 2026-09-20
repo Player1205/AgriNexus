@@ -256,8 +256,8 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                                     maps_url: currentState.client_latitude && currentState.client_longitude
                                         ? `https://maps.google.com/?q=${currentState.client_latitude},${currentState.client_longitude}`
                                         : "https://maps.google.com/?q=Krishi+Vigyan+Kendra",
-                                    lat: currentState.client_latitude || 28.6139,
-                                    lng: currentState.client_longitude || 77.2090
+                                    lat: currentState.client_latitude || null,
+                                    lng: currentState.client_longitude || null
                                 }
                             };
 
@@ -320,8 +320,8 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                     maps_url: currentState.client_latitude && currentState.client_longitude
                         ? `https://maps.google.com/?q=${currentState.client_latitude},${currentState.client_longitude}`
                         : "https://maps.google.com/?q=Krishi+Vigyan+Kendra",
-                    lat: currentState.client_latitude || 28.6139,
-                    lng: currentState.client_longitude || 77.2090
+                    lat: currentState.client_latitude || null,
+                    lng: currentState.client_longitude || null
                 }
             };
 
