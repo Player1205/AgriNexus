@@ -8,7 +8,7 @@ client = TestClient(app)
 
 def test_full_auth_and_user_scans_flow():
     uid = uuid.uuid4().hex[:8]
-    email = f"api_farmer_{uid}@example.com"
+    email = f"api_farmer_{uid}@gmail.com"
     name = f"Test Farmer {uid}"
     password = "SuperStrongPassword123"
 

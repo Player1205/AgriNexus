@@ -10,7 +10,7 @@ def setup_db():
 
 def test_user_registration_and_duplicate():
     random_suffix = uuid.uuid4().hex[:8]
-    email = f"farmer_{random_suffix}@example.com"
+    email = f"farmer_{random_suffix}@gmail.com"
     name = f"Farmer {random_suffix}"
     password = "SecurePassword123"
 
@@ -29,7 +29,7 @@ def test_user_registration_and_duplicate():
 
 def test_user_authentication_and_session():
     random_suffix = uuid.uuid4().hex[:8]
-    email = f"auth_{random_suffix}@example.com"
+    email = f"auth_{random_suffix}@gmail.com"
     name = "Auth Test Farmer"
     password = "MyPassword999"
 
