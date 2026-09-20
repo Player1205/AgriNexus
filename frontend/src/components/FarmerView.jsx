@@ -138,10 +138,37 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
     const speakOnDeviceFallback = useCallback((text, langCode) => {
         if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
         try {
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = langCode === 'pa' ? 'pa-IN' : langCode === 'te' ? 'te-IN' : langCode === 'ta' ? 'ta-IN' : 'hi-IN';
+            const langMap = {
+                hi: 'hi-IN',
+                pa: 'pa-IN',
+                te: 'te-IN',
+                ta: 'ta-IN',
+                ml: 'ml-IN',
+                kn: 'kn-IN',
+                bn: 'bn-IN',
+                mr: 'mr-IN',
+                gu: 'gu-IN',
+                od: 'hi-IN',
+                en: 'en-IN'
+            };
+            utterance.lang = langMap[langCode] || 'hi-IN';
             utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const matchedVoice = voices?.find(v => {
+                const vLang = (v.lang || '').replace('_', '-').toLowerCase();
+                return vLang.startsWith(langCode.toLowerCase()) || vLang === utterance.lang.toLowerCase();
+            });
+            if (matchedVoice) {
+                utterance.voice = matchedVoice;
+            }
+
             window.speechSynthesis.speak(utterance);
         } catch (e) {
             console.warn('[WEB SPEECH FALLBACK] Error speaking utterance:', e);
@@ -306,13 +333,23 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                     ? result.vernacular_audio_url
                     : `${baseUrl}${result.vernacular_audio_url}`;
                 setAudioUrl(resolvedAudio);
-            } else if (result.translated_text && typeof navigator !== 'undefined' && navigator.onLine) {
-                // Online but audioUrl was not ready from cloud; synthesize immediately via Sarvam AI
-                synthesizeSarvamSpeech(result.translated_text, selectedLang).then((newUrl) => {
-                    if (newUrl) setAudioUrl(newUrl);
-                });
-            } else if (result.translated_text && !navigator.onLine) {
-                speakOnDeviceFallback(result.translated_text, selectedLang);
+            } else if (result.translated_text) {
+                if (typeof navigator !== 'undefined' && navigator.onLine) {
+                    // Online: Attempt Sarvam AI speech synthesis first
+                    synthesizeSarvamSpeech(result.translated_text, selectedLang).then((newUrl) => {
+                        if (newUrl) {
+                            setAudioUrl(newUrl);
+                        } else {
+                            // If Sarvam API key reached daily quota or is unavailable, automatically fallback to mobile internal speech
+                            console.log('[SARVAM QUOTA FALLBACK] Sarvam audio unavailable. Automatically speaking via mobile internal speech...');
+                            speakOnDeviceFallback(result.translated_text, selectedLang);
+                        }
+                    }).catch(() => {
+                        speakOnDeviceFallback(result.translated_text, selectedLang);
+                    });
+                } else {
+                    speakOnDeviceFallback(result.translated_text, selectedLang);
+                }
             }
 
             if (result.is_crop_supported !== undefined) {
@@ -928,6 +965,10 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                             controls 
                             autoPlay 
                             src={audioUrl} 
+                            onError={(e) => {
+                                console.warn('[SARVAM PLAYBACK] Audio stream failed, seamlessly falling back to mobile internal speech:', e);
+                                speakOnDeviceFallback(translatedText, selectedLang);
+                            }}
                             className="w-full h-9 rounded-lg"
                         />
                     </div>

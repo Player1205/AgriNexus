@@ -157,13 +157,27 @@ const SARVAM_LANG_MAP = {
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+let isSarvamQuotaExhausted = false;
+
+export const resetSarvamQuotaStatus = () => {
+    isSarvamQuotaExhausted = false;
+};
+
+export const isSarvamQuotaExhaustedStatus = () => isSarvamQuotaExhausted;
+
 /**
  * Synthesizes natural Indic acoustic speech using Sarvam AI Bulbul:v3.
  * Returns self-contained base64 data URL ('data:audio/wav;base64,...') on success.
- * Includes automated retries for transient mobile DNS/socket drops.
+ * Automatically falls back to mobile internal speech if daily quota limit is reached.
  */
 export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetries = 2) => {
     if (!text || !SARVAM_API_KEY || typeof window === 'undefined' || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+        return null;
+    }
+
+    // Fast-path: if daily quota is already known to be exhausted, bypass immediately
+    if (isSarvamQuotaExhausted) {
+        console.warn('[SARVAM AI] Daily quota previously reached. Instantly routing to mobile internal speech...');
         return null;
     }
 
@@ -212,6 +226,18 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
 
             if (!response.ok) {
                 console.warn(`[SARVAM AI] API returned status ${response.status}: ${response.statusText}`);
+                // Quota exhausted (429/402/403): set exhaustion flag and immediately return null
+                if (response.status === 429 || response.status === 402 || response.status === 403) {
+                    isSarvamQuotaExhausted = true;
+                    console.warn('[SARVAM AI] Daily quota limit reached (429/402/403). Marked exhausted for session; falling back to mobile internal speech.');
+                    return null;
+                }
+                const errBody = await response.text().catch(() => '');
+                if (errBody.toLowerCase().includes('quota') || errBody.toLowerCase().includes('limit') || errBody.toLowerCase().includes('credit')) {
+                    isSarvamQuotaExhausted = true;
+                    console.warn('[SARVAM AI] Quota / credit limit detected in response body. Falling back to mobile internal speech.');
+                    return null;
+                }
                 if (attempt < maxRetries) {
                     await delay(800 * attempt);
                     continue;
@@ -269,16 +295,19 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
     return null;
 };
 
-export const speakVernacularOffline = (text, languageCode = 'hi') => {
-    // Strict Invariant: Built-in device TTS should ONLY occur when internet is not connected!
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
+export const speakVernacularOffline = (text, languageCode = 'hi', allowOnlineFallback = false) => {
+    // If online and not in explicit fallback mode, suppress to maintain Sarvam priority
+    if (typeof navigator !== 'undefined' && navigator.onLine && !allowOnlineFallback) {
         console.warn("[TTS INVARIANT] Device is connected to the internet; suppressing on-device speech synthesis to maintain Sarvam AI priority.");
         return;
     }
 
-    if (!('speechSynthesis' in window) || !text) return;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return;
 
     try {
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         
@@ -301,7 +330,10 @@ export const speakVernacularOffline = (text, languageCode = 'hi') => {
         utterance.pitch = 1.0;
 
         const voices = window.speechSynthesis.getVoices();
-        const matchedVoice = voices.find(v => v.lang.startsWith(languageCode) || v.lang === utterance.lang);
+        const matchedVoice = voices?.find(v => {
+            const vLang = (v.lang || '').replace('_', '-').toLowerCase();
+            return vLang.startsWith(languageCode.toLowerCase()) || vLang === utterance.lang.toLowerCase();
+        });
         if (matchedVoice) {
             utterance.voice = matchedVoice;
         }
@@ -338,14 +370,12 @@ export const runEdgeVoiceAgent = async (state) => {
                 vernacular_audio_url: sarvamAudioUrl
             };
         }
-        console.warn('[VOICE PRIORITY] Sarvam API unreachable despite online status. On-device TTS suppressed to maintain Sarvam priority.');
+        console.warn('[VOICE FALLBACK] Sarvam API quota reached or unreachable. Automatically falling back to mobile internal speech...');
     }
 
-    // 2. FALLBACK ONLY: If not connected to the internet, use built-in on-device Web Speech API
-    if (!isOnline) {
-        console.log('[OFFLINE VOICE] Device is disconnected from internet. Using built-in on-device speech synthesis (window.speechSynthesis)...');
-        speakVernacularOffline(translatedText, lang);
-    }
+    // 2. AUTOMATIC FALLBACK: Use built-in mobile internal speech synthesis (Web Speech API)
+    console.log('[DEVICE VOICE] Speaking via mobile internal speech synthesis (window.speechSynthesis)...');
+    speakVernacularOffline(translatedText, lang, true);
 
     return {
         language_code: lang,

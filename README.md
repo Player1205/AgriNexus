@@ -236,8 +236,8 @@ struct PassportRecord {
 
 AgriNexus natively speaks and writes in **11 Indian Regional Languages** with a deterministic priority hierarchy:
 
-* **Online Primary (Sarvam AI Bulbul:v3):** High-fidelity neural voice synthesis (`shubh` speaker) executing with zero device-speech leakage whenever internet connectivity is detected. Includes interactive audio replay controls (`🔊 सुनो`).
-* **Offline Fallback (Native On-Device Web Speech):** Strictly and exclusively activated when offline (`!navigator.onLine`), generating localized speech synthesis without network latency or external dependencies, accompanied by meteorological caution warnings.
+* **Online Primary (Sarvam AI Bulbul:v3):** High-fidelity neural voice synthesis (`shubh` speaker) executing whenever internet connectivity is detected. Includes interactive audio replay controls (`🔊 सुनो`).
+* **Automated Quota Failover & Offline Fallback (Native On-Device Web Speech):** If Sarvam AI encounters daily request quota limits (HTTP 429/402/403) or the device is offline (`!navigator.onLine`), AgriNexus automatically fails over to the mobile device's built-in Web Speech API (`window.speechSynthesis`) across all 11 Indian languages with zero audio interruptions.
 
 | Language | Native Script | Agronomic Greeting | Language | Native Script | Agronomic Greeting |
 | :--- | :--- | :--- | :--- | :--- | :--- |

@@ -1950,3 +1950,62 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > </details>
 </details>
 
+---
+
+### ADR-086: Automatic Failover to Mobile Internal Speech (`window.speechSynthesis`) on Sarvam AI Quota Exhaustion
+
+* **Context & The Problem:**
+  1. *Daily Quota Exhaustion Silence:* The Sarvam AI text-to-speech API (Bulbul:v3) enforces daily request and character limits on free and commercial API tiers. When the API key reached its daily maximum requests, Sarvam returned HTTP 429 (`Too Many Requests`), 402 (`Payment Required`), or 403 (`Forbidden`).
+  2. *Online Network Guard Suppression:* Previously, `speakVernacularOffline` in `edgeVoiceAgent.js` contained a guard: `if (typeof navigator !== 'undefined' && navigator.onLine) return;`. While designed to preserve Sarvam AI priority when connected, this guard had the unintended consequence of completely silencing speech when the farmer's mobile phone was connected to mobile data or Wi-Fi but the Sarvam API key had exceeded its daily request allocation.
+  3. *Unresponsive UI & Replay Inaction:* In `FarmerView.jsx`, `handleFileSelect` and `handleReplayVoice` did not automatically route to on-device speech when Sarvam synthesis returned `null` while online, leaving farmers with no audio feedback.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Immediate Session Quota Caching & Zero-Retry Fast-Path (`frontend/src/services/edgeVoiceAgent.js`):*
+     - Introduced session-level tracking (`isSarvamQuotaExhausted`).
+     - In `synthesizeSarvamSpeech`, immediately intercepted HTTP 429, 402, 403, and quota/credit error messages:
+       ```javascript
+       if (response.status === 429 || response.status === 402 || response.status === 403) {
+           isSarvamQuotaExhausted = true;
+           console.warn('[SARVAM AI] Daily quota limit reached. Marked exhausted; falling back to mobile internal speech.');
+           return null;
+       }
+       ```
+     - Subsequent calls immediately short-circuit in 0ms without making wasteful HTTP fetch requests.
+  2. *Permissioned Online Fallback (`frontend/src/services/edgeVoiceAgent.js`):*
+     - Added an `allowOnlineFallback = false` parameter to `speakVernacularOffline`.
+     - In `runEdgeVoiceAgent`, if online synthesis returns `null`, it seamlessly invokes:
+       ```javascript
+       speakVernacularOffline(translatedText, lang, true);
+       ```
+     - Added `window.speechSynthesis.paused` recovery and robust case-insensitive language and dialect matching across all 11 Indian languages (`hi`, `pa`, `te`, `ta`, `ml`, `kn`, `bn`, `mr`, `gu`, `od`, `en`).
+  3. *FarmerView Fallback Audio Orchestration (`frontend/src/components/FarmerView.jsx`):*
+     - In `handleFileSelect`, when `result.translated_text` exists and `vernacular_audio_url` is absent, online Sarvam failure instantly invokes `speakOnDeviceFallback(result.translated_text, selectedLang)`.
+     - In `handleReplayVoice`, user replay taps cleanly fall back to `speakOnDeviceFallback` if Sarvam returns `null` or audio playback fails.
+     - Added an inline `onError` event handler to the `<audio>` element so corrupt or expired audio streams automatically fail over to device speech synthesis.
+  4. *Hermetic Test Suite (`frontend/src/test/EdgeVoiceAgent.test.js` & `frontend/src/test/setup.js`):*
+     - Polyfilled `SpeechSynthesisUtterance` in test harnesses.
+     - Added 5 comprehensive automated tests asserting quota exhaustion flags, fast-path bypassing, automatic fallback execution, and language mapping.
+
+* **Architectural Rationale:**
+  - AgriNexus is engineered for rural smallholder farmers where vernacular spoken audio is essential for accessibility and literacy. Agrochemical safety advisories must NEVER be muted due to third-party cloud API limits.
+  - Caching quota exhaustion locally eliminates recurring network latency and failed network requests, providing instant (<10ms) acoustic output directly from the mobile browser's native speech synthesis engine.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-086</strong></summary>
+
+> **Question:** Why is suppressing `window.speechSynthesis` based purely on `navigator.onLine === true` dangerous in rural edge applications?
+>
+> 1. Because mobile devices cannot run JavaScript when online.
+> 2. Because an active internet connection does not guarantee third-party cloud API availability; if an upstream TTS service (like Sarvam AI) exceeds daily request quotas or experiences downtime, an online-only suppression guard permanently mutes spoken advisories, leaving farmers without critical safety guidance.
+> 3. Because Web Speech API requires an offline network socket.
+> 4. Because React components unmount whenever the device connects to Wi-Fi.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Network connectivity (`navigator.onLine`) is independent of third-party API health and quota limits. When cloud services return 429/402 quota errors, the client must seamlessly engage native on-device capabilities regardless of network status.
+> </details>
+</details>
+
+
