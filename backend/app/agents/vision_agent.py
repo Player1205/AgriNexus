@@ -151,19 +151,19 @@ async def vision_node(state: AgriNexusState) -> dict:
             ]
         )
         
-        gemini_models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+        gemini_models = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.6-flash"]
         response = None
         for model_name in gemini_models:
             try:
                 print(f"[TIER 2 - GEMINI FALLBACK] Attempting model '{model_name}'...")
-                llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
+                llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key, max_retries=0, timeout=15.0)
                 res = llm.invoke([message])
                 if res and res.content:
                     response = res
                     print(f"[TIER 2 - GEMINI FALLBACK] Success with model: {model_name}")
                     break
             except Exception as model_err:
-                print(f"[TIER 2 - GEMINI FALLBACK] Model '{model_name}' failed: {model_err}")
+                print(f"[TIER 2 - GEMINI FALLBACK] Model '{model_name}' failed (skipping without sleep): {model_err}")
 
         if not response or not response.content:
             raise RuntimeError("All Gemini models in fallback cascade failed or rate-limited.")

@@ -519,17 +519,17 @@ IMPORTANT INSTRUCTIONS:
 
 Advisory text: '{english_text}'"""
             
-            gemini_models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+            gemini_models = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.6-flash"]
             response = None
             for model_name in gemini_models:
                 try:
-                    llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
+                    llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key, max_retries=0, timeout=15.0)
                     res = llm.invoke(prompt)
                     if res and res.content:
                         response = res
                         break
                 except Exception as model_err:
-                    print(f"[VOICE LLM] Model '{model_name}' failed: {model_err}")
+                    print(f"[VOICE LLM] Model '{model_name}' failed (skipping without sleep): {model_err}")
 
             if not response or not response.content:
                 raise RuntimeError("All Gemini models in voice cascade failed.")

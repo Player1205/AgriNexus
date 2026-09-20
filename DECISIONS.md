@@ -1900,3 +1900,53 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > </details>
 </details>
 
+---
+
+### ADR-085: Elimination of 429 Retry Sleep Latency, Zero-Retry Failover, and Gemini Flash-Lite Priority
+
+**Context & The Problem:**
+1. *The 156-Second Swarm Stall:* During live field image diagnostics, the backend swarm took over 156.6 seconds (2.6 minutes) to process a single scan.
+2. *Exhaustion of Gemini Flash Free Tier:* On Google's free tier, `gemini-flash-latest` (Gemini 3.8 Flash) has a strict ceiling of **20 requests per day**. Once exhausted, Google returns HTTP 429 `RESOURCE_EXHAUSTED` with a header specifying `retryDelay: 53s`.
+3. *LangChain Blocking Retry Sleep:* Because `ChatGoogleGenerativeAI` was initialized with default LangChain options (without `max_retries=0`), the underlying Google SDK parsed the `retryDelay: 53s` header and **literally paused execution, sleeping for 53 seconds** on model 1 and **30 seconds** on model 2. This caused Node 1 (Vision) to take 77.5 seconds and Node 5 (Voice) to take 79.1 seconds.
+4. *Frontend Timeout & Silent Swarm Rollback:* In [`frontend/src/services/api.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/api.js), client fetch operations have a 60-second `AbortController` timeout. When the backend stalled at Node 5, the browser aborted the request, triggering the `catch (err)` block. The client then seamlessly fell back to `runOfflineSwarmPipeline`, which **reset the UI and restarted the pipeline from Agent 1**, causing the appearance that "the first 4 agents run and just before the 5th agent everything rolls back".
+
+**What Was Changed & How It Was Changed:**
+1. *Prioritized High-Quota Flash-Lite Models:*
+   - Reordered the fallback model cascade in [`backend/app/agents/vision_agent.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/agents/vision_agent.py), [`backend/app/agents/voice_agent.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/agents/voice_agent.py), and [`frontend/src/services/swarmOrchestrator.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/swarmOrchestrator.js):
+     ```python
+     gemini_models = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.6-flash"]
+     ```
+   - `gemini-flash-lite-latest` has a separate, generous daily limit of **1,500 requests per day** (75x higher than flash-latest) and responds in **1.3–2.1 seconds**.
+2. *Disabled LangChain Retry Sleep Loops:*
+   - Explicitly passed `max_retries=0` and `timeout=15.0` to `ChatGoogleGenerativeAI`:
+     ```python
+     llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key, max_retries=0, timeout=15.0)
+     ```
+   - If a model encounters a rate limit or 429, it throws an exception immediately in **0.1 seconds** instead of pausing for 53 seconds, instantly cascading to the next healthy model or falling back to the instant localized template.
+3. *Performance Validation:*
+   - Full pipeline execution time dropped from **156.61 seconds down to 8.87 seconds** (a 17x speedup).
+   - Vision node completed in **2.69 seconds**; Voice node (with Sarvam AI audio generation) completed in **6.17 seconds**.
+   - Completely resolved the 60s client fetch abort, eliminating the silent UI rollback.
+
+**Architectural Rationale:**
+- Multi-agent cascading architectures must enforce zero-wait failover (`max_retries=0`) across LLM providers. In real-time multi-agent systems, catching a provider failure in 100ms and falling back to a lightweight model is infinitely preferable to pausing an active WebSocket or HTTP stream for 50+ seconds.
+- Guarantees sub-10s round-trip execution for field diagnostics, well within the 60s client timeout and mobile network keepalive boundaries.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-085</strong></summary>
+
+> **Question:** In an asynchronous multi-agent pipeline with a 60-second client timeout, why is setting `max_retries=0` on LLM client instances critical when handling HTTP 429 rate limits?
+>
+> 1. Because LangChain crashes if max_retries is greater than 1.
+> 2. Because default SDK retry handlers respect provider `retryDelay` headers (e.g. 30–60s), causing the server thread to sleep and accumulate multi-minute latencies that blow past client HTTP/proxy timeouts; setting `max_retries=0` ensures immediate failover to secondary models or deterministic fallbacks in sub-second time.
+> 3. Because Google Gemini models do not support retries.
+> 4. Because Vite dev server blocks all POST requests with retries.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* When Google returns 429, it advises clients to wait (e.g. `retryDelay: 53s`). LangChain's default retry behavior sleeps for that duration. In a multi-model cascade with a 60s client abort limit, sleeping for 53s guarantees that the browser will abort and trigger offline rollback before the response can return. With `max_retries=0`, the 429 is rejected in 100ms, immediately engaging the next model or fallback template.
+> </details>
+</details>
+

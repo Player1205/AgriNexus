@@ -175,7 +175,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                 const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY;
 
                 if (geminiKey) {
-                    const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-flash-lite-latest'];
+                    const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.6-flash'];
                     let response = null;
 
                     for (const modelName of GEMINI_MODELS) {
