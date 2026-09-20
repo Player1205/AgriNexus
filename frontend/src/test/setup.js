@@ -1,4 +1,7 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+
+vi.stubEnv('VITE_SARVAM_API_KEY', 'test_mock_key');
 
 // Polyfill HTMLMediaElement methods for audio tests
 window.HTMLMediaElement.prototype.load = () => {};
