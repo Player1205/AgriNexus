@@ -15,6 +15,8 @@ import {
   Droplets,
 } from "lucide-react";
 import { getUserScans, deleteUserScan, getBaseApiUrl } from "../services/api";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function UserScansModal({ isOpen, onClose, user }) {
   const [scans, setScans] = useState([]);
@@ -46,6 +48,66 @@ export default function UserScansModal({ isOpen, onClose, user }) {
       }
     }
   }, [isOpen]);
+
+  const generatePDF = (scan) => {
+    const doc = new jsPDF();
+    
+    // Header background
+    doc.setFillColor(6, 78, 59); // Dark green
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    // Header text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("AgriNexus Scan Report", 14, 25);
+    
+    // Sub-header metadata
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    let currentY = 55;
+    doc.text(`Date: ${new Date(scan.created_at || scan.timestamp || Date.now()).toLocaleString()}`, 14, currentY);
+    currentY += 8;
+    doc.text(`Crop & Diagnosis: ${scan.vision_diagnosis || scan.diagnosis || "Unknown"}`, 14, currentY);
+    currentY += 8;
+    doc.text(`Safety Status: ${scan.is_spray_safe ? "Safe to Spray" : "Not Safe / Delay"}`, 14, currentY);
+
+    const tableData = [];
+    
+    // jsPDF doesn't support Hindi/Devanagari natively (causes garbled text).
+    // We use the English 'treatment' from ICAR database, or a safe fallback.
+    if (scan.treatment) {
+        tableData.push(["ICAR Treatment", scan.treatment]);
+    } else {
+        tableData.push(["Advice", "Please refer to the AgriNexus app for full vernacular audio and text advice."]);
+    }
+    
+    if (scan.safety_warning) tableData.push(["Safety Warning", scan.safety_warning]);
+    
+    if (scan.weather_data || scan.weather) {
+      const w = scan.weather_data || scan.weather;
+      tableData.push(["Farm Weather", `${w.temperature_c || w.temperature || "N/A"}°C, ${w.relative_humidity || w.humidity || "N/A"}% Humidity`]);
+    }
+    
+    if (scan.tx_hash) tableData.push(["Blockchain Tx", scan.tx_hash]);
+
+    autoTable(doc, {
+      startY: currentY + 12,
+      head: [['Metric', 'Details']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [16, 185, 129] }, // Emerald green
+      styles: { cellPadding: 5, fontSize: 10, overflow: 'linebreak', cellWidth: 'wrap' },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 40 },
+        1: { cellWidth: 140 }
+      }
+    });
+    
+    doc.save(`AgriNexus_Report_${scan.id || "scan"}.pdf`);
+  };
 
   const handleDelete = async (scanId) => {
     if (!confirm("क्या आप वाकई इस स्कैन को हटाना चाहते हैं?\nAre you sure you want to delete this scan?")) return;
@@ -244,54 +306,85 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                 >
                   {/* Top row: badges + timestamp + actions */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        {/* Crop badge */}
-                        <span
-                          className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-green-500/30 flex items-center gap-1"
-                          style={{ background: "rgba(34,197,94,0.12)", color: "#86efac" }}
-                        >
-                          <Sprout className="w-3 h-3" />
-                          {scan.crop ? scan.crop : "Field Scan"}
-                        </span>
-
-                        {/* Spray safety */}
-                        {scan.is_spray_safe !== undefined && (
+                    <div className="flex-1 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      {/* Cloudinary Image */}
+                      {scan.image_url && (
+                        <div className="shrink-0 w-full sm:w-24">
+                          <img src={scan.image_url} alt="Scan" className="w-full h-36 sm:h-24 object-cover rounded-xl border border-white/10 shadow-md" />
+                        </div>
+                      )}
+                      
+                      <div className="flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          {/* Crop badge */}
                           <span
-                            className={`text-[11px] font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full border ${
-                              scan.is_spray_safe
-                                ? "border-green-500/30 text-green-300"
-                                : "border-amber-500/30 text-amber-300"
-                            }`}
-                            style={{
-                              background: scan.is_spray_safe
-                                ? "rgba(34,197,94,0.1)"
-                                : "rgba(245,158,11,0.1)",
-                            }}
+                            className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-green-500/30 flex items-center gap-1"
+                            style={{ background: "rgba(34,197,94,0.12)", color: "#86efac" }}
                           >
-                            {scan.is_spray_safe ? (
-                              <><ShieldCheck className="w-3 h-3" /> Safe</>
-                            ) : (
-                              <><ShieldAlert className="w-3 h-3" /> Delay</>
-                            )}
+                            <Sprout className="w-3 h-3" />
+                            {scan.crop ? scan.crop : "Field Scan"}
                           </span>
-                        )}
 
-                        {/* Timestamp */}
-                        <span className="text-[10px] text-green-400/40 flex items-center gap-1 ml-auto font-medium">
-                          <Calendar className="w-3 h-3" />
-                          {formattedDate}
-                        </span>
+                          {/* Spray safety */}
+                          {scan.is_spray_safe !== undefined && (
+                            <span
+                              className={`text-[11px] font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full border ${
+                                scan.is_spray_safe
+                                  ? "border-green-500/30 text-green-300"
+                                  : "border-amber-500/30 text-amber-300"
+                              }`}
+                              style={{
+                                background: scan.is_spray_safe
+                                  ? "rgba(34,197,94,0.1)"
+                                  : "rgba(245,158,11,0.1)",
+                              }}
+                            >
+                              {scan.is_spray_safe ? (
+                                <><ShieldCheck className="w-3 h-3" /> Safe</>
+                              ) : (
+                                <><ShieldAlert className="w-3 h-3" /> Delay</>
+                              )}
+                            </span>
+                          )}
+
+                          {/* Timestamp */}
+                          <span className="text-[10px] text-green-400/40 flex items-center gap-1 ml-auto font-medium">
+                            <Calendar className="w-3 h-3" />
+                            {formattedDate}
+                          </span>
+                        </div>
+
+                        {/* Diagnosis title */}
+                        <h4 className="text-sm sm:text-base font-bold text-white/90 leading-snug">
+                          {scan.vision_diagnosis || scan.diagnosis || "General Crop Diagnosis"}
+                        </h4>
                       </div>
-
-                      {/* Diagnosis title */}
-                      <h4 className="text-sm sm:text-base font-bold text-white/90 leading-snug">
-                        {scan.vision_diagnosis || "General Crop Diagnosis"}
-                      </h4>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center gap-2 self-end sm:self-start shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 self-end sm:self-start shrink-0">
+                      {/* PDF Report Button */}
+                      <button
+                        onClick={() => generatePDF(scan)}
+                        className="px-3 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-blue-300/80 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-300 transition"
+                        title="Download PDF"
+                      >
+                        PDF
+                      </button>
+
+                      {/* Blockchain Link */}
+                      {scan.tx_hash && (
+                        <a
+                          href={`https://sepolia.basescan.org/tx/${scan.tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-purple-300/80 hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-300 transition"
+                          title="View on BaseScan"
+                        >
+                          On-Chain
+                        </a>
+                      )}
+
                       {scan.vernacular_audio_url && (
                         <button
                           onClick={() => handlePlayAudio(scan.vernacular_audio_url, scan.id)}
