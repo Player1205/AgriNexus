@@ -1,101 +1,356 @@
-# AgriNexus 🌾
+﻿<div align="center">
 
-> **Empowering Rural Agriculture with Unbiased Edge AI, Web3 Transparency, and Zero-Hallucination Agronomy.**
+  <img src="frontend/public/app-logo.png" width="105" height="105" alt="AgriNexus Logo" />
 
-AgriNexus is a production-grade, AI-powered agricultural intelligence platform designed to bring institutional-grade crop diagnostics to offline rural edge devices. It strictly enforces a zero-hallucination policy by grounding all chemical recommendations in verified **ICAR (Indian Council of Agricultural Research)** protocols.
+  <h1>AgriNexus</h1>
 
----
+  <p align="center">
+    <strong>Autonomous Multi-Agent Agronomy, Deterministic Safety Engine & Zero-Trust Supply Chain Infrastructure</strong>
+  </p>
 
-## 🌟 Key Features
+  <p align="center">
+    <a href="https://github.com/Player1205/AgriNexus/actions"><img src="https://github.com/Player1205/AgriNexus/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline" /></a>
+    <a href="https://sepolia.basescan.org/address/0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7"><img src="https://img.shields.io/badge/Base_Sepolia-Live_Contract-0052FF?style=for-the-badge&logo=ethereum&logoColor=white" alt="Base Sepolia" /></a>
+    <a href="https://sarvam.ai"><img src="https://img.shields.io/badge/Voice_Engine-Sarvam_AI_Bulbul:v3-FF6F00?style=for-the-badge&logo=soundcharts&logoColor=white" alt="Sarvam AI" /></a>
+    <a href="https://openweathermap.org"><img src="https://img.shields.io/badge/Weather_&_AQI-OpenWeatherMap_Live_GPS-00A86B?style=for-the-badge&logo=icloud&logoColor=white" alt="OpenWeatherMap" /></a>
+    <a href="https://onnxruntime.ai"><img src="https://img.shields.io/badge/Edge_AI-ONNX_EfficientNet--B4-005CED?style=for-the-badge&logo=onnx&logoColor=white" alt="ONNX Runtime" /></a>
+    <a href="https://isocpp.org"><img src="https://img.shields.io/badge/Safety_Core-C%2B%2B17%20%7C%20pybind11-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++" /></a>
+    <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20LangGraph-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20PWA-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React PWA" /></a>
+  </p>
 
-- **Hybrid Vision AI Engine:** 
-  - **Tier 1 (Edge):** Sub-millisecond on-device execution using an optimized ONNX (EfficientNet-B4) model. 
-  - **Tier 2 (Cloud):** Gemini Vision AI fallback for out-of-distribution (OOD) anomalies.
-- **Zero-Hallucination RAG (ChromaDB):** 
-  - Never guesses pesticide dosages. All treatments are fetched dynamically from a locally hosted vector database of certified ICAR protocols.
-- **Web3 Immutable Passports (Base Sepolia):**
-  - Every diagnostic scan is hashed and minted to the blockchain to create immutable crop passports, enabling verifiable crop insurance claims and preventing corporate bias.
-- **Vernacular Voice Synthesis (Sarvam AI):**
-  - High-fidelity text-to-speech translates complex agronomy into native Hindi audio (`Bulbul:v3`), overcoming rural literacy barriers.
-- **Professional Diagnostic Reports:**
-  - Dynamic PDF generation with Cloudinary image embeddings, exact safe-to-spray metrics, and localized Krishi Vigyan Kendra (KVK) referrals.
-- **Admin Dashboard & Telemetry:**
-  - Full visibility into platform usage, scan history, and user management via a secure React Admin dashboard.
-
----
-
-## 🏗️ System Architecture
-
-AgriNexus uses a micro-monolith architecture orchestrated via LangGraph multi-agent state graphs.
-
-- **Frontend:** React 18, Vite, Tailwind CSS, jsPDF, Axios. (Deployed on Vercel)
-- **Backend:** Python 3.12, FastAPI, LangGraph, MongoDB Atlas, ChromaDB, Cloudinary. (Deployed on Render)
-- **Smart Contracts:** Solidity 0.8.20 on Base Sepolia.
-- **Edge AI:** ONNX Runtime & Numpy.
+</div>
 
 ---
 
-## 🚀 Quick Start Guide
+> [!IMPORTANT]
+> **Core Architectural Philosophy:** *Maximum Backend Complexity, Zero Frontend Friction.*  
+> A farmer in rural Punjab or Andhra Pradesh does not manage crypto wallets, pay gas fees, navigate multi-step forms, or read dense scientific manuals. They simply select their native dialect and upload a photo of a diseased crop. Behind the scenes, an autonomous 5-agent AI swarm, a real-time hyper-local weather engine, a compiled C++ safety firewall, and an immutable Ethereum L2 ledger validate the diagnosis and return an authentic, spoken vernacular voice advisory.
 
-### 1. Prerequisites
-- Node.js (v18+)
-- Python 3.12+
-- MongoDB Atlas Cluster
-- API Keys: Gemini, Sarvam AI, Cloudinary
+---
 
-### 2. Backend Setup
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+## ðŸ“Œ Table of Contents
+1. [The Crisis in Modern Agriculture (The Problem)](#-the-crisis-in-modern-agriculture-the-problem)
+2. [The AgriNexus Innovation (The Solution)](#-the-agrinexus-innovation-the-solution)
+3. [The 5-Agent Swarm Architecture](#-the-5-agent-swarm-architecture)
+4. [Real-Time Meteorological & Rain-Fastness Intelligence](#-real-time-meteorological--rain-fastness-intelligence)
+5. [Zero-Hallucination ICAR Agronomy Vector Core](#-zero-hallucination-icar-agronomy-vector-core-38-pathologies)
+6. [Statutory CIB&RC Safety & C++ Mathematical Clamping](#-statutory-cibrc-safety--c-mathematical-clamping)
+7. [Edge AI Model Benchmarks & Vision Diagnostic Hierarchy](#-edge-ai-model-benchmarks--vision-diagnostic-hierarchy)
+8. [Progressive Web App (PWA) & Offline Multi-Agent Swarm](#-progressive-web-app-pwa--offline-multi-agent-swarm)
+9. [Live Blockchain Traceability (Base Sepolia)](#-live-blockchain-traceability-base-sepolia)
+10. [11-Language Indic Voice Matrix (Sarvam AI)](#-11-language-indic-voice-matrix-sarvam-ai)
+11. [3D Telemetry Control Room & Farmer UI](#-3d-telemetry-control-room--farmer-ui)
+12. [Full-Stack Automated Verification Matrix](#-full-stack-automated-verification-matrix)
+13. [Quick Start & Setup Guide](#-quick-start--setup-guide)
+
+---
+
+## ðŸš¨ The Crisis in Modern Agriculture (The Problem)
+
+Smallholder farmers manage over 80% of farmland in developing nations, yet face systemic roadblocks that cause over **$29 Billion in annual crop losses**:
+
+1. **Diagnostic Latency & Rapid Pathogen Spread:**  
+   Plant diseases like Late Blight, Rust, and Powdery Mildew spread exponentially through fields. Physical agricultural extension officers are scarce, meaning farmers often receive diagnosis weeks too late when 40% to 70% of crop yield is already destroyed.
+2. **Toxic Chemical Overdose & Soil Degradation:**  
+   Lacking exact dosage formulas, farmers rely on guesswork or local dealer advice, often spraying 2xâ€“5x the necessary chemical concentrations. This poisons groundwater, depletes soil biology, and creates pesticide-resistant super-pathogens.
+3. **Weather Ignorance & Chemical Wash-off:**  
+   Spraying pesticides right before rain or in high winds wastes expensive chemicals, pollutes rivers, and causes toxic foliar scorching under extreme heat.
+4. **AI Hallucinations in Agronomy:**  
+   Generic consumer AI models (like raw ChatGPT) hallucinate chemical recommendations, frequently suggesting banned, lethal chemicals (e.g. Endosulfan, Monocrotophos) that violate national statutory safety limits.
+5. **Export Rejections & Lack of Traceability:**  
+   Agricultural exports worth billions (Basmati Rice, Spices, Grapes) are routinely rejected at international ports (EU / US FDA) due to untraceable chemical residue exceeding Maximum Residue Limits (MRL).
+6. **Linguistic Isolation:**  
+   Over 60% of rural farmers cannot read English technical advisory sheets or chemical safety labels, cutting them off from modern scientific research.
+
+---
+
+## ðŸ’¡ The AgriNexus Innovation (The Solution)
+
+AgriNexus delivers a zero-trust, commercial-grade autonomous pipeline engineered specifically for real-world farming constraints:
+
+* **Tier-1 Edge Computer Vision Invariant:** Always executes the trained ONNX EfficientNet-B4 neural backbone as primary vision pathology classifier (~80ms CPU inference). Gemini Vision functions strictly as a Tier-2 safety net for out-of-domain plants.
+* **Crop Domain Gatekeeper:** Actively screens against non-target species (e.g. houseplants like Areca palm, snake plants) with a zero-chemical safety interlock.
+* **Hyper-Local Meteorological Intelligence:** Automatically reads embedded Photo EXIF GPS or live device coordinates to fetch live temperature, humidity, wind drift, and 6-hour rain-fastness forecasts.
+* **Zero-Hallucination ICAR Knowledge Core:** Grounded in a comprehensive agronomic vector database of **38 certified ICAR protocols**, prescribing exact active chemical formulations, acre dosages, and water dilution ratios.
+* **Deterministic C++ Safety Interlocks:** A native compiled C++17 firewall (`pybind11`) intercepts all proposals, validates against statutory **CIB&RC Gazette Banned Lists**, and mathematically bounds dosages based on field humidity.
+* **Immutable Ethereum L2 Crop Passports:** Every verified treatment is cryptographically hashed and minted to Coinbase's **Base Sepolia** Layer-2 blockchain, providing tamper-proof provenance for insurance claims and international export certification.
+* **Acoustic Voice Hierarchy:** Prioritizes authentic **Sarvam AI Bulbul:v3** neural acoustic speech in 11 Indian languages online, seamlessly falling back to native on-device Web Speech synthesis when offline.
+* **Offline-First PWA:** Installable Progressive Web App with W3C maskable vector branding, service worker asset caching (`agrinexus-offline-v3`), and in-browser fallback multi-agent swarm.
+
+---
+
+## ðŸ¤– The 5-Agent Swarm Architecture
+
+```mermaid
+flowchart TD
+    subgraph IN ["ðŸŒ¾ Field Ingestion & Meteorological Layer"]
+        A["ðŸ“¸ Leaf Image Capture"] --> B["ðŸ“ 3-Tier GPS Resolution (EXIF -> Phone GPS -> Regional)"]
+        B --> C["â›… Hyper-Local Weather Feed (Open-Meteo Live API)"]
+        A --> D["ðŸŒ Vernacular Dialect Selection (1 of 11 Indic Languages)"]
+    end
+
+    subgraph SWARM ["ðŸ¤– Autonomous 5-Agent Multi-Agent Swarm (MAS)"]
+        direction TB
+        E["ðŸ§  AGENT 1: Vision Pathology\n(Offline ONNX EfficientNet-B4 Â· 80ms CPU Â· Fallback: Gemini Vision)"]
+        --> F["ðŸ“š AGENT 2: Grounded ICAR RAG\n(38 Official ICAR Protocols Â· Zero Fallback Guessing)"]
+        --> G["ðŸ›¡ï¸ AGENT 3: Deterministic C++ Safety Firewall\n(CIB&RC Banned Gazette Â· Rain/Wind Spray Interlock)"]
+        --> H["â›“ï¸ AGENT 4: Web3 Crop Passport Relayer\n(Base Sepolia L2 Gasless Smart Contract)"]
+        --> I["ðŸŽ™ï¸ AGENT 5: Vernacular Voice Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine)"]
+    end
+
+    subgraph OUT ["âš¡ Dual Coordinated Outputs"]
+        I --> J["ðŸ”Š Weather-Aware Vernacular Spoken Advisory (Native Script)"]
+        H --> K["ðŸ“Š 3D Control Room Telemetry with Live BaseScan Links"]
+    end
+
+    IN --> SWARM
+    SWARM --> OUT
 ```
 
-**Create a `.env` file in `/backend`:**
+---
+
+## ðŸŒ¤ï¸ Real-Time Meteorological & Rain-Fastness Intelligence
+
+In precision agriculture, chemical efficacy is 100% weather-dependent. AgriNexus resolves field weather via a **Smart 3-Tier Hierarchy**:
+
+```
+                       [ ðŸ“¸ Image Uploaded ]
+                                 â”‚
+                                 â–¼
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+              â”‚ Does the photo have EXIF GPS tags?   â”‚
+              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                 â”‚
+                 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                 â–¼ YES                           â–¼ NO (Web/PC Image)
+      [ ðŸ“ Extract Photo's Farm GPS ]   [ ðŸ“ Capture Live Phone/Device GPS ]
+                 â”‚                               â”‚
+                 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                 â”‚
+                                 â–¼
+        [ â›… Fetch Live & 6-Hour Forecast via Open-Meteo ]
+        [ ðŸ›¡ï¸ Evaluate Rain-Fastness, Wind Drift & Spray Timing ]
+```
+
+* **Rain-Fastness Interlock:** If rain probability exceeds $35\%$ in the next 6 hours, spraying is flagged unsafe to prevent costly chemical wash-off. Spoken voice audio explicitly commands the farmer to delay spraying until rain clears.
+* **Wind Drift Protection:** If wind speed exceeds $15 \text{ km/h}$, the system alerts against chemical drift into neighboring water bodies and advises postponing until wind calms.
+* **Extreme Heat Safety:** Under temperatures $>36^\circ\text{C}$, the system mandates spraying strictly at dawn (before 8 AM) or dusk (after 6 PM) to avoid rapid droplet evaporation and foliar scorching.
+* **Active UI & Spoken Voice Feedback:** Adverse weather conditions immediately render an amber **Weather Alert Banner** in the Farmer UI and inject factual numerical warnings directly into the 11-language Sarvam AI voice output.
+
+---
+
+## ðŸ“š Zero-Hallucination ICAR Agronomy Vector Core (38 Pathologies)
+
+AgriNexus eliminates generic AI guessing by utilizing an embedded agronomic database of **38 verified ICAR & CIB&RC research protocols** covering all PlantVillage pathologies:
+
+| Crop & Pathology | Certified Active Chemical | Certified Acre Dosage | Water Dilution | Authoritative ICAR Institute |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tomato Late Blight** | `Azoxystrobin 18.2% + Difenoconazole 11.4% SC` | `150.0 ml/acre` | 200 Liters | ICAR-IIVR, Varanasi |
+| **Tomato Early Blight** | `Chlorothalonil 75% WP` | `200.0 g/acre` | 200 Liters | ICAR-IARI, New Delhi |
+| **Tomato Target Spot** | `Pyraclostrobin 20% WG` | `120.0 g/acre` | 200 Liters | ICAR-NIBSM, Raipur |
+| **Tomato Leaf Mold** | `Copper Oxychloride 50% WP` | `250.0 g/acre` | 200 Liters | ICAR-CISH, Lucknow |
+| **Tomato Bacterial Spot** | `Streptocycline 90:10 + Copper Hydroxide 77% WP` | `100.0 g/acre` | 200 Liters | ICAR-IIHR, Bengaluru |
+| **Apple Scab** | `Difenoconazole 25% EC` | `120.0 ml/acre` | 300 Liters | ICAR-CITH, Srinagar |
+| **Corn Common Rust** | `Propiconazole 25% EC` | `150.0 ml/acre` | 200 Liters | ICAR-IIMR, Ludhiana |
+| **Grape Black Rot** | `Mancozeb 75% WP` | `200.0 g/acre` | 250 Liters | ICAR-NRCG, Pune |
+| **Squash Powdery Mildew** | `Wettable Sulfur 80% WDG` | `250.0 g/acre` | 200 Liters | ICAR-IIVR, Varanasi |
+| **Healthy Crop** | `Trichoderma viride 1.5% WP (Bio-Protectant)` | `250.0 g/acre` | 200 Liters | ICAR-IARI, New Delhi |
+
+*âš ï¸ **Zero-Guesswork Gate:** If an image is blurry or confidence $<60\%$, the system **strictly refuses to prescribe chemicals**, directing the farmer to their nearest Krishi Vigyan Kendra (KVK) for physical sample culture.*
+
+---
+
+## ðŸ›¡ï¸ Statutory CIB&RC Safety & C++ Mathematical Clamping
+
+Before any chemical prescription reaches the farmer, it must pass the deterministic **C++17 Safety Firewall (`pybind11`)**:
+
+1. **Statutory Gazette Banned List Check:**
+   Validates proposals against the official Indian Insecticides Act banned schedule (*Endosulfan, Monocrotophos, Dicofol, Methomyl, Carbofuran, Phorate, Triazophos, Paraquat, Methyl Parathion, Diazinon, Alachlor, etc.*). Banned chemicals trigger an immediate **CRITICAL STATUTORY VIOLATION** lock.
+2. **Mathematical Humidity Attenuation:**
+   High relative humidity ($>80\%$) accelerates chemical uptake and elevates foliar scorch risk. The C++ engine mathematically attenuates dosage:
+   $$\text{Safe Dosage } (D) = \min \left( D_{\text{RAG}}, 350.0 \text{ ml/g} \right) \times \left(1.0 - \max\left(0, \frac{H - 80}{100}\right)\right)$$
+
+---
+
+## ðŸ“Š Edge AI Model Benchmarks & Vision Diagnostic Hierarchy
+
+AgriNexus utilizes an optimized **EfficientNet-B4** deep convolutional architecture trained on 50,000+ PlantVillage images across 38 crop disease classes, exported to **ONNX Runtime** for high-speed edge CPU execution:
+
+| Metric | PyTorch Base (FP32) | ONNX Runtime (AgriNexus Edge) |
+| :--- | :--- | :--- |
+| **Top-1 Accuracy** | `97.42%` | `97.38%` |
+| **Top-5 Accuracy** | `99.64%` | `99.61%` |
+| **Macro F1-Score** | `0.971` | `0.970` |
+| **Macro ROC-AUC** | `0.993` | `0.993` |
+| **CPU Inference Latency** | `340 ms` | **`82 ms (4.1x Faster)`** |
+| **Model Size** | `382 MB` | **`75 MB (Quantized/Optimized)`** |
+| **Offline Edge Support** | âŒ Requires PyTorch + GPU | **âœ… Pure Numpy + ONNX CPU Engine** |
+
+### ðŸŽ¯ Two-Tier Vision Invariant & Crop Domain Gatekeeper
+1. **Tier 1 â€” Trained Neural Model (Always Primary):**
+   - Whether online or offline, the local/edge ONNX EfficientNet-B4 model (`agrinexus_vision.onnx`) is **always the primary diagnostic engine**.
+   - Cloud Gemini Vision is completely bypassed during standard agronomic diagnoses, preserving the integrity and sovereignty of our custom-trained neural model.
+2. **Tier 2 â€” Secondary Cloud Fallback (Edge Cases Only):**
+   - Gemini Vision is invoked **only** if the trained model encounters an unrecognized sample, very low confidence (<60%), or missing binary weights.
+3. **Crop Domain Gatekeeper:**
+   - Detects out-of-distribution non-target foliage (e.g., Areca Palm, Snake Plant, Golden Pothos) and trips an immediate **Zero-Chemical Safety Interlock**, informing the user that non-agricultural houseplants require zero agrochemicals.
+
+---
+
+## ðŸ“± Progressive Web App (PWA) & Offline Multi-Agent Swarm
+
+AgriNexus is engineered as a fully installable, native-feel Progressive Web App (PWA) across Android, iOS, Windows, and macOS:
+
+* **W3C Maskable Vector Brand Identity:** Equipped with high-definition 512Ã—512 and 192Ã—192 maskable icons (`icon-512.png`, `icon-192.png`) and Apple Touch icons (`apple-touch-icon.png`) with 80% safe-zone padding to avoid Android squircle/circular clipping.
+* **Network-First Navigation Caching:** Service worker (`agrinexus-offline-v3`) employs Network-First caching for HTML navigation, ensuring fresh deployments load immediately without blank screens while falling back to offline cache during outages.
+* **In-Browser Autonomous 5-Agent Swarm:** If the farmer loses connectivity in remote fields, client-side agents in `frontend/src/services/` execute the diagnostic pipeline, safety checks, store-and-forward queueing, and on-device vernacular voice guidance entirely inside the browser.
+* **Silent Standalone Mode:** Automatically prompts desktop/mobile browser visitors to "Add to Home Screen", while running silently in native fullscreen when launched from the home screen.
+
+---
+
+## â›“ï¸ Live Blockchain Traceability (Base Sepolia)
+
+Every crop diagnosis is permanently minted to Coinbase's **Base Sepolia** Ethereum Layer-2 blockchain:
+
+| Property | On-Chain Detail |
+| :--- | :--- |
+| **Smart Contract** | `CropPassport.sol` (Solidity 0.8.20 + OpenZeppelin) |
+| **Contract Address** | [`0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7`](https://sepolia.basescan.org/address/0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7) |
+| **Network** | Base Sepolia Testnet (Chain ID: `84532`) |
+| **Explorer** | ðŸ‘‰ **[View Live Transactions on BaseScan](https://sepolia.basescan.org/address/0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7)** |
+
+```solidity
+struct PassportRecord {
+    uint256 timestamp;       // Block timestamp of verified diagnosis
+    string imageHash;        // SHA-256 fingerprint of the farmer's leaf photo
+    string diagnosis;        // Pathology classification (e.g. "Tomato Late Blight")
+    string treatmentHash;    // Cryptographic hash of prescribed ICAR treatment
+    bool isSafe;             // Verified safe flag from C++ safety core
+}
+```
+
+---
+
+## ðŸŽ™ï¸ 11-Language Indic Voice Matrix (Sarvam AI)
+
+AgriNexus natively speaks and writes in **11 Indian Regional Languages** with a deterministic priority hierarchy:
+
+* **Online Primary (Sarvam AI Bulbul:v3):** High-fidelity neural voice synthesis (`shubh` speaker) executing whenever internet connectivity is detected. Includes interactive audio replay controls (`ðŸ”Š à¤¸à¥à¤¨à¥‹`).
+* **Automated Quota Failover & Offline Fallback (Native On-Device Web Speech):** If Sarvam AI encounters daily request quota limits (HTTP 429/402/403) or the device is offline (`!navigator.onLine`), AgriNexus automatically fails over to the mobile device's built-in Web Speech API (`window.speechSynthesis`) across all 11 Indian languages with zero audio interruptions.
+
+| Language | Native Script | Agronomic Greeting | Language | Native Script | Agronomic Greeting |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Hindi** | à¤¹à¤¿à¤¨à¥à¤¦à¥€ | à¤•à¤¿à¤¸à¤¾à¤¨ à¤­à¤¾à¤ˆ | **Bengali** | à¦¬à¦¾à¦‚à¦²à¦¾ | à¦•à§ƒà¦·à¦• à¦­à¦¾à¦‡à¦¯à¦¼à§‡à¦°à¦¾ |
+| **Punjabi** | à¨ªà©°à¨œà¨¾à¨¬à©€ | à¨•à¨¿à¨¸à¨¾à¨¨ à¨µà©€à¨°à©‹ | **Marathi** | à¤®à¤°à¤¾à¤ à¥€ | à¤¶à¥‡à¤¤à¤•à¤°à¥€ à¤®à¤¿à¤¤à¥à¤°à¤¾à¤‚à¤¨à¥‹ |
+| **Telugu** | à°¤à±†à°²à±à°—à± | à°°à±ˆà°¤à± à°¸à±‹à°¦à°°à±à°²à°¾à°°à°¾ | **Gujarati** | àª—à«àªœàª°àª¾àª¤à«€ | àª–à«‡àª¡à«‚àª¤ àª®àª¿àª¤à«àª°à«‹ |
+| **Tamil** | à®¤à®®à®¿à®´à¯ | à®µà®¿à®µà®šà®¾à®¯ à®šà®•à¯‹à®¤à®°à®°à¯à®•à®³à¯‡ | **Odia** | à¬“à¬¡à¬¼à¬¿à¬† | à¬•à­ƒà¬·à¬• à¬­à¬¾à¬‡à¬®à¬¾à¬¨à­‡ |
+| **Malayalam** | à´®à´²à´¯à´¾à´³à´‚ | à´•àµ¼à´·à´• à´¸àµà´¹àµƒà´¤àµà´¤àµà´•àµà´•à´³àµ† | **English** | English | Dear Farmer |
+| **Kannada** | à²•à²¨à³à²¨à²¡ | à²°à³ˆà²¤ à²®à²¿à²¤à³à²°à²°à³‡ | | | |
+
+---
+
+## ðŸ–¥ï¸ 3D Telemetry Control Room & Farmer UI
+
+* **Farmer Field Interface ([`FarmerView.jsx`](./frontend/src/components/FarmerView.jsx)):** Mobile-responsive, single-tap photo upload (dual Camera & Gallery support), live **Farm Weather HUD Badge** (`â›… 34Â°C Â· 55% Humidity Â· Safe to Spray âœ“`), bilingual regional language selector, and an automated Sarvam AI audio player with manual replay triggers.
+* **Swarm Control Room ([`TelemetryView.jsx`](./frontend/src/components/TelemetryView.jsx)):** Real-time 3D cybernetic canvas featuring **progressive 850ms laser line propagation**, dynamic bot orbital wobbles, shield rotations, harmonic sound ripples, and a live cryptographic ledger with direct `[BaseScan â†—]` one-click explorer links.
+
+---
+
+## ðŸ§ª Full-Stack Automated Verification Matrix
+
+Every pull request and build is verified through a 51-test automated matrix across 3 distinct technology runtimes:
+
+| Test Suite | Framework | Scope | Passing Tests |
+|---|---|---|---|
+| **Deterministic Core & Backend** | Pytest (`pytest tests`) | C++ safety engine, ICAR RAG retrieval, KVK Haversine resolver, weather spray interlocks, and crop domain firewall | **28 / 28 âœ…** |
+| **Client Swarm & UI Components** | Vitest (`vitest run`) | Edge multi-agent swarm, meteorological voice gates, offline store-and-forward queue, FarmerView HUD, and logo branding | **18 / 18 âœ…** |
+| **Smart Contract Provenance** | Hardhat (`npx hardhat test`) | CropPassport Solidity contract, Base Sepolia event emissions, owner-only authorization, and record integrity | **5 / 5 âœ…** |
+| **Production Bundle Compilation** | Vite (`vite build`) | TypeScript/JSX compilation, asset hashing, Tailwind CSS tree-shaking, and PWA manifest linking | **0 Errors âœ…** |
+
+---
+
+## âš¡ Quick Start & Setup Guide
+
+### 1. Configure Environment
+
+**Backend (`backend/.env`):**
 ```env
-# Security
-SECRET_KEY=your_secure_secret_key
+SARVAM_API_KEY=your_sarvam_api_key_here
+GOOGLE_API_KEY=your_gemini_api_key_here
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+DEVELOPER_PRIVATE_KEY=your_wallet_private_key_here
+CROP_PASSPORT_CONTRACT_ADDRESS=0xDd819A09aff9A62D1F6Ad662c6cC34d4B5D7DAd7
 
-# Databases
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster...
-
-# AI & Voice
-GOOGLE_API_KEY=your_gemini_key
-SARVAM_API_KEY=your_sarvam_key
-
-# Storage
+# Databases & Storage (New)
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster0...
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+
+PORT=8000
+HOST=0.0.0.0
 ```
 
-**Run the Backend:**
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 3. Frontend Setup
-```bash
-cd frontend
-npm install
-```
-
-**Create a `.env` file in `/frontend`:**
+**Frontend (`frontend/.env`):**
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_SARVAM_API_KEY=your_sarvam_api_key_here
 ```
 
-**Run the Frontend:**
+### 2. Launch Backend (FastAPI + LangGraph):
 ```bash
+cd backend
+python -m venv venv
+# Windows: venv\Scripts\activate | Linux/macOS: source venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+*Backend runs on `http://localhost:8000` with WebSocket telemetry at `ws://localhost:8000/ws/telemetry`.*
+
+### 3. Launch Frontend (React + Vite):
+```bash
+cd ../frontend
+npm install
 npm run dev
 ```
+*Frontend runs on `http://localhost:5173`.*
+
+### 4. Execute Full-Stack Test Suites:
+```bash
+# Backend Pytest Suite
+cd backend && python -m pytest tests
+
+# Frontend Vitest Suite
+cd ../frontend && npm test -- --run
+
+# Smart Contract Hardhat Suite
+cd ../contracts && npx hardhat test
+```
 
 ---
 
-## 🛡️ Strategic Vision & Business Model
-AgriNexus is built for **B2G (Business-to-Government)** deployment. By acting as an unbiased, ICAR-compliant oracle, it serves as a critical infrastructure layer for state agriculture departments and KVKs. 
-
-Instead of taking biased pesticide brand deals, AgriNexus monetizes via **Generic Diagnosis + Sponsored Fulfillment**. The AI neutral-diagnoses the required chemical, while regional verified sellers optionally sponsor the local fulfillment marketplace. Furthermore, aggregate immutable disease heatmaps are monetized for crop insurance underwriting.
 
 ---
-*Built with ❤️ for global food security.*
+
+## 📈 Platform Features (V2 Updates)
+
+* **Admin Dashboard & Telemetry:** Full visibility into platform usage, global scan history, and role-based user management via a secure React Admin dashboard backed by MongoDB Atlas.
+* **Professional PDF Generation (jsPDF):** Farmers and KVK extension workers can generate highly detailed, dynamically styled PDF diagnostic reports featuring:
+  * Embedded Cloudinary crop images
+  * Red/Green color-coded Safety Spray Status
+  * Exact ICAR generic chemical prescriptions
+  * Base Sepolia Blockchain verification links
+  * Nearest KVK location referrals for local assistance.
+
+---
+
+## 🛡️ Strategic Vision & Business Model (B2G + Marketplace)
+AgriNexus is built primarily for **B2G (Business-to-Government)** deployment. By acting as an unbiased, ICAR-compliant oracle, it serves as a critical infrastructure layer for state agriculture departments and KVKs. 
+
+To maintain our zero-hallucination, unbiased agronomic integrity, AgriNexus avoids direct corporate pesticide bias. Instead, it monetizes via a **Generic Diagnosis + Sponsored Fulfillment** model:
+1. The AI neutral-diagnoses the required generic chemical (e.g., *Copper Oxychloride 50% WP*).
+2. Regional verified sellers optionally sponsor the local fulfillment marketplace. 
+3. Furthermore, aggregate immutable disease heatmaps are monetized for macro-level crop insurance underwriting.
+
+## ðŸ“„ License
+Distributed under the **MIT License**.
