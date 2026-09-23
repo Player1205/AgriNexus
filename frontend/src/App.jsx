@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import FarmerView from "./components/FarmerView";
+import FarmerView, { UI_TRANSLATIONS } from "./components/FarmerView";
 import TelemetryView from "./components/TelemetryView";
 import PwaInstallBanner from "./components/PwaInstallBanner";
 import AuthView from "./components/AuthView";
@@ -15,6 +15,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isScansModalOpen, setIsScansModalOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("hi");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -36,7 +37,7 @@ export default function App() {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#020612] text-sm font-semibold text-emerald-300 gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-        <p className="animate-pulse">Loading AgriNexus with MongoDB Atlas...</p>
+        <p className="animate-pulse">Loading AgriNexus...</p>
       </div>
     );
   }
@@ -62,9 +63,6 @@ export default function App() {
           <div className="hidden sm:block">
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-white tracking-tight text-sm">AgriNexus</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                ATLAS
-              </span>
             </div>
             <p className="text-[10px] text-slate-400">Autonomous Agricultural Intelligence</p>
           </div>
@@ -128,14 +126,13 @@ export default function App() {
             </button>
           )}
 
-          {/* User History Button */}
           <button
             onClick={() => setIsScansModalOpen(true)}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 font-bold text-xs shadow-sm transition"
-            title="View your saved scans on MongoDB Atlas"
+            title="View your saved scans"
           >
             <Database className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">My Scans</span>
+            <span className="hidden sm:inline">{UI_TRANSLATIONS[selectedLang]?.myScans || UI_TRANSLATIONS['en'].myScans}</span>
           </button>
 
           {/* User Profile Pill */}
@@ -177,6 +174,8 @@ export default function App() {
             <FarmerView 
               onAnalysisComplete={setLastResult}
               onOpenScans={() => setIsScansModalOpen(true)}
+              selectedLang={selectedLang}
+              setSelectedLang={setSelectedLang}
             />
           </div>
 
@@ -196,6 +195,7 @@ export default function App() {
         isOpen={isScansModalOpen}
         onClose={() => setIsScansModalOpen(false)}
         user={user}
+        selectedLang={selectedLang}
       />
 
       {/* PWA Offline Banner */}
