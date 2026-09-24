@@ -17,8 +17,9 @@ import {
 import { getUserScans, deleteUserScan, getBaseApiUrl } from "../services/api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { UI_TRANSLATIONS } from "./FarmerView";
 
-export default function UserScansModal({ isOpen, onClose, user }) {
+export default function UserScansModal({ isOpen, onClose, user, selectedLang = "hi" }) {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
@@ -220,30 +221,25 @@ export default function UserScansModal({ isOpen, onClose, user }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-      {/* Dark green backdrop with blur */}
+      {/* Light green backdrop with blur */}
       <div
-        className="absolute inset-0"
-        style={{
-          background: "rgba(2, 26, 16, 0.85)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-        }}
+        className="absolute inset-0 bg-green-50/80 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Animated glow orbs */}
       <div
-        className="absolute top-[10%] left-[10%] w-[250px] h-[250px] rounded-full pointer-events-none"
+        className="absolute top-[10%] left-[10%] w-[300px] h-[300px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, rgba(34,197,94,0.2) 0%, transparent 70%)",
-          filter: "blur(50px)",
+          background: "radial-gradient(circle, rgba(134,239,172,0.4) 0%, transparent 70%)",
+          filter: "blur(40px)",
           animation: "scansPulse 6s ease-in-out infinite",
         }}
       />
       <div
-        className="absolute bottom-[10%] right-[10%] w-[200px] h-[200px] rounded-full pointer-events-none"
+        className="absolute bottom-[10%] right-[10%] w-[250px] h-[250px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(167,243,208,0.4) 0%, transparent 70%)",
           filter: "blur(40px)",
           animation: "scansPulse 7s ease-in-out infinite reverse",
         }}
@@ -251,45 +247,35 @@ export default function UserScansModal({ isOpen, onClose, user }) {
 
       {/* Modal */}
       <div
-        className="relative flex flex-col w-full max-w-2xl max-h-[88vh] rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50"
-        style={{
-          background: "linear-gradient(160deg, rgba(5,46,22,0.92) 0%, rgba(6,78,59,0.88) 50%, rgba(2,44,34,0.92) 100%)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-        }}
+        className="relative flex flex-col w-full max-w-2xl max-h-[88vh] rounded-3xl overflow-hidden border border-green-200 shadow-2xl shadow-green-900/10 bg-white"
         role="dialog"
         aria-modal="true"
         aria-labelledby="scans-modal-title"
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/8"
-          style={{ background: "rgba(0,0,0,0.2)" }}
+          className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-green-100 bg-green-50/50"
         >
           <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-green-500/30 shadow-lg shadow-green-900/40"
-              style={{
-                background: "linear-gradient(135deg, rgba(34,197,94,0.25) 0%, rgba(16,185,129,0.15) 100%)",
-              }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-green-200 shadow-sm bg-white"
             >
-              <Leaf className="h-5 w-5 text-green-400 drop-shadow" />
+              <Leaf className="h-5 w-5 text-green-600 drop-shadow-sm" />
             </div>
             <div>
               <h2
                 id="scans-modal-title"
-                className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2 drop-shadow"
+                className="text-base sm:text-lg font-extrabold text-green-900 flex items-center gap-2"
               >
-                मेरी फसल जाँच
+                {UI_TRANSLATIONS[selectedLang]?.myScans || UI_TRANSLATIONS['en'].myScans}
                 <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-500/30"
-                  style={{ background: "rgba(34,197,94,0.15)", color: "#86efac" }}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200 bg-green-100 text-green-700"
                 >
                   {scans.length} saved
                 </span>
               </h2>
-              <p className="text-[11px] text-green-300/50 font-medium">
-                My Field Scans • MongoDB Atlas • {user?.email}
+              <p className="text-[11px] text-green-600 font-medium">
+                My Field Scans • {user?.email}
               </p>
             </div>
           </div>
@@ -298,16 +284,16 @@ export default function UserScansModal({ isOpen, onClose, user }) {
             <button
               onClick={fetchScans}
               disabled={loading}
-              className="p-2 rounded-lg transition border border-white/5 hover:border-green-500/30 hover:bg-white/5 disabled:opacity-40"
+              className="p-2 rounded-lg transition border border-transparent hover:border-green-200 hover:bg-green-50 disabled:opacity-40 text-green-600"
               title="Refresh"
             >
               <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin text-green-400" : "text-green-300/60"}`}
+                className={`h-4 w-4 ${loading ? "animate-spin text-green-600" : "text-green-600"}`}
               />
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg transition border border-white/5 hover:border-red-500/30 hover:bg-red-500/10 text-green-300/50 hover:text-red-300"
+              className="p-2 rounded-lg transition border border-transparent hover:border-red-200 hover:bg-red-50 text-green-600 hover:text-red-600"
               title="Close"
             >
               <X className="h-5 w-5" />
@@ -320,37 +306,32 @@ export default function UserScansModal({ isOpen, onClose, user }) {
           {loading && scans.length === 0 ? (
             <div className="py-20 text-center flex flex-col items-center gap-3">
               <div
-                className="h-14 w-14 rounded-2xl flex items-center justify-center border border-green-500/20"
-                style={{ background: "rgba(34,197,94,0.1)" }}
+                className="h-14 w-14 rounded-2xl flex items-center justify-center border border-green-200 bg-green-50"
               >
-                <RefreshCw className="h-6 w-6 text-green-400 animate-spin" />
+                <RefreshCw className="h-6 w-6 text-green-600 animate-spin" />
               </div>
-              <p className="text-sm font-semibold text-green-300/70">
-                MongoDB Atlas से रिकॉर्ड लोड हो रहे हैं...
+              <p className="text-sm font-semibold text-green-800">
+                रिकॉर्ड लोड हो रहे हैं...
               </p>
-              <p className="text-[11px] text-green-400/40">Fetching your field records</p>
+              <p className="text-[11px] text-green-600">Fetching your field records</p>
             </div>
           ) : scans.length === 0 ? (
             <div className="py-16 text-center flex flex-col items-center gap-4">
               <div
-                className="h-20 w-20 rounded-3xl flex items-center justify-center border border-green-600/20 shadow-lg shadow-green-950/30"
-                style={{
-                  background: "linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(16,185,129,0.06) 100%)",
-                }}
+                className="h-20 w-20 rounded-3xl flex items-center justify-center border border-green-200 shadow-sm bg-gradient-to-br from-green-50 to-emerald-50"
               >
-                <Sprout className="h-10 w-10 text-green-500/50" />
+                <Sprout className="h-10 w-10 text-green-600" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-white/90 mb-1">
+                <h3 className="text-base font-extrabold text-green-900 mb-1">
                   अभी तक कोई जाँच नहीं
                 </h3>
-                <p className="text-[11px] text-green-300/40 font-medium">
+                <p className="text-[11px] text-green-600 font-medium">
                   No field scans recorded yet
                 </p>
               </div>
               <p
-                className="text-xs max-w-xs leading-relaxed font-medium px-4 py-3 rounded-xl border border-white/5"
-                style={{ color: "rgba(134,239,172,0.5)", background: "rgba(255,255,255,0.03)" }}
+                className="text-xs max-w-xs leading-relaxed font-medium px-4 py-3 rounded-xl border border-green-200 bg-green-50 text-green-800"
               >
                 जब आप Farmer View में फसल की फोटो कैप्चर या अपलोड करेंगे, तो आपका निदान, मौसम डेटा और
                 खुराक स्वचालित रूप से यहाँ सेव होगा।
@@ -371,11 +352,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
               return (
                 <div
                   key={scan.id}
-                  className="rounded-2xl border border-white/8 hover:border-green-500/25 transition-all p-4 sm:p-5 shadow-lg group relative"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    backdropFilter: "blur(8px)",
-                  }}
+                  className="rounded-2xl border border-green-100 hover:border-green-300 transition-all p-4 sm:p-5 shadow-sm hover:shadow-md group relative bg-white"
                 >
                   {/* Top row: badges + timestamp + actions */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
@@ -383,7 +360,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                       {/* Cloudinary Image */}
                       {scan.image_url && (
                         <div className="shrink-0 w-full sm:w-24">
-                          <img src={scan.image_url} alt="Scan" className="w-full h-36 sm:h-24 object-cover rounded-xl border border-white/10 shadow-md" />
+                          <img src={scan.image_url} alt="Scan" className="w-full h-36 sm:h-24 object-cover rounded-xl border border-green-100 shadow-sm" />
                         </div>
                       )}
                       
@@ -391,8 +368,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                           {/* Crop badge */}
                           <span
-                            className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-green-500/30 flex items-center gap-1"
-                            style={{ background: "rgba(34,197,94,0.12)", color: "#86efac" }}
+                            className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700 flex items-center gap-1"
                           >
                             <Sprout className="w-3 h-3" />
                             {scan.crop ? scan.crop : "Field Scan"}
@@ -403,14 +379,9 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                             <span
                               className={`text-[11px] font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full border ${
                                 scan.is_spray_safe
-                                  ? "border-green-500/30 text-green-300"
-                                  : "border-amber-500/30 text-amber-300"
+                                  ? "border-green-200 bg-green-50 text-green-700"
+                                  : "border-amber-200 bg-amber-50 text-amber-700"
                               }`}
-                              style={{
-                                background: scan.is_spray_safe
-                                  ? "rgba(34,197,94,0.1)"
-                                  : "rgba(245,158,11,0.1)",
-                              }}
                             >
                               {scan.is_spray_safe ? (
                                 <><ShieldCheck className="w-3 h-3" /> Safe</>
@@ -421,14 +392,14 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                           )}
 
                           {/* Timestamp */}
-                          <span className="text-[10px] text-green-400/40 flex items-center gap-1 ml-auto font-medium">
+                          <span className="text-[10px] text-gray-500 flex items-center gap-1 ml-auto font-medium">
                             <Calendar className="w-3 h-3" />
                             {formattedDate}
                           </span>
                         </div>
 
                         {/* Diagnosis title */}
-                        <h4 className="text-sm sm:text-base font-bold text-white/90 leading-snug">
+                        <h4 className="text-sm sm:text-base font-bold text-gray-900 leading-snug">
                           {scan.vision_diagnosis || scan.diagnosis || "General Crop Diagnosis"}
                         </h4>
                       </div>
@@ -439,7 +410,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                       {/* PDF Report Button */}
                       <button
                         onClick={() => generatePDF(scan)}
-                        className="px-3 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-blue-300/80 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-300 transition"
+                        className="px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-xs font-bold text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition"
                         title="Download PDF"
                       >
                         PDF
@@ -451,7 +422,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                           href={`https://sepolia.basescan.org/tx/${scan.tx_hash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-purple-300/80 hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-300 transition"
+                          className="px-3 py-1.5 rounded-xl border border-purple-200 bg-purple-50 text-xs font-bold text-purple-700 hover:bg-purple-100 hover:border-purple-300 transition"
                           title="View on BaseScan"
                         >
                           On-Chain
@@ -463,8 +434,8 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                           onClick={() => handlePlayAudio(scan.vernacular_audio_url, scan.id)}
                           className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
                             playingAudio === scan.id
-                              ? "bg-green-500 text-green-950 border-green-400 shadow-lg shadow-green-900/50"
-                              : "border-white/10 text-green-300/70 hover:border-green-500/30 hover:text-green-300 hover:bg-white/5"
+                              ? "bg-green-600 text-white border-green-700 shadow-md shadow-green-900/20"
+                              : "border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100"
                           }`}
                           title="सुनो (Play audio)"
                         >
@@ -476,7 +447,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                       <button
                         onClick={() => handleDelete(scan.id)}
                         disabled={deletingId === scan.id}
-                        className="p-2 rounded-xl border border-white/8 text-green-400/30 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 transition disabled:opacity-40"
+                        className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition disabled:opacity-40 bg-white"
                         title="हटाएं (Delete)"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -487,8 +458,7 @@ export default function UserScansModal({ isOpen, onClose, user }) {
                   {/* Translated advice text */}
                   {scan.translated_text && (
                     <p
-                      className="text-xs leading-relaxed p-3 rounded-xl border border-white/5 mb-3 font-medium"
-                      style={{ color: "rgba(187,247,208,0.7)", background: "rgba(0,0,0,0.15)" }}
+                      className="text-xs leading-relaxed p-3 rounded-xl border border-green-100 bg-green-50 mb-3 font-medium text-green-800"
                     >
                       {scan.translated_text}
                     </p>
@@ -496,30 +466,29 @@ export default function UserScansModal({ isOpen, onClose, user }) {
 
                   {/* Details footer strip */}
                   <div
-                    className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[11px] font-medium pt-2.5 border-t border-white/5"
-                    style={{ color: "rgba(134,239,172,0.4)" }}
+                    className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[11px] font-medium pt-2.5 border-t border-gray-100 text-gray-500"
                   >
                     {scan.dosage_unit && (
                       <div className="flex items-center gap-1">
-                        <Droplets className="w-3 h-3" />
-                        <span>Unit: <span className="text-green-300/70 font-semibold">{scan.dosage_unit}</span></span>
+                        <Droplets className="w-3 h-3 text-blue-500" />
+                        <span>Unit: <span className="text-gray-700 font-semibold">{scan.dosage_unit}</span></span>
                       </div>
                     )}
                     {scan.weather_data && (
                       <>
                         <div className="flex items-center gap-1">
-                          <CloudRain className="w-3 h-3 text-cyan-400/40" />
+                          <CloudRain className="w-3 h-3 text-cyan-500" />
                           <span>{scan.weather_data.temperature_c}°C</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Wind className="w-3 h-3" />
+                          <Wind className="w-3 h-3 text-gray-400" />
                           <span>{scan.weather_data.relative_humidity}% Humidity</span>
                         </div>
                       </>
                     )}
                     {scan.filename && (
                       <div className="flex items-center gap-1">
-                        <Database className="w-3 h-3" />
+                        <Database className="w-3 h-3 text-gray-400" />
                         <span className="truncate max-w-[120px]">{scan.filename}</span>
                       </div>
                     )}
@@ -532,16 +501,15 @@ export default function UserScansModal({ isOpen, onClose, user }) {
 
         {/* Footer */}
         <div
-          className="border-t border-white/8 px-5 sm:px-6 py-3 flex items-center justify-between text-[11px] font-medium"
-          style={{ background: "rgba(0,0,0,0.2)", color: "rgba(134,239,172,0.35)" }}
+          className="border-t border-green-100 px-5 sm:px-6 py-3 flex items-center justify-between text-[11px] font-medium bg-green-50/50 text-green-700"
         >
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3 h-3 text-green-500/40" />
-            MongoDB Atlas में सुरक्षित • Encrypted at rest
+            <ShieldCheck className="w-3 h-3 text-green-600" />
+            सुरक्षित • Encrypted at rest
           </span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl font-bold text-green-300/80 transition border border-white/10 hover:border-green-500/30 hover:bg-white/5 hover:text-green-200"
+            className="px-4 py-1.5 rounded-xl font-bold text-green-700 transition border border-green-200 hover:border-green-300 hover:bg-green-100 bg-white shadow-sm"
           >
             बंद करें (Done)
           </button>

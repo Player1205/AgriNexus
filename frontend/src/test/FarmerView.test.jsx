@@ -12,10 +12,16 @@ vi.mock('../services/api', () => ({
 }));
 
 import { uploadImage } from '../services/api';
+import React, { useState } from 'react';
+
+const FarmerViewWrapper = (props) => {
+    const [selectedLang, setSelectedLang] = useState('hi');
+    return <FarmerView {...props} selectedLang={selectedLang} setSelectedLang={setSelectedLang} />;
+};
 
 describe('FarmerView UI Component Suite', () => {
     it('Renders the AgriNexus branding, subtitle, and dual photo capture options (Camera and Gallery) cleanly', () => {
-        render(<FarmerView />);
+        render(<FarmerViewWrapper />);
         
         expect(screen.getByText('AgriNexus')).toBeInTheDocument();
         expect(screen.getByAltText('AgriNexus Logo')).toBeInTheDocument();
@@ -25,7 +31,7 @@ describe('FarmerView UI Component Suite', () => {
     });
 
     it('Renders all 11 Indian Regional Languages for farmer selection', () => {
-        render(<FarmerView />);
+        render(<FarmerViewWrapper />);
         
         expect(screen.getByText('हिन्दी')).toBeInTheDocument();
         expect(screen.getByText('ਪੰਜਾਬੀ')).toBeInTheDocument();
@@ -41,7 +47,7 @@ describe('FarmerView UI Component Suite', () => {
     });
 
     it('Allows switching active language seamlessly', () => {
-        render(<FarmerView />);
+        render(<FarmerViewWrapper />);
         
         const punjabiBtn = screen.getByText('ਪੰਜਾਬੀ').closest('button');
         fireEvent.click(punjabiBtn);
@@ -71,7 +77,7 @@ describe('FarmerView UI Component Suite', () => {
             }
         });
 
-        render(<FarmerView />);
+        render(<FarmerViewWrapper />);
 
         // Simulate file upload
         const file = new File(['fake-leaf-content'], 'leaf.jpg', { type: 'image/jpeg' });
@@ -104,7 +110,7 @@ describe('FarmerView UI Component Suite', () => {
             }
         });
 
-        render(<FarmerView />);
+        render(<FarmerViewWrapper />);
 
         const file = new File(['fake-leaf'], 'unknown.jpg', { type: 'image/jpeg' });
         const input = document.querySelector('input[type="file"]');

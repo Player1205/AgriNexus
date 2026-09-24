@@ -20,18 +20,18 @@ const LANGUAGES = [
     { code: 'en', name: 'English', label: 'English' }
 ];
 
-const UI_TRANSLATIONS = {
-    hi: { camera: "फोटो खींचें", gallery: "गैलरी से चुनें" },
-    pa: { camera: "ਫੋਟੋ ਖਿੱਚੋ", gallery: "ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ" },
-    te: { camera: "ఫోటో తీయండి", gallery: "గ్యాలరీ నుండి ఎంచుకోండి" },
-    ta: { camera: "புகைப்படம் எடுக்கவும்", gallery: "கேலரியில் இருந்து தேர்ந்தெடுக்கவும்" },
-    ml: { camera: "ഫോട്ടോ എടുക്കുക", gallery: "ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക" },
-    kn: { camera: "ಫೋಟೋ ತೆಗೆದುಕೊಳ್ಳಿ", gallery: "ಗ್ಯಾಲರಿಯಿಂದ ಆರಿಸಿ" },
-    bn: { camera: "ছবি তুলুন", gallery: "গ্যালারি থেকে বেছে নিন" },
-    mr: { camera: "फोटो काढा", gallery: "गॅलरीतून निवडा" },
-    gu: { camera: "ફોટો લો", gallery: "ગેલેરીમાંથી પસંદ કરો" },
-    od: { camera: "ଫଟୋ ନିଅନ୍ତୁ", gallery: "ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ" },
-    en: { camera: "Take Photo", gallery: "Choose from Gallery" }
+export const UI_TRANSLATIONS = {
+    hi: { camera: "फोटो खींचें", gallery: "गैलरी से चुनें", deviceGps: "📍 डिवाइस जीपीएस", photoExif: "📸 फोटो EXIF", mapPin: "🗺️ मैप पिन", myScans: "मेरे स्कैन", whereIsCrop: "यह फसल कहाँ स्थित है?" },
+    pa: { camera: "ਫੋਟੋ ਖਿੱਚੋ", gallery: "ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ", deviceGps: "📍 ਡਿਵਾਈਸ GPS", photoExif: "📸 ਫੋਟੋ EXIF", mapPin: "🗺️ ਮੈਪ ਪਿੰਨ", myScans: "ਮੇਰੇ ਸਕੈਨ", whereIsCrop: "ਇਹ ਫਸਲ ਕਿੱਥੇ ਹੈ?" },
+    te: { camera: "ఫోటో తీయండి", gallery: "గ్యాలరీ నుండి ఎంచుకోండి", deviceGps: "📍 పరికరం GPS", photoExif: "📸 ఫోటో EXIF", mapPin: "🗺️ మ్యాప్ పిన్", myScans: "నా స్కాన్లు", whereIsCrop: "ఈ పంట ఎక్కడ ఉంది?" },
+    ta: { camera: "புகைப்படம் எடுக்கவும்", gallery: "கேலரியில் இருந்து தேர்ந்தெடுக்கவும்", deviceGps: "📍 சாதன GPS", photoExif: "📸 புகைப்பட EXIF", mapPin: "🗺️ வரைபட முள்", myScans: "என் ஸ்கேன்", whereIsCrop: "இந்தப் பயிர் எங்கே அமைந்துள்ளது?" },
+    ml: { camera: "ഫോട്ടോ എടുക്കുക", gallery: "ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", deviceGps: "📍 ഉപകരണ GPS", photoExif: "📸 ഫോട്ടോ EXIF", mapPin: "🗺️ മാപ്പ് പിൻ", myScans: "എന്റെ സ്കാനുകൾ", whereIsCrop: "ഈ വിള എവിടെയാണ് സ്ഥിതി ചെയ്യുന്നത്?" },
+    kn: { camera: "ಫೋಟೋ ತೆಗೆದುಕೊಳ್ಳಿ", gallery: "ಗ್ಯಾಲರಿಯಿಂದ ಆರಿಸಿ", deviceGps: "📍 ಸಾಧನ GPS", photoExif: "📸 ಫೋಟೋ EXIF", mapPin: "🗺️ ನಕ್ಷೆ ಪಿನ್", myScans: "ನನ್ನ ಸ್ಕ್ಯಾನ್ಗಳು", whereIsCrop: "ಈ ಬೆಳೆ ಎಲ್ಲಿದೆ?" },
+    bn: { camera: "ছবি তুলুন", gallery: "গ্যালারি থেকে বেছে নিন", deviceGps: "📍 ডিভাইস জিপিএস", photoExif: "📸 ছবির EXIF", mapPin: "🗺️ মানচিত্র পিন", myScans: "আমার স্ক্যান", whereIsCrop: "এই ফসল কোথায় অবস্থিত?" },
+    mr: { camera: "फोटो काढा", gallery: "गॅलरीतून निवडा", deviceGps: "📍 डिव्हाइस GPS", photoExif: "📸 फोटो EXIF", mapPin: "🗺️ नकाशा पिन", myScans: "माझे स्कॅन", whereIsCrop: "हे पीक कोठे आहे?" },
+    gu: { camera: "ફોટો લો", gallery: "ગેલેરીમાંથી પસંદ કરો", deviceGps: "📍 ઉપકરણ GPS", photoExif: "📸 ફોટો EXIF", mapPin: "🗺️ નકશો પિન", myScans: "મારા સ્કેન", whereIsCrop: "આ પાક ક્યાં આવેલો છે?" },
+    od: { camera: "ଫଟୋ ନିଅନ୍ତୁ", gallery: "ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ", deviceGps: "📍 ଡିଭାଇସ୍ GPS", photoExif: "📸 ଫଟୋ EXIF", mapPin: "🗺️ ମ୍ୟାପ୍ ପିନ୍", myScans: "ମୋର ସ୍କାନ୍", whereIsCrop: "ଏହି ଫସଲ କେଉଁଠାରେ ଅବସ୍ଥିତ?" },
+    en: { camera: "Take Photo", gallery: "Choose from Gallery", deviceGps: "📍 Device GPS", photoExif: "📸 Photo EXIF", mapPin: "🗺️ Map Pin", myScans: "My Scans", whereIsCrop: "Where is this crop located?" }
 };
 
 const STATUS = {
@@ -51,9 +51,8 @@ const NODE_STYLES = {
     early_exit: { text: "Low Confidence: Bypassing RAG & Safety...", size: "text-lg sm:text-xl", color: "text-red-600" }
 };
 
-export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
+export default function FarmerView({ onAnalysisComplete, onOpenScans, selectedLang = 'hi', setSelectedLang }) {
     const [status, setStatus] = useState(STATUS.IDLE);
-    const [selectedLang, setSelectedLang] = useState('hi');
     const [activeNode, setActiveNode] = useState(null);
     const [weather, setWeather] = useState(null);
     const [audioUrl, setAudioUrl] = useState(null);
@@ -479,20 +478,20 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                     </div>
                 </div>
 
-                                {/* Location Source Selector */}
+                {/* Location Source Selector */}
                 <div className="w-full bg-white p-3 rounded-2xl shadow-sm border border-green-100 flex flex-col gap-2">
-                    <div className="text-[11px] font-semibold text-gray-500">Where is this crop located?</div>
+                    <div className="text-[11px] font-semibold text-gray-500">{UI_TRANSLATIONS[selectedLang]?.whereIsCrop || UI_TRANSLATIONS['en'].whereIsCrop}</div>
                     <div className="flex flex-wrap gap-2">
                         <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all ${locationSource === 'device' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>
                             <input type="radio" name="locSource" value="device" checked={locationSource === 'device'} onChange={() => setLocationSource('device')} className="hidden" />
-                            📍 Device GPS
+                            {UI_TRANSLATIONS[selectedLang]?.deviceGps || UI_TRANSLATIONS['en'].deviceGps}
                         </label>
                         <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all ${locationSource === 'exif' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>
                             <input type="radio" name="locSource" value="exif" checked={locationSource === 'exif'} onChange={() => setLocationSource('exif')} className="hidden" />
-                            📸 Photo EXIF
+                            {UI_TRANSLATIONS[selectedLang]?.photoExif || UI_TRANSLATIONS['en'].photoExif}
                         </label>
                         <button type="button" onClick={() => setIsMapModalOpen(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${locationSource === 'map' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700'}`}>
-                            🗺️ Map Pin
+                            {UI_TRANSLATIONS[selectedLang]?.mapPin || UI_TRANSLATIONS['en'].mapPin}
                         </button>
                     </div>
                     {exifError && (
@@ -709,7 +708,7 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans }) {
                         <div className="w-full flex items-center justify-between bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-xl text-xs text-emerald-800 mt-1">
                             <span className="flex items-center gap-1.5 font-medium">
                                 <Database className="w-3.5 h-3.5 text-emerald-600" />
-                                Stored in your MongoDB Atlas account
+                                Stored in your account
                             </span>
                             {onOpenScans && (
                                 <button
