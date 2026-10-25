@@ -19,7 +19,20 @@
     <a href="https://react.dev"><img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20PWA-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React PWA" /></a>
   </p>
 
+  <p align="center">
+    <a href="https://youtu.be/ACrBIGvxyBA?si=jc36sZ3cFg3yFVUC" target="_blank">
+      <img src="https://img.shields.io/badge/▶_Watch_Explanation_&_Demo-YouTube_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch AgriNexus Explanation & Demo on YouTube" />
+    </a>
+  </p>
+
 </div>
+
+---
+
+> [!TIP]
+> 📺 **Official Video Walkthrough & Live Demo:**  
+> Watch the complete architectural explanation and full working platform demo on YouTube:  
+> [👉 **https://youtu.be/ACrBIGvxyBA (Click to Watch)**](https://youtu.be/ACrBIGvxyBA?si=jc36sZ3cFg3yFVUC)
 
 ---
 
@@ -30,6 +43,7 @@
 ---
 
 ## 📌 Table of Contents
+0. [🎥 System Explanation & Working Demo (Video Walkthrough)](#-system-explanation--working-demo-video-walkthrough)
 1. [The Crisis in Modern Agriculture (The Problem)](#-the-crisis-in-modern-agriculture-the-problem)
 2. [The AgriNexus Innovation (The Solution)](#-the-agrinexus-innovation-the-solution)
 3. [The 5-Agent Swarm Architecture](#-the-5-agent-swarm-architecture)
@@ -43,6 +57,33 @@
 11. [3D Telemetry Control Room & Farmer UI](#-3d-telemetry-control-room--farmer-ui)
 12. [Full-Stack Automated Verification Matrix](#-full-stack-automated-verification-matrix)
 13. [Quick Start & Setup Guide](#-quick-start--setup-guide)
+
+---
+
+## 🎥 System Explanation & Working Demo (Video Walkthrough)
+
+Watch the end-to-end platform walkthrough, multi-agent swarm telemetry, deterministic C++ safety clamping, offline PWA capabilities, and live Indic voice generation in action:
+
+<div align="center">
+  <a href="https://youtu.be/ACrBIGvxyBA?si=jc36sZ3cFg3yFVUC" target="_blank">
+    <img src="https://img.youtube.com/vi/ACrBIGvxyBA/maxresdefault.jpg" width="750" alt="AgriNexus Explanation & Demo Walkthrough" style="border-radius: 8px; border: 1px solid #334155; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+  </a>
+
+  <p align="center">
+    <strong>▶ <a href="https://youtu.be/ACrBIGvxyBA?si=jc36sZ3cFg3yFVUC" target="_blank">Click here to watch the AgriNexus System Explanation & Working Demo on YouTube</a></strong>
+  </p>
+</div>
+
+* **Video Link:** [https://youtu.be/ACrBIGvxyBA?si=jc36sZ3cFg3yFVUC](https://youtu.be/ACrBIGvxyBA?si=jc36sZ3cFg3yFVUC)
+* **What is demonstrated:**
+  - Real-time foliar pathology classification with on-device ONNX Runtime & Gemini Vision fallback.
+  - Live hyper-local weather & AQI spray interlock evaluation.
+  - Zero-hallucination ICAR/CIB&RC chemical lookup and sub-millisecond C++ dosage clamping.
+  - Base Sepolia blockchain cryptographic crop passport generation.
+  - 11-regional-language human acoustic speech synthesis via Sarvam AI Bulbul:v3 with zero-truncation audio.
+  - Interactive 3D laser telemetry node bus.
+
+---
 
 ---
 
