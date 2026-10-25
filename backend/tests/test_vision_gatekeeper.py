@@ -1,4 +1,12 @@
-import pytest
+try:
+    import pytest
+except ImportError:
+    class DummyMark:
+        def asyncio(self, f):
+            return f
+    class DummyPytest:
+        mark = DummyMark()
+    pytest = DummyPytest()
 from app.agents.rag_agent import rag_node
 from app.agents.safety_agent import safety_node
 from app.agents.voice_agent import voice_node
@@ -102,6 +110,8 @@ async def test_vision_node_tier1_priority_on_confident_ml_model(monkeypatch):
 
     assert result["vision_confidence"] >= 0.97
     assert result["is_crop_supported"] is True
+    assert result["vision_engine"] == "ONNX EfficientNet-B4"
+    assert result["identified_by"] == "onnx_model"
     assert "Tomato" in result["vision_diagnosis"] or "Leaf" in result["detected_subject"]
 
 @pytest.mark.asyncio
@@ -143,6 +153,8 @@ async def test_vision_node_tier1_accepts_97_percent_confidence_detection(monkeyp
 
     assert result["vision_confidence"] >= 0.97
     assert result["is_crop_supported"] is True
+    assert result["vision_engine"] == "ONNX EfficientNet-B4"
+    assert result["identified_by"] == "onnx_model"
     assert "Potato" in result["vision_diagnosis"] and "Early blight" in result["vision_diagnosis"]
 
 @pytest.mark.asyncio
@@ -180,6 +192,8 @@ async def test_vision_node_tier1_rejects_below_97_percent_and_triggers_tier2(mon
     # Triggered Tier 2 because 86.5% < 97% floor; no API key returns fallback referral
     assert result["vision_confidence"] < 0.97
     assert result["is_crop_supported"] is False
+    assert result["vision_engine"] == "KVK Referral (Low Confidence)"
+    assert result["identified_by"] == "kvk_referral"
 
 @pytest.mark.asyncio
 async def test_vision_node_tier2_fallback_when_confidence_below_threshold(monkeypatch):

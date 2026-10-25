@@ -196,7 +196,9 @@ export const runEdgeVisionAgent = async (file) => {
                             vision_diagnosis: diseaseName,
                             vision_confidence: top1.prob,
                             is_crop_supported: CERTIFIED_CROPS.includes(detectedCrop),
-                            detected_subject: `${detectedCrop} Leaf`
+                            detected_subject: `${detectedCrop} Leaf`,
+                            vision_engine: "ONNX EfficientNet-B4",
+                            identified_by: "onnx_model"
                         });
 
                     } catch (err) {

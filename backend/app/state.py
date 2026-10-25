@@ -21,6 +21,8 @@ class AgriNexusState(TypedDict, total=False):
     vision_confidence: float
     is_crop_supported: Optional[bool]
     detected_subject: Optional[str]
+    vision_engine: Optional[str]
+    identified_by: Optional[str]
     
     # RAG Agent Outputs
     rag_treatment_plan: Optional[str]

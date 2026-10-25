@@ -99,7 +99,9 @@ async def vision_node(state: AgriNexusState) -> dict:
                     "vision_diagnosis": disease_name,
                     "vision_confidence": confidence,
                     "is_crop_supported": True,
-                    "detected_subject": f"{detected_crop} Leaf"
+                    "detected_subject": f"{detected_crop} Leaf",
+                    "vision_engine": "ONNX EfficientNet-B4",
+                    "identified_by": "onnx_model"
                 }
             else:
                 print(f"[TIER 1 UNCERTAIN / OOD] Confidence ({round(confidence * 100, 1)}%) < 97% or Margin ({round(confidence_margin * 100, 1)}%) < 60%. Engaging Tier 2 Gemini Gatekeeper...")
@@ -118,7 +120,9 @@ async def vision_node(state: AgriNexusState) -> dict:
                 "vision_diagnosis": "Unrecognized Pattern (Low Confidence)",
                 "vision_confidence": 0.35,
                 "is_crop_supported": False,
-                "detected_subject": "Unverified Leaf Anomaly"
+                "detected_subject": "Unverified Leaf Anomaly",
+                "vision_engine": "KVK Referral (Low Confidence)",
+                "identified_by": "kvk_referral"
             }
 
         print("[TIER 2 - GEMINI FALLBACK] Consulting Gemini Vision Gatekeeper to analyze unidentified subject...")
@@ -229,6 +233,7 @@ async def vision_node(state: AgriNexusState) -> dict:
                 "vision_confidence": 0.0,
                 "is_crop_supported": False,
                 "detected_subject": "Non-Agricultural Subject",
+                "vision_engine": "Gemini 1.5 Flash (Cloud Fallback)",
                 "identified_by": "gemini_fallback"
             }
 
@@ -245,6 +250,7 @@ async def vision_node(state: AgriNexusState) -> dict:
             "vision_confidence": confidence,
             "is_crop_supported": is_supported,
             "detected_subject": detected_subject,
+            "vision_engine": "Gemini 1.5 Flash (Cloud Fallback)",
             "identified_by": "gemini_fallback"
         }
         
@@ -255,5 +261,7 @@ async def vision_node(state: AgriNexusState) -> dict:
             "vision_diagnosis": "Unrecognized Pattern (Low Confidence)",
             "vision_confidence": 0.35,
             "is_crop_supported": False,
-            "detected_subject": "Unverified Leaf Anomaly"
+            "detected_subject": "Unverified Leaf Anomaly",
+            "vision_engine": "KVK Referral (Low Confidence)",
+            "identified_by": "kvk_referral"
         }

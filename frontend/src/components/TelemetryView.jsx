@@ -382,7 +382,7 @@ export default function TelemetryView() {
                                     <span className="text-emerald-400 font-medium">✓ DONE</span>
                                 </div>
                                 <div className="text-gray-300 bg-black/70 p-1.5 sm:p-2 rounded border border-gray-800/50 break-words whitespace-pre-wrap font-mono text-[10px] sm:text-[11px]">
-                                    {ev.node === 'vision' && `Diagnosis: ${ev.state.vision_diagnosis}\nConfidence: ${(ev.state.vision_confidence * 100).toFixed(1)}%\nEngine: ONNX EfficientNet-B4`}
+                                    {ev.node === 'vision' && `Diagnosis: ${ev.state.vision_diagnosis}\nConfidence: ${(ev.state.vision_confidence * 100).toFixed(1)}%\nEngine: ${ev.state.vision_engine || (ev.state.identified_by === 'gemini_fallback' ? 'Gemini 1.5 Flash (Cloud Fallback)' : 'ONNX EfficientNet-B4')}`}
                                     {ev.node === 'rag' && `Action: ICAR Vector Retrieved\nPrescription: ${ev.state.proposed_chemical}`}
                                     {ev.node === 'safety' && `C++ Engine: ${ev.state.is_safe ? 'VERIFIED SAFE' : 'REJECTED'}\nSafe Dosage: ${ev.state.safe_dosage_ml_per_acre} ml/acre`}
                                     {ev.node === 'web3' && (
