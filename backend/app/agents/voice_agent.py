@@ -209,10 +209,9 @@ async def voice_node(state: AgriNexusState) -> dict:
     is_gemini_fallback = state.get("identified_by") == "gemini_fallback"
 
     if not is_crop_supported:
-        if is_gemini_fallback and detected_subj and "Non-Agricultural" not in detected_subj:
+        if detected_subj and "Non-Agricultural" not in detected_subj:
             english_text = (
-                f"Dear Farmer, our on-device ICAR computer vision model was uncertain or this crop is uncertified. "
-                f"Via Gemini Cloud AI fallback, the crop was identified as {detected_subj}, showing signs of {vision_diagnosis}. "
+                f"Dear Farmer, your crop has been identified as {detected_subj}, showing foliar signs of {vision_diagnosis}. "
                 f"Current field weather: {temperature}°C, {humidity}% humidity, wind {wind_speed} km/h, and Air Quality Index is AQI {aqi} ({aqi_label}). "
                 f"Please note: AgriNexus is officially certified only for 14 commercial agricultural food crops "
                 f"(Tomato, Potato, Corn, Apple, Grape, Strawberry, Pepper, Orange, Soybean, Peach, Cherry, Squash, Raspberry, Blueberry). "
@@ -309,73 +308,73 @@ async def voice_node(state: AgriNexusState) -> dict:
 
     def get_localized_fallback() -> str:
         if not is_crop_supported:
-            if is_gemini_fallback and detected_subj and "Non-Agricultural" not in detected_subj:
+            if detected_subj and "Non-Agricultural" not in detected_subj:
                 if language_code == "hi":
                     return (
-                        f"किसान भाई, हमारे ऑन-डिवाइस मॉडल द्वारा पहचान न होने पर Gemini AI द्वारा इस पौधे की पहचान '{detected_subj}' ({vision_diagnosis}) के रूप में की गई है। "
+                        f"किसान भाई, इस पौधे की पहचान '{detected_subj}' ({vision_diagnosis}) के रूप में की गई है। "
                         f"खेत का मौसम: तापमान {temperature}°C, नमी {humidity}%, हवा {wind_speed} km/h तथा वायु गुणवत्ता सूचकांक AQI {aqi} ({aqi_label}) है। "
                         f"कृपया ध्यान दें: AgriNexus केवल 14 प्रमाणित फसलों के लिए सत्यापित है। सुरक्षा कारणों से इसके लिए रासायनिक कीटनाशक लॉक हैं। "
                         f"प्रभावित पत्तियों को छांटें और खेत साफ रखें। प्रमाणित विनिर्देशों और उपचार के लिए अपने नजदीकी कृषि विज्ञान केंद्र '{kvk_name_str}' ({kvk_dist_str}) से संपर्क करें।"
                     )
                 elif language_code == "pa":
                     return (
-                        f"ਕਿਸਾਨ ਵੀਰੋ, ਸਾਡੇ ਆਨ-ਡਿਵਾਈਸ ਮਾਡਲ ਦੁਆਰਾ ਪਛਾਣ ਨਾ ਹੋਣ 'ਤੇ Gemini AI ਦੁਆਰਾ ਇਸ ਪੌਦੇ ਦੀ ਪਛਾਣ '{detected_subj}' ({vision_diagnosis}) ਵਜੋਂ ਕੀਤੀ ਗਈ ਹੈ। "
+                        f"ਕਿਸਾਨ ਵੀਰੋ, ਇਸ ਪੌਦੇ ਦੀ ਪਛਾਣ '{detected_subj}' ({vision_diagnosis}) ਵਜੋਂ ਕੀਤੀ ਗਈ ਹੈ। "
                         f"ਖੇਤ ਦਾ ਮੌਸਮ: ਤਾਪਮਾਨ {temperature}°C, ਨਮੀ {humidity}%, ਹਵਾ {wind_speed} km/h ਅਤੇ ਹਵਾ ਗੁਣਵੱਤਾ ਸੂਚਕਾਂਕ AQI {aqi} ({aqi_label}) ਹੈ। "
                         f"ਕਿਰਪਾ ਕਰਕੇ ਧਿਆਨ ਦਿਓ: AgriNexus ਸਿਰਫ 14 ਪ੍ਰਮਾਣਿਤ ਫਸਲਾਂ ਲਈ ਪ੍ਰਮਾਣਿਤ ਹੈ। ਸੁਰੱਖਿਆ ਕਾਰਨਾਂ ਕਰਕੇ ਰਸਾਇਣਕ ਕੀਟਨਾਸ਼ਕ ਲਾਕ ਹਨ। "
                         f"ਪ੍ਰਭਾਵਿਤ ਪੱਤਿਆਂ ਦੀ ਛੰਗਾਈ ਕਰੋ। ਪ੍ਰਮਾਣਿਤ ਇਲਾਜ ਲਈ ਆਪਣੇ ਨਜ਼ਦੀਕੀ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ '{kvk_name_str}' ({kvk_dist_str}) ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
                     )
                 elif language_code == "te":
                     return (
-                        f"రైతు సోదరులారా, ఆన్-డివైస్ మోడల్ గుర్తించలేకపోవడంతో Gemini AI ద్వారా ఈ మొక్క '{detected_subj}' ({vision_diagnosis}) గా గుర్తించబడింది. "
+                        f"రైతు సోదరులారా, ఈ మొక్క '{detected_subj}' ({vision_diagnosis}) గా గుర్తించబడింది. "
                         f"వాతావరణం: ఉష్ణోగ్రత {temperature}°C, తేమ {humidity}%, గాలి {wind_speed} km/h, AQI {aqi} ({aqi_label}). "
                         f"AgriNexus 14 ధృవీకరించబడిన పంటలకే మద్దతు ఇస్తుంది. భద్రత దృష్ట్యా రసాయనాలు లాక్ చేయబడ్డాయి. "
                         f"సమీపంలోని కృషి విజ్ఞాన కేంద్రం '{kvk_name_str}' ({kvk_dist_str}) ను సంప్రదించండి."
                     )
                 elif language_code == "ta":
                     return (
-                        f"விவசாய சகோதரர்களே, Gemini AI மூலம் இந்த பயிர் '{detected_subj}' ({vision_diagnosis}) என அடையாளம் காணப்பட்டுள்ளது. "
+                        f"விவசாய சகோதரர்களே, இந்த பயிர் '{detected_subj}' ({vision_diagnosis}) என அடையாளம் காணப்பட்டுள்ளது. "
                         f"வானிலை: வெப்பநிலை {temperature}°C, ஈரப்பதம் {humidity}%, காற்று {wind_speed} km/h, AQI {aqi} ({aqi_label}). "
                         f"பாதுகாப்பு கருதி ரசாயனங்கள் பூட்டப்பட்டுள்ளன. அருகிலுள்ள வேளாண் அறிவியல் மையம் '{kvk_name_str}' ({kvk_dist_str}) அணுகவும்."
                     )
                 elif language_code == "mr":
                     return (
-                        f"शेतकरी मित्रांनो, Gemini AI द्वारे या पिकाची ओळख '{detected_subj}' ({vision_diagnosis}) अशी झाली आहे. "
+                        f"शेतकरी मित्रांनो, या पिकाची ओळख '{detected_subj}' ({vision_diagnosis}) अशी झाली आहे. "
                         f"हवामान: तापमान {temperature}°C, आर्द्रता {humidity}%, वारा {wind_speed} km/h, AQI {aqi} ({aqi_label}). "
                         f"सुरक्षेसाठी रासायनिक फवारणी लॉक केली आहे. जवळच्या कृषी विज्ञान केंद्र '{kvk_name_str}' ({kvk_dist_str}) शी संपर्क साधा."
                     )
                 elif language_code == "bn":
                     return (
-                        f"কৃষক ভাইয়েরা, Gemini AI দ্বারা এই গাছটি '{detected_subj}' ({vision_diagnosis}) হিসাবে চিহ্নিত হয়েছে। "
+                        f"কৃষক ভাইয়েরা, এই গাছটি '{detected_subj}' ({vision_diagnosis}) হিসাবে চিহ্নিত হয়েছে। "
                         f"আবহাওয়া: তাপমাত্রা {temperature}°C, আর্দ্রতা {humidity}%, বাতাস {wind_speed} km/h, AQI {aqi} ({aqi_label})। "
                         f"নিরাপত্তার কারণে রাসায়নিক স্প্রে লক করা হয়েছে। নিকটস্থ কৃষি বিজ্ঞান কেন্দ্র '{kvk_name_str}' ({kvk_dist_str}) এ যোগাযোগ করুন।"
                     )
                 elif language_code == "gu":
                     return (
-                        f"ખેડૂત મિત્રો, Gemini AI દ્વારા આ છોડની ઓળખ '{detected_subj}' ({vision_diagnosis}) તરીકે થઈ છે. "
+                        f"ખેડૂત મિત્રો, આ છોડની ઓળખ '{detected_subj}' ({vision_diagnosis}) તરીકે થઈ છે. "
                         f"હવામાન: તાપમાન {temperature}°C, ભેજ {humidity}%, પવન {wind_speed} km/h, AQI {aqi} ({aqi_label}). "
                         f"સુરક્ષા માટે દવાઓ લૉક કરેલ છે. નજીકના કૃષિ વિજ્ઞાન કેન્દ્ર '{kvk_name_str}' ({kvk_dist_str}) નો સંપર્ક કરો."
                     )
                 elif language_code == "kn":
                     return (
-                        f"ರೈತ ಮಿತ್ರರೇ, Gemini AI ಮೂಲಕ ಈ ಬೆಳೆ '{detected_subj}' ({vision_diagnosis}) ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ. "
+                        f"ರೈತ ಮಿತ್ರರೇ, ಈ ಬೆಳೆ '{detected_subj}' ({vision_diagnosis}) ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ. "
                         f"ಹವಾಮಾನ: ತಾಪಮಾನ {temperature}°C, ತೇವಾಂಶ {humidity}%, ಗಾಳಿ {wind_speed} km/h, AQI {aqi} ({aqi_label}). "
                         f"ಸುರಕ್ಷತೆಗಾಗಿ ರಾಸಾಯನಿಕಗಳನ್ನು ಲಾಕ್ ಮಾಡಲಾಗಿದೆ. ಹತ್ತಿರದ ಕೃಷಿ ವಿಜ್ಞಾನ ಕೇಂದ್ರ '{kvk_name_str}' ({kvk_dist_str}) ಸಂಪರ್ಕಿಸಿ."
                     )
                 elif language_code == "ml":
                     return (
-                        f"കർഷക സുഹൃത്തുക്കളെ, Gemini AI വഴി ഈ ചെടി '{detected_subj}' ({vision_diagnosis}) ആയി തിരിച്ചറിഞ്ഞു. "
+                        f"കർഷക സുഹൃത്തുക്കളെ, ഈ ചെടി '{detected_subj}' ({vision_diagnosis}) ആയി തിരിച്ചറിഞ്ഞു. "
                         f"കാലാവസ്ഥ: താപനില {temperature}°C, ഈർപ്പം {humidity}%, കാറ്റ് {wind_speed} km/h, AQI {aqi} ({aqi_label}). "
                         f"സുരക്ഷ മുൻനിർത്തി രാസവസ്തുക്കൾ പൂട്ടിയിരിക്കുന്നു. അടുത്തുള്ള കൃഷി വിജ്ഞാൻ കേന്ദ്രം '{kvk_name_str}' ({kvk_dist_str}) ബന്ധപ്പെടുക."
                     )
                 elif language_code == "od":
                     return (
-                        f"କୃଷକ ଭାଇମାନେ, Gemini AI ଦ୍ୱାରା ଏହି ଗଛଟି '{detected_subj}' ({vision_diagnosis}) ଭାବେ ଚିହ୍ନଟ ହୋଇଛି। "
+                        f"କୃଷକ ଭାଇମାନେ, ଏହି ଗଛଟି '{detected_subj}' ({vision_diagnosis}) ଭାବେ ଚିହ୍ନଟ ହୋଇଛି। "
                         f"ପାଣିପାଗ: ତାପମାତ୍ରା {temperature}°C, ଆର୍ଦ୍ରତା {humidity}%, ପବନ {wind_speed} km/h, AQI {aqi} ({aqi_label})। "
                         f"ସୁରକ୍ଷା ପାଇଁ କୌଣସି ରାସାୟନିକ ସ୍ପ୍ରେ ଲକ୍ ଅଛି। ନିକଟସ୍ଥ କୃଷି ବିଜ୍ଞାନ କେନ୍ଦ୍ର '{kvk_name_str}' ({kvk_dist_str}) ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।"
                     )
                 else:
                     return (
-                        f"Dear Farmer, identified via Gemini AI fallback as {detected_subj} ({vision_diagnosis}). "
+                        f"Dear Farmer, your crop has been identified as {detected_subj} ({vision_diagnosis}). "
                         f"Current weather: {temperature}°C, humidity {humidity}%, wind {wind_speed} km/h, and Air Quality Index AQI {aqi} ({aqi_label}). "
                         f"AgriNexus is certified for 14 main crops; chemical recommendations are locked for safety. "
                         f"Please maintain cultural sanitation and visit nearest KVK '{kvk_name_str}' ({kvk_dist_str}) for certified specifications."
@@ -514,7 +513,7 @@ Translate and adapt the following agricultural advisory into natural, fluent, an
 IMPORTANT INSTRUCTIONS:
 1. Respectful Greeting (e.g. '{lang_meta["greeting"]}').
 2. Maintain all exact metrics and readings: temperature ({temperature}°C), humidity ({humidity}%), wind speed ({wind_speed} km/h), rain probability ({rain_risk}%), and Air Quality Index (AQI {aqi} - {aqi_label}).
-3. Maintain all agronomic and safety advice: mention the detected crop, diagnosis, practical care steps, note clearly that this identification is from Gemini AI fallback rather than on-device models, and the referral to {kvk_name_str}.
+3. Maintain all agronomic and safety advice: mention the detected crop, diagnosis, practical care steps, weather suitability, exact dosage, and the referral to {kvk_name_str}. Focus strictly on clear, practical agricultural advice for the farmer; do NOT mention AI models, ONNX, Gemini, or fallback systems.
 4. Respond strictly with plain text in {target_script} script with zero markdown headers, bullet points, JSON, or code quotes.
 
 Advisory text: '{english_text}'"""
