@@ -2008,4 +2008,53 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > </details>
 </details>
 
+---
+
+### ADR-087: Multi-Chunk Speech Synthesis Concatenation and Separation of Technical Provenance from Farmer-Facing Vernacular Advisories
+
+* **Context & The Problem:**
+  1. *Premature Voice Truncation:* AgriNexus generates detailed agronomic advisories spanning 700–900 characters in regional Indic languages (including exact meteorological readings, verified ICAR chemical dosages, dilution volumes, application windows, and local KVK referrals). Because Sarvam AI's Bulbul:v3 API enforces a strict 500-character maximum per input payload, previous implementations truncated text at index 490 (e.g. cutting off mid-sentence after `"150.0 मिलीलीटर "`), silently dropping over 300 characters of crucial chemical dosage, water mixing, and extension center referral instructions.
+  2. *Hallucinatory Fallback Language in Farmer Output:* Instruction #3 in the Voice Agent's Gemini translation prompt unconditionally mandated: `"note clearly that this identification is from Gemini AI fallback rather than on-device models"`. Even when the user's trained ONNX EfficientNet-B4 neural network achieved 100.0% confidence, the generated Hindi audio and text proclaimed: *"जेमिनी एआई फॉलबैक तकनीक (जो कि ऑन-डिवाइस मॉडल के बजाय उपयोग की गई है) के माध्यम से आपकी फसल की जांच की गई है..."*, confusing farmers and obscuring the local edge model's successful diagnostic run.
+  3. *Static Engine Attribution in Telemetry:* The Telemetry Ledger UI previously displayed hardcoded string `Engine: ONNX EfficientNet-B4`, even when Tier 2 Gemini multi-modal fallback had been engaged.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Binary Multi-Chunk Audio Concatenation (`backend/app/services/tts_client.py` & `frontend/src/services/edgeVoiceAgent.js`):*
+     - Implemented `split_text_into_chunks(text, max_chars=450)` across both Python and JavaScript. Slices advisory text at natural Indic punctuation boundaries (`।`, `.`, `?`, `!`, `,`, whitespace) so every chunk stays under 450 characters.
+     - Implemented standard library RIFF WAV frame concatenation in Python (`wave` / `io`): decodes all base64 WAV chunks returned by Sarvam AI, preserves format parameters, and merges raw PCM frames into a single continuous `.wav` file (`concatenate_wav_bytes`).
+     - Implemented binary TypedArray WAV concatenation in client-side JavaScript (`mergeWavBase64List` in `edgeVoiceAgent.js`), updating RIFF ChunkSize (byte 4) and Subchunk2Size (after `data`) to combine audio buffers into a single seamless base64 data URL.
+     - Ensured secondary fallback to Microsoft Edge Neural TTS (`edge_tts`) handles the entire un-truncated text if cloud quota or connectivity limits are reached.
+  2. *Separation of Provenance Telemetry vs. Farmer-Facing Agronomic Advisories (`backend/app/agents/voice_agent.py`):*
+     - Purged Instruction #3 from the Gemini translation prompt of all references to AI models and fallback mechanisms, ordering the model: *"Focus strictly on clear, practical agricultural advice for the farmer; do NOT mention AI models, ONNX, Gemini, or fallback systems."*
+     - Sanitized English and all 11 Indic localized fallback templates (`hi`, `pa`, `te`, `ta`, `mr`, `bn`, `gu`, `kn`, `ml`, `od`, `en`), replacing AI model jargon with direct, respectful agronomic statements (e.g. *"किसान भाई, इस पौधे की पहचान '{detected_subj}' ({vision_diagnosis}) के रूप में की गई है।"*).
+  3. *Dynamic Engine Attribution in Swarm State & Telemetry (`vision_agent.py`, `state.py`, `TelemetryView.jsx`, `edgeVisionAgent.js`):*
+     - Explicitly added `vision_engine` to `AgriNexusState`.
+     - In Tier 1: Emits `"vision_engine": "ONNX EfficientNet-B4"`, `"identified_by": "onnx_model"`.
+     - In Tier 2: Emits `"vision_engine": "Gemini 1.5 Flash (Cloud Fallback)"`, `"identified_by": "gemini_fallback"`.
+     - In `TelemetryView.jsx`: Dynamically renders `Engine: ONNX EfficientNet-B4` or `Engine: Gemini 1.5 Flash (Cloud Fallback)` based on live event telemetry state.
+  4. *Automated Unit Testing (`backend/tests/test_tts_client.py`, `test_vision_gatekeeper.py`):*
+     - Added comprehensive tests verifying that texts of arbitrary lengths split cleanly without character loss and that multi-chunk WAV audio buffers merge seamlessly with frame count preservation.
+
+* **Architectural Rationale:**
+  - *Zero-Truncation Mandate:* In precision agriculture, chemical dilution volumes (e.g. 200L clean water) and active ingredient dosages are safety-critical. Dropping text mid-sentence after chemical volume risks improper chemical application or severe crop scorching.
+  - *Cognitive Separation of Audience:* Farmers require immediate, authoritative, actionable guidance without confusing technical AI jargon about neural models vs. cloud fallbacks. Conversely, farm managers and audit agronomists inspecting the Telemetry Ledger require strict, unambiguous provenance tracing showing whether inference ran locally on the edge via ONNX or via cloud multi-modal vision.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-087</strong></summary>
+
+> **Question:** When merging two standard 16-bit PCM WAV audio clips into a single continuous audio stream, why can't you simply concatenate their raw byte arrays (`clip1_bytes + clip2_bytes`)?
+>
+> 1. Because WAV files are encrypted with AES-256 keys.
+> 2. Because every WAV file begins with a 44-byte RIFF header defining the file length and `data` subchunk size; concatenating raw byte arrays places the second file's header directly inside the audio stream, causing audio players to interpret the second header as loud static/pop noise or stop playback at the first file's declared byte length.
+> 3. Because browsers only play MP3 audio, not WAV audio.
+> 4. Because PCM audio samples invert their sign when concatenated.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* A WAV file consists of a RIFF container and a `data` subchunk header. To cleanly concatenate two WAV files with identical sampling rates and bit depths, one must extract the raw PCM audio frames from each, write a single updated RIFF header with the combined `totalDataSize` and overall chunk size, and stream the concatenated PCM frames.
+> </details>
+</details>
+
+
 
