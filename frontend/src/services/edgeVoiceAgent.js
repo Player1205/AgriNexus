@@ -165,8 +165,123 @@ export const resetSarvamQuotaStatus = () => {
 
 export const isSarvamQuotaExhaustedStatus = () => isSarvamQuotaExhausted;
 
+export const splitTextIntoChunks = (text, maxChars = 450) => {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return [];
+    if (trimmed.length <= maxChars) return [trimmed];
+
+    const chunks = [];
+    const delimiters = ['।', '.', '?', '!', '\n', ';', ','];
+    let current = trimmed;
+
+    while (current.length > maxChars) {
+        let bestSplit = -1;
+        for (const delim of delimiters) {
+            const pos = current.slice(0, maxChars).lastIndexOf(delim);
+            if (pos > bestSplit) {
+                bestSplit = pos;
+            }
+        }
+        if (bestSplit <= 50) {
+            bestSplit = current.slice(0, maxChars).lastIndexOf(' ');
+        }
+        if (bestSplit <= 0) {
+            bestSplit = maxChars;
+        } else {
+            bestSplit += 1;
+        }
+
+        const chunk = current.slice(0, bestSplit).trim();
+        if (chunk) chunks.push(chunk);
+        current = current.slice(bestSplit).trim();
+    }
+    if (current) chunks.push(current);
+    return chunks;
+};
+
+export const mergeWavBase64List = (b64List) => {
+    if (!b64List || b64List.length === 0) return null;
+    if (b64List.length === 1) return `data:audio/wav;base64,${b64List[0]}`;
+
+    try {
+        const byteArrays = b64List.map(b64 => {
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        });
+
+        const pcmChunks = [];
+        let totalPcmBytes = 0;
+
+        for (const bytes of byteArrays) {
+            let dataPos = -1;
+            for (let i = 12; i < bytes.length - 8; i++) {
+                if (bytes[i] === 0x64 && bytes[i+1] === 0x61 && bytes[i+2] === 0x74 && bytes[i+3] === 0x61) {
+                    dataPos = i;
+                    break;
+                }
+            }
+            if (dataPos !== -1) {
+                const dataLen = bytes[dataPos + 4] | (bytes[dataPos + 5] << 8) | (bytes[dataPos + 6] << 16) | (bytes[dataPos + 7] << 24);
+                const pcm = bytes.subarray(dataPos + 8, dataPos + 8 + dataLen);
+                pcmChunks.push(pcm);
+                totalPcmBytes += pcm.length;
+            } else {
+                const pcm = bytes.subarray(44);
+                pcmChunks.push(pcm);
+                totalPcmBytes += pcm.length;
+            }
+        }
+
+        const first = byteArrays[0];
+        let firstDataPos = 36;
+        for (let i = 12; i < first.length - 8; i++) {
+            if (first[i] === 0x64 && first[i+1] === 0x61 && first[i+2] === 0x74 && first[i+3] === 0x61) {
+                firstDataPos = i;
+                break;
+            }
+        }
+
+        const headerLen = firstDataPos + 8;
+        const out = new Uint8Array(headerLen + totalPcmBytes);
+        out.set(first.subarray(0, headerLen), 0);
+
+        const totalRiffSize = out.length - 8;
+        out[4] = totalRiffSize & 0xff;
+        out[5] = (totalRiffSize >> 8) & 0xff;
+        out[6] = (totalRiffSize >> 16) & 0xff;
+        out[7] = (totalRiffSize >> 24) & 0xff;
+
+        out[firstDataPos + 4] = totalPcmBytes & 0xff;
+        out[firstDataPos + 5] = (totalPcmBytes >> 8) & 0xff;
+        out[firstDataPos + 6] = (totalPcmBytes >> 16) & 0xff;
+        out[firstDataPos + 7] = (totalPcmBytes >> 24) & 0xff;
+
+        let offset = headerLen;
+        for (const pcm of pcmChunks) {
+            out.set(pcm, offset);
+            offset += pcm.length;
+        }
+
+        let binaryStr = '';
+        const step = 8192;
+        for (let i = 0; i < out.length; i += step) {
+            const chunk = out.subarray(i, i + step);
+            binaryStr += String.fromCharCode.apply(null, chunk);
+        }
+        return `data:audio/wav;base64,${btoa(binaryStr)}`;
+    } catch (e) {
+        console.warn('[WAV MERGE WARNING]', e);
+        return `data:audio/wav;base64,${b64List[0]}`;
+    }
+};
+
 /**
  * Synthesizes natural Indic acoustic speech using Sarvam AI Bulbul:v3.
+ * Supports multi-chunk synthesis to ensure 100% of written text is synthesized.
  * Returns self-contained base64 data URL ('data:audio/wav;base64,...') on success.
  * Automatically falls back to mobile internal speech if daily quota limit is reached.
  */
@@ -183,28 +298,18 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
 
     const targetLang = SARVAM_LANG_MAP[languageCode] || 'hi-IN';
 
-    // Sarvam API has a strict 500-char limit per input chunk; truncate cleanly at sentence/word boundary
-    let sarvamText = text.trim();
-    if (sarvamText.length > 490) {
-        const truncated = sarvamText.slice(0, 490);
-        const lastStop = Math.max(
-            truncated.lastIndexOf('।'),
-            truncated.lastIndexOf('.'),
-            truncated.lastIndexOf('?'),
-            truncated.lastIndexOf('!'),
-            truncated.lastIndexOf(','),
-            truncated.lastIndexOf(' ')
-        );
-        sarvamText = lastStop > 100 ? truncated.slice(0, lastStop) : truncated;
-    }
+    // Split into clean sentence/phrase chunks under 450 chars (Sarvam limit 500)
+    const chunks = splitTextIntoChunks(text, 450);
+    if (chunks.length === 0) return null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            console.log(`[SARVAM AI] Synthesizing speech via Bulbul:v3 for '${languageCode}' (Attempt ${attempt}/${maxRetries})...`);
+            console.log(`[SARVAM AI] Synthesizing speech via Bulbul:v3 for '${languageCode}' (${chunks.length} chunks, Attempt ${attempt}/${maxRetries})...`);
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 16000);
 
+            // Attempt batch synthesis
             const response = await fetch('https://api.sarvam.ai/text-to-speech', {
                 method: 'POST',
                 headers: {
@@ -212,7 +317,7 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    inputs: [sarvamText],
+                    inputs: chunks,
                     target_language_code: targetLang,
                     speaker: 'shubh',
                     pace: 1.0,
@@ -226,7 +331,6 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
 
             if (!response.ok) {
                 console.warn(`[SARVAM AI] API returned status ${response.status}: ${response.statusText}`);
-                // Quota exhausted (429/402/403): set exhaustion flag and immediately return null
                 if (response.status === 429 || response.status === 402 || response.status === 403) {
                     isSarvamQuotaExhausted = true;
                     console.warn('[SARVAM AI] Daily quota limit reached (429/402/403). Marked exhausted for session; falling back to mobile internal speech.');
@@ -247,10 +351,13 @@ export const synthesizeSarvamSpeech = async (text, languageCode = 'hi', maxRetri
 
             const data = await response.json();
             const audios = data?.audios;
-            if (audios && audios.length > 0 && audios[0]) {
-                const audioDataUrl = `data:audio/wav;base64,${audios[0]}`;
-                console.log(`[SARVAM AI] Successfully generated authentic voice note (${audios[0].length} chars).`);
-                return audioDataUrl;
+            if (audios && audios.length > 0) {
+                const validAudios = audios.filter(Boolean);
+                const audioDataUrl = mergeWavBase64List(validAudios);
+                if (audioDataUrl) {
+                    console.log(`[SARVAM AI] Successfully generated complete voice note (${validAudios.length} chunks synthesized).`);
+                    return audioDataUrl;
+                }
             }
         } catch (err) {
             console.warn(`[SARVAM AI] Online speech attempt ${attempt} failed:`, err.message);
