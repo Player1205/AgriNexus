@@ -130,26 +130,26 @@ AgriNexus orchestrates an autonomous multi-agent swarm using LangGraph state gra
 
 ```mermaid
 flowchart TD
-    subgraph IN ["🌾 Multi-Modal Field Ingestion & Meteorological Layer"]
+    subgraph IN ["🌾 Multi-Modal Field Ingestion and Meteorological Layer"]
         A["📸 Leaf Image Capture\n(Mobile Camera / Laptop Webcam / File)"] --> B["📍 3-Tier Geolocation Engine\n(Photo EXIF GPS -> Browser GPS -> Interactive Map Pin)"]
-        B --> C["⛅ Hyper-Local Weather & AQI Feed\n(OpenWeatherMap: Temp, Humidity, Rain, Wind + Air Pollution AQI/PM2.5)"]
+        B --> C["⛅ Hyper-Local Weather and AQI Feed\n(OpenWeatherMap: Temp, Humidity, Rain, Wind + Air Pollution AQI/PM2.5)"]
         A --> D["🌐 Vernacular Dialect Selection\n(1 of 11 Indic Regional Languages)"]
     end
 
     subgraph SWARM ["🤖 Autonomous 5-Agent Multi-Agent Swarm (MAS) — LangGraph Runtime"]
         direction TB
-        E["🧠 AGENT 1: Vision Pathology & Dual Gate\n(Offline ONNX EfficientNet-B4 · Dual-Gate · Gemini Vision Cascade)"]
+        E["🧠 AGENT 1: Vision Pathology and Dual Gate\n(Offline ONNX EfficientNet-B4 · Dual-Gate · Gemini Vision Cascade)"]
         
         %% Conditional Early Exit Routing
-        E -- "Certified Crop (14 Food Crops & Conf >= 97%)" --> F["📚 AGENT 2: Grounded ICAR RAG Core\n(38 Official ICAR Protocols · Zero Fallback Guessing)"]
+        E -- "Certified Crop (14 Food Crops and Conf >= 97%)" --> F["📚 AGENT 2: Grounded ICAR RAG Core\n(38 Official ICAR Protocols · Zero Fallback Guessing)"]
         E -. "Uncertified Crop / OOD Bypass\n(Direct Jump · Zero Chemical Prescription)" .-> I
         
-        F --> G["🛡️ AGENT 3: Deterministic C++ Safety Firewall\n(CIB&RC Gazette Banned List · Mathematical Clamping · MIC Floor)"]
+        F --> G["🛡️ AGENT 3: Deterministic C++ Safety Firewall\n(CIB and RC Gazette Banned List · Mathematical Clamping · MIC Floor)"]
         G --> H["⛓️ AGENT 4: Web3 Crop Passport Relayer\n(Base Sepolia L2 Gasless Smart Contract · SHA-256 Hashes)"]
-        H --> I["🎙️ AGENT 5: Vernacular Voice & KVK Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine · Localized Advisory)"]
+        H --> I["🎙️ AGENT 5: Vernacular Voice and KVK Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine · Localized Advisory)"]
     end
 
-    subgraph OUT ["⚡ Dual Coordinated Outputs & Persistence"]
+    subgraph OUT ["⚡ Dual Coordinated Outputs and Persistence"]
         I --> J["🔊 Farmer Interface\n(Weather HUD + Spoken Audio + Verified Safe / Amber Card)"]
         H --> K["📊 3D Control Room Telemetry\n(Real-Time WebSocket Bus + Laser Line Propagation + BaseScan)"]
         I --> L["🍃 Enterprise Cloud Database\n(MongoDB Atlas User Scans + Cloudinary CDN + Downloadable PDF)"]
@@ -225,10 +225,12 @@ Before any chemical prescription reaches the farmer, it must pass the determinis
 2. **Formulation Separation:**
    Distinguishes liquid formulations (`LIQUID_SC`, `LIQUID_EC` in `ml`) from solid powders (`SOLID_WP`, `SOLID_WDG` in `g`), applying distinct statutory ceilings.
 3. **Mathematical Humidity Attenuation & MIC Floor Protection:**
-   High relative humidity ($>80\%$) accelerates chemical uptake and elevates foliar scorch risk. The C++ engine attenuates dosage by 10%, but guarantees it never falls below the **Minimum Inhibitory Concentration (MIC) floor**:
-   $$D_{\text{bounded}} = \min \left( D_{\text{RAG}}, D_{\text{max\_statutory}} \right)$$
-   $$D_{\text{attenuated}} = \begin{cases} D_{\text{bounded}} \times 0.90 & \text{if } \text{Humidity} > 80.0\% \\ D_{\text{bounded}} & \text{otherwise} \end{cases}$$
-   $$\mathbf{D}_{\text{final}} = \max \left( D_{\text{min\_MIC}}, D_{\text{attenuated}} \right)$$
+   High relative humidity (> 80%) accelerates chemical uptake and elevates foliar scorch risk. The C++ engine attenuates dosage by 10%, but guarantees it never falls below the **Minimum Inhibitory Concentration (MIC) floor**:
+   $$D_{\mathrm{bounded}} = \min(D_{\mathrm{RAG}}, D_{\mathrm{ceiling}}) \quad (D_{\mathrm{ceiling}} = 350.0\text{ ml or g})$$
+   $$D_{\mathrm{attenuated}} = \begin{cases} D_{\mathrm{bounded}} \times 0.90 & \text{if } H \gt 80 \\ D_{\mathrm{bounded}} & \text{otherwise} \end{cases}$$
+   $$\mathbf{D}_{\mathrm{final}} = \max(D_{\mathrm{MIC}}, D_{\mathrm{attenuated}})$$
+
+   *where $H$ is ambient relative humidity (%).*
 
 ---
 
@@ -250,11 +252,11 @@ AgriNexus utilizes an optimized **EfficientNet-B4** deep convolutional architect
 1. **Tier 1 — Trained Neural Model (Always Primary):**
    - The local ONNX EfficientNet-B4 model ([`agrinexus_vision.onnx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/ml_model/agrinexus_vision.onnx)) is **always the primary diagnostic engine**.
    - Enforces the **Dual-Gate mathematical criterion**:
-     $$\text{Confidence}(p_{(1)}) \ge 0.97 \quad \text{AND} \quad \Delta_{\text{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
-   - If satisfied, returns in $\approx 40\text{ms}$ with **zero cloud dependencies**, emitting `vision_engine: "ONNX EfficientNet-B4"`.
+     $$\text{Confidence}(p_{(1)}) \ge 0.97 \quad \text{AND} \quad \Delta_{\mathrm{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
+   - If satisfied, returns in approximately 40ms with **zero cloud dependencies**, emitting `vision_engine: "ONNX EfficientNet-B4"`.
 2. **Tier 2 — Secondary Cloud Fallback (Edge Cases & OOD):**
-   - Invoked only if the trained model encounters an uncertain subject ($p_{(1)} < 0.97$ or $\Delta < 0.60$).
-   - Cascades across `gemini-flash-lite-latest` $\to$ `gemini-flash-latest` $\to$ `gemini-3.6-flash` with zero-retry failover (`max_retries=0`, `timeout=15.0`).
+   - Invoked only if the trained model encounters an uncertain subject ($p_{(1)} \lt 0.97$ or $\Delta \lt 0.60$).
+   - Cascades across `gemini-flash-lite-latest` → `gemini-flash-latest` → `gemini-3.6-flash` with zero-retry failover (`max_retries=0`, `timeout=15.0`).
 3. **Crop Domain Gatekeeper & OOD Early-Exit:**
    - Detects non-target species (Areca palm, snake plant, weeds) or uncertified crops (Guava, Mango). LangGraph conditional router `route_after_vision` immediately jumps directly to Agent 5, locking chemical advice to $0.0\text{ ml/g}$ and referring the farmer to their nearest ICAR KVK center.
 

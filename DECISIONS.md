@@ -2137,3 +2137,45 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* Smallholder farmers often suffer steep discounts or export rejections due to lack of verifiable treatment provenance. Grounding the PDF report with official ICAR institute protocols and an immutable on-chain BaseScan transaction hash establishes an indisputable paper and cryptographic audit trail for procurement agents and crop insurance inspectors.
 > </details>
 </details>
+
+---
+
+### ADR-090: GitHub Markdown Rendering Hardening — KaTeX Math Mode Sanitization & Mermaid Sequence Operator Normalization
+
+* **Context & The Problem:**
+  1. *Mermaid Sequence Parse Failures:* In [`ARCHITECTURE.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/ARCHITECTURE.md) Section 4.2, the Mermaid sequence diagram failed to render with:
+     `Parse error on line 19: ...dance & KVK referral Voice-->>Farmer`
+     In Mermaid sequence syntax, the ampersand `&` is a reserved actor-parallelization operator (`A & B ->> C`). Using raw ampersands inside participant aliases (`Voice & KVK Referral`) or message descriptions (`guidance & KVK referral`) broke Mermaid's tokenizer.
+  2. *KaTeX Math Mode Underscore Errors:* KaTeX threw `'_' allowed only in math mode` on mathematical formulas such as `$D_{\text{max\_statutory}}$` and `$\text{is\_spray\_safe} = \text{true}$`. In LaTeX, `\text{}` enters text mode where underscores are invalid unless specifically escaped, and KaTeX's text-mode parser strictly forbids unescaped underscores.
+  3. *KaTeX Piecewise `Missing \end{cases}` Error:* KaTeX threw `Missing \end{cases}` on humidity attenuation formulas. In LaTeX, `%` is the comment operator; writing `80.0\% \\` caused the parser to treat the remainder of the line (including subsequent cases and `\end{cases}`) as a comment, leaving the environment unclosed. Additionally, raw `<` symbols inside markdown math blocks were interpreted as HTML tags or `&lt;`, injecting spurious column-alignment ampersands into `cases`.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Mermaid Operator Normalization:*
+     - Quoted all sequence participant definitions across [`ARCHITECTURE.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/ARCHITECTURE.md) and [`README.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/README.md).
+     - Replaced all raw ampersands (`&`) with plain text `and` across both flowchart node labels and sequence message strings (e.g. `Voice and KVK Referral`).
+  2. *KaTeX Math Mode Sanitization:*
+     - Replaced `\text{..._...}` subscripts with clean math-mode Roman font `\mathrm{bounded}`, `\mathrm{ceiling}`, `\mathrm{MIC}`, `\mathrm{attenuated}`, `\mathrm{final}`, completely eliminating text-mode underscore errors.
+     - Converted raw inequalities to `\lt` and `\gt` to prevent markdown HTML entity conversion.
+     - Removed `%` comment characters from LaTeX math blocks, expressing percentage units cleanly in descriptive prose variables ($H \gt 80$).
+     - Converted code variable names (e.g. `is_spray_safe = true`) from LaTeX math mode to standard markdown backticks.
+
+* **Architectural Rationale:**
+  - *Universal Visual Fidelity:* Technical specifications and commercial documentation must render with 100% precision across GitHub's web interface, mobile apps, and markdown preview tools without broken diagrams or red KaTeX parse banners.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-090</strong></summary>
+
+> **Question:** In GitHub Flavored Markdown (KaTeX / MathJax), why does placing a raw `%` inside an equation block (e.g. `\text{Humidity} > 80\% \\ \end{cases}`) cause KaTeX to throw a `Missing \end{cases}` error?
+>
+> 1. Because KaTeX only calculates integers, not percentages.
+> 2. Because in LaTeX grammar, `%` is the comment delimiter; unless properly handled, everything after `%` on that line is discarded as a comment, causing the parser to miss the line break `\\` and the subsequent `\end{cases}` closing token.
+> 3. Because GitHub converts `%` into a URL encoding character `%20`.
+> 4. Because KaTeX requires percent symbols to be written in Roman numerals.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In standard LaTeX syntax, `%` initiates a comment until the end of the line. In multi-line environments like `\begin{cases} ... \end{cases}`, an unescaped or markdown-processed `%` comments out the closing tokens, leaving the environment unclosed and triggering a fatal parser failure.
+> </details>
+</details>

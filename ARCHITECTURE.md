@@ -4,7 +4,7 @@
 
 ## 📑 1. Executive Summary & Mission Statement
 
-**AgriNexus** is a decentralized, zero-trust, edge-optimized multi-agent agronomy platform engineered to address the **$29 Billion annual crop disease and chemical toxicity crisis** affecting smallholder farmers globally.
+**AgriNexus** is a decentralized, zero-trust, edge-optimized multi-agent agronomy platform engineered to address the **\$29 Billion annual crop disease and chemical toxicity crisis** affecting smallholder farmers globally.
 
 Modern agriculture suffers from three acute structural failures:
 1. **Diagnostic Latency:** Physical agricultural extension officers are scarce; farmers wait days or weeks for lab diagnosis while aggressive fungal/viral pathogens destroy 40%–70% of crop yields.
@@ -32,7 +32,7 @@ AgriNexus operates on a **Dual Execution Architecture**:
 
 ```mermaid
 flowchart TD
-    subgraph INGESTION ["🌾 Multi-Modal Ingestion & Edge Client Layer (Browser / PWA)"]
+    subgraph INGESTION ["🌾 Multi-Modal Ingestion and Edge Client Layer (Browser / PWA)"]
         UI["🌾 Farmer Interface (React 18 / Tailwind)"]
         CAM["📸 Dual-Mode Capture (Camera / Webcam / File)"]
         GEO["📍 3-Tier Geolocation (EXIF GPS -> Device GPS -> Interactive Map Pin)"]
@@ -49,30 +49,30 @@ flowchart TD
 
     subgraph CLOUD_SWARM ["🤖 Cloud Multi-Agent Swarm (MAS) — LangGraph Runtime"]
         direction TB
-        V1["🧠 AGENT 1: Vision Pathology & Dual-Gate Guard\n(ONNX EfficientNet-B4 · Dual-Gate · Gemini Vision Cascade)"]
+        V1["🧠 AGENT 1: Vision Pathology and Dual-Gate Guard\n(ONNX EfficientNet-B4 · Dual-Gate · Gemini Vision Cascade)"]
         
         %% Conditional Early Exit
-        V1 -- "Certified Crop (14 Food Crops & Conf >= 97%)" --> R2["📚 AGENT 2: Grounded ICAR RAG Core\n(38 Certified Research Protocols · Zero-Guesswork)"]
+        V1 -- "Certified Crop (14 Food Crops and Conf >= 97%)" --> R2["📚 AGENT 2: Grounded ICAR RAG Core\n(38 Certified Research Protocols · Zero-Guesswork)"]
         V1 -. "Uncertified Crop / OOD Bypass\n(Direct Jump · Zero Chemical Prescription)" .-> VO5
         
-        R2 --> S3["🛡️ AGENT 3: Deterministic C++ Safety Engine\n(CIB&RC Gazette Banned List · Mathematical Clamping · MIC Floor)"]
+        R2 --> S3["🛡️ AGENT 3: Deterministic C++ Safety Engine\n(CIB and RC Gazette Banned List · Mathematical Clamping · MIC Floor)"]
         S3 --> W4["⛓️ AGENT 4: Web3 Crop Passport Relayer\n(Base Sepolia L2 Gasless Smart Contract · SHA-256 Hashes)"]
-        W4 --> VO5["🎙️ AGENT 5: Vernacular Voice & KVK Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine · Localized Advisory)"]
+        W4 --> VO5["🎙️ AGENT 5: Vernacular Voice and KVK Supervisor\n(Sarvam AI Bulbul:v3 Indic Acoustic Engine · Localized Advisory)"]
     end
 
     subgraph OFFLINE_SWARM ["📱 In-Browser 5-Agent Swarm (100% Local WASM Execution)"]
         direction TB
         EV1["👁️ edgeVisionAgent.js\n(WASM ONNX + Canvas Chlorophyll Pre-Filter)"]
         ER2["📖 edgeRagAgent.js\n(In-Memory ICAR Protocol Search)"]
-        ES3["🔒 edgeSafetyAgent.js\n(Deterministic JS Clamping & Banned List)"]
-        EW4["🔏 edgeWeb3Agent.js\n(Web Crypto API SHA-256 & Local Queue)"]
+        ES3["🔒 edgeSafetyAgent.js\n(Deterministic JS Clamping and Banned List)"]
+        EW4["🔏 edgeWeb3Agent.js\n(Web Crypto API SHA-256 and Local Queue)"]
         EV5["🗣️ edgeVoiceAgent.js\n(Sarvam Cloud / Web Speech API Fallback)"]
         
         EV1 --> ER2 --> ES3 --> EW4 --> EV5
     end
 
-    subgraph EXTERNAL ["🌐 External Infrastructure & Autonomous Services"]
-        OWM["⛅ OpenWeatherMap & Air Pollution AQI API"]
+    subgraph EXTERNAL ["🌐 External Infrastructure and Autonomous Services"]
+        OWM["⛅ OpenWeatherMap and Air Pollution AQI API"]
         CLD["☁️ Cloudinary CDN Media Storage"]
         MDB[("🍃 MongoDB Atlas Multi-Tenant Cluster")]
         BASE["⛓️ Base Sepolia Ethereum L2 (Chain ID: 84532)"]
@@ -80,7 +80,7 @@ flowchart TD
         KVK["🏛️ 731 ICAR Krishi Vigyan Kendra Network"]
     end
 
-    subgraph TELEMETRY ["📊 Real-Time Telemetry & Admin Layer"]
+    subgraph TELEMETRY ["📊 Real-Time Telemetry and Admin Layer"]
         WS["⚡ WebSocket Telemetry Bus (/ws/telemetry)"]
         DASH["📊 3D Laser Control Room (TelemetryView.jsx)"]
         ADM["🛡️ Nexus Command Portal (AdminDashboard.jsx)"]
@@ -116,7 +116,7 @@ AgriNexus chooses specific runtimes for individual engineering constraints:
 | **Cryptographic Provenance** | `Solidity 0.8.20`, `Hardhat` | `Web3.py`, `Base Sepolia` | Gas-optimized smart contract on Base Layer-2 (Chain ID: `84532`) with sponsored developer relayer. |
 | **Database & Persistence** | `MongoDB Atlas` | `PyMongo 4.x` | Multi-tenant cluster with connection pooling, compound indexing, and PBKDF2 authentication. |
 | **Media Asset Management** | `Cloudinary API` | `Python Cloudinary SDK` | Secure cloud storage for leaf diagnostic images, enabling permanent CDN URLs and PDF report embedding. |
-| **Meteorological Intelligence** | `REST Async HTTP` | `httpx` (Python), `fetch` (JS) | 4-tier meteorological cascade (OpenWeatherMap + AQI $\to$ Open-Meteo $\to$ Met.no $\to$ WTTR.in). |
+| **Meteorological Intelligence** | `REST Async HTTP` | `httpx` (Python), `fetch` (JS) | 4-tier meteorological cascade (OpenWeatherMap + AQI → Open-Meteo → Met.no → WTTR.in). |
 | **Speech Synthesis (Indic)** | `Sarvam AI (Bulbul:v3)` | `httpx`, `edge_tts`, Web Speech | 11 Indic languages; multi-chunk sentence splitting and binary PCM WAV frame concatenation. |
 | **Frontend UI & Telemetry** | `React 18`, `Vite`, `Tailwind` | `Lucide React`, `Leaflet` | Sub-50ms reactive state hydration, responsive mobile HUD, cybernetic 3D SVG laser line animations. |
 | **Report Generation** | `jsPDF`, `jspdf-autotable` | Browser Client Worker | Instant offline-capable PDF generation incorporating embedded scan imagery, ICAR treatments, and BaseScan hashes. |
@@ -133,45 +133,45 @@ When the client has internet connectivity, requests flow through the FastAPI gat
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Farmer as 🌾 Farmer (Client UI)
-    participant GW as ⚡ FastAPI Gateway (/api/v1/analyze)
-    participant CDN as ☁️ Cloudinary Storage
-    participant Weather as ⛅ Meteorological & AQI Service
-    participant Vision as 🧠 Agent 1 (Edge Vision & Dual-Gate)
-    participant RAG as 📚 Agent 2 (ICAR RAG Core)
-    participant Safety as 🛡️ Agent 3 (Deterministic C++ Core)
-    participant Web3 as ⛓️ Agent 4 (Base Sepolia L2)
-    participant Voice as 🎙️ Agent 5 (Sarvam AI Bulbul:v3)
-    participant DB as 🍃 MongoDB Atlas Cluster
-    participant WS as 📊 Telemetry WebSocket Bus
+    actor Farmer as "🌾 Farmer (Client UI)"
+    participant GW as "⚡ FastAPI Gateway (/api/v1/analyze)"
+    participant CDN as "☁️ Cloudinary Storage"
+    participant Weather as "⛅ Meteorological and AQI Service"
+    participant Vision as "🧠 Agent 1 (Edge Vision and Dual-Gate)"
+    participant RAG as "📚 Agent 2 (ICAR RAG Core)"
+    participant Safety as "🛡️ Agent 3 (Deterministic C++ Core)"
+    participant Web3 as "⛓️ Agent 4 (Base Sepolia L2)"
+    participant Voice as "🎙️ Agent 5 (Sarvam AI Bulbul:v3)"
+    participant DB as "🍃 MongoDB Atlas Cluster"
+    participant WS as "📊 Telemetry WebSocket Bus"
 
     Farmer->>GW: POST /api/v1/analyze (Image, Language, GPS, SessionId)
     GW->>CDN: Upload leaf image to agrinexus_scans folder
     CDN-->>GW: Return secure HTTPS CDN URL
-    GW->>Weather: Resolve 3-Tier GPS & Query OpenWeatherMap + AQI
+    GW->>Weather: Resolve 3-Tier GPS and Query Weather and AQI
     Weather-->>GW: {temp: 28.4°C, humidity: 76%, rain_risk: 5%, aqi: 2, is_spray_safe: true}
     
-    Note over GW,Vision: Initialize AgriNexusState & Launch LangGraph astream()
+    Note over GW,Vision: Initialize AgriNexusState and Launch LangGraph astream()
     
     GW->>Vision: Run ONNX EfficientNet-B4 (or Gemini Cascade Fallback)
     Vision-->>GW: {vision_diagnosis: "Tomato Late Blight", vision_confidence: 0.98, is_crop_supported: true}
-    GW->>WS: Broadcast Node Event: 'vision' (Laser links to RAG)
+    GW->>WS: Broadcast Node Event: vision (Laser links to RAG)
 
     GW->>RAG: Query ICAR protocols for "Tomato Late Blight"
     RAG-->>GW: {chemical: "Azoxystrobin + Difenoconazole", base_dosage: 150ml, unit: "ml"}
-    GW->>WS: Broadcast Node Event: 'rag' (Laser links to Safety)
+    GW->>WS: Broadcast Node Event: rag (Laser links to Safety)
 
-    GW->>Safety: Invoke C++ safety_engine (CIB&RC schedule, humidity clamp, MIC floor)
+    GW->>Safety: Invoke C++ safety_engine (CIB and RC schedule, humidity clamp, MIC floor)
     Safety-->>GW: {is_safe: true, safe_dosage_ml_per_acre: 150.0, is_mic_protected: false}
-    GW->>WS: Broadcast Node Event: 'safety' (Laser links to Web3)
+    GW->>WS: Broadcast Node Event: safety (Laser links to Web3)
 
-    GW->>Web3: Sign gasless Base Sepolia tx (SHA-256 image & treatment hashes)
+    GW->>Web3: Sign gasless Base Sepolia tx (SHA-256 image and treatment hashes)
     Web3-->>GW: {tx_hash: "0x7a8f...b291", passport_id: 101}
-    GW->>WS: Broadcast Node Event: 'web3' (Laser links to Voice)
+    GW->>WS: Broadcast Node Event: web3 (Laser links to Voice)
 
     GW->>Voice: Multi-chunk Indic speech synthesis (Sarvam Bulbul:v3)
     Voice-->>GW: {translated_text: "...", vernacular_audio_url: "/static/audio/..."}
-    GW->>WS: Broadcast Node Event: 'voice' (Swarm Complete)
+    GW->>WS: Broadcast Node Event: voice (Swarm Complete)
 
     GW->>DB: Save complete scan document in user_scans collection
     DB-->>GW: Return scan_id
@@ -187,23 +187,23 @@ If a non-target plant, ornamental leaf (e.g., Hibiscus), or low-confidence anoma
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Farmer as 🌾 Farmer
-    participant Vision as 🧠 Agent 1 (Vision Pathology)
-    participant Router as 🔀 LangGraph route_after_vision
-    participant Voice as 🎙️ Agent 5 (Voice & KVK Referral)
-    participant KVK as 🏛️ ICAR KVK Geolocation Resolver
+    actor Farmer as "🌾 Farmer"
+    participant Vision as "🧠 Agent 1 (Vision Pathology)"
+    participant Router as "🔀 LangGraph route_after_vision"
+    participant Voice as "🎙️ Agent 5 (Voice and KVK Referral)"
+    participant KVK as "🏛️ ICAR KVK Geolocation Resolver"
 
-    Farmer->>Vision: Upload image of uncertified plant (e.g. Guava / Weed)
-    Vision->>Vision: ONNX confidence < 0.97 or margin < 0.60
+    Farmer->>Vision: Upload image of uncertified plant (e.g. Guava or Weed)
+    Vision->>Vision: ONNX confidence below 0.97 or margin below 0.60
     Vision->>Vision: Engage Tier 2 Gemini Cascade (Identifies "Guava Leaf", is_certified = false)
-    Vision-->>Router: {is_crop_supported: false, vision_confidence: 0.85, detected_subject: "Guava Leaf"}
+    Vision-->>Router: Uncertified crop detected (is_crop_supported = false)
     
-    Note over Router: Early Exit Condition Met: NOT is_crop_supported OR confidence < 0.97
+    Note over Router: Early Exit Condition Met: Uncertified crop or confidence below 0.97
     Router->>Voice: DIRECT JUMP (Bypass Agent 2 RAG, Agent 3 Safety, Agent 4 Web3)
     
     Voice->>KVK: Calculate Haversine nearest KVK center from farmer coordinates
-    KVK-->>Voice: {name: "District KVK Ludhiana", distance_km: 12.4, phone: "0161-2401960"}
-    Voice->>Voice: Lock chemical dosage to 0.0; generate organic care guidance & KVK referral
+    KVK-->>Voice: Return nearest KVK center coordinates and phone
+    Voice->>Voice: Lock chemical dosage to 0.0; generate organic care guidance and KVK referral
     Voice-->>Farmer: Spoken advisory directing farmer to physical KVK agronomist
 ```
 
@@ -224,16 +224,16 @@ sequenceDiagram
 #### Dual-Gate Mathematical Verification Criterion
 To eliminate false-positive classifications on open-world out-of-distribution flora (e.g. text documents, ornamental weeds, houseplants) while instantly identifying certified foliar diseases, Agent 1 enforces a strict **Dual-Gate condition**:
 
-$$\text{Gate 1 (Top-1 Probability Floor):} \quad p_{(1)} = \max_{i} \left( \text{Softmax}(\mathbf{z}) \right) \ge 0.97$$
+$$\text{Gate 1 (Top-1 Probability Floor):} \quad p_{(1)} = \max_{i} \left( \operatorname{Softmax}(\mathbf{z}) \right) \ge 0.97$$
 
-$$\text{Gate 2 (Confidence Margin):} \quad \Delta_{\text{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
+$$\text{Gate 2 (Confidence Margin):} \quad \Delta_{\mathrm{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
 
-* If **both** conditions hold: The inference terminates in $\approx 40\text{ms}$ on CPU with **zero cloud dependencies**. It emits `"vision_engine": "ONNX EfficientNet-B4"`, `"identified_by": "onnx_model"`.
-* If **either** condition fails ($p_{(1)} < 0.97$ or $\Delta < 0.60$): The model is declared uncertain and drops into the **Tier 2 Multi-Modal Cascade**.
+* If **both** conditions hold: The inference terminates in approximately 40ms on CPU with **zero cloud dependencies**. It emits `"vision_engine": "ONNX EfficientNet-B4"`, `"identified_by": "onnx_model"`.
+* If **either** condition fails ($p_{(1)} \lt 0.97$ or $\Delta \lt 0.60$): The model is declared uncertain and drops into the **Tier 2 Multi-Modal Cascade**.
 
 #### Tier 2: Gemini Multi-Modal Fallback Cascade
 Engaged inside Agent 1 whenever the local neural network is uncertain:
-- **Cascade Sequence:** Queries `gemini-flash-lite-latest` $\to$ `gemini-flash-latest` $\to$ `gemini-3.6-flash`.
+- **Cascade Sequence:** Queries `gemini-flash-lite-latest` → `gemini-flash-latest` → `gemini-3.6-flash`.
 - **Zero-Wait Failover:** Instantiated with `max_retries=0` and `timeout=15.0` to eliminate LangChain exponential retry sleeps, slashing failover round-trips from 156 seconds to 8.8 seconds.
 - **Botanical Gatekeeper Prompt:** Demands strict JSON identifying botanical authenticity:
   ```json
@@ -243,14 +243,14 @@ Engaged inside Agent 1 whenever the local neural network is uncertain:
 
 #### In-Browser Canvas Chlorophyll Pre-Filter (`edgeVisionAgent.js`)
 Prior to constructing WebAssembly tensor buffers, client-side execution runs a sub-2ms Canvas heuristic:
-1. Subsamples the input image onto a $100\times100$ Canvas buffer.
+1. Subsamples the input image onto a 100×100 Canvas buffer.
 2. Evaluates RGB pixel channels: pixel is classified as organic vegetation if $G > R \land G > B$ (healthy chlorophyll) or $R > 80 \land G > 50 \land B < 50$ (chlorotic/necrotic foliar tissue).
-3. If the ratio of organic vegetation pixels is $< 4\%$, the image is instantly rejected as a non-plant (white paper, screenshot, furniture) in $<2\text{ms}$ without loading the 71MB ONNX weights into WebAssembly memory.
+3. If the ratio of organic vegetation pixels is `< 4%`, the image is instantly rejected as a non-plant (white paper, screenshot, furniture) in `< 2ms` without loading the 71MB ONNX weights into WebAssembly memory.
 
 #### 14 Certified Commercial Food Crops
 AgriNexus enforces certified chemical protocols exclusively across 14 high-value food and horticulture crops:
-$$\mathcal{C}_{\text{certified}} = \{\text{Apple}, \text{Blueberry}, \text{Cherry}, \text{Corn}, \text{Grape}, \text{Orange}, \text{Peach}, \text{Pepper}, \text{Potato}, \text{Raspberry}, \text{Soybean}, \text{Squash}, \text{Strawberry}, \text{Tomato}\}$$
-Any crop outside this set (e.g. Guava, Mango, Cotton, Hibiscus) is classified as uncertified (`is_crop_supported = false`), locking chemical sprays to $0.0\text{ ml/g}$.
+$$\mathcal{C}_{\mathrm{certified}} = \{\text{Apple}, \text{Blueberry}, \text{Cherry}, \text{Corn}, \text{Grape}, \text{Orange}, \text{Peach}, \text{Pepper}, \text{Potato}, \text{Raspberry}, \text{Soybean}, \text{Squash}, \text{Strawberry}, \text{Tomato}\}$$
+Any crop outside this set (e.g. Guava, Mango, Cotton, Hibiscus) is classified as uncertified (`is_crop_supported = false`), locking chemical sprays to 0.0 ml/g.
 
 ---
 
@@ -262,9 +262,9 @@ Any crop outside this set (e.g. Guava, Mango, Cotton, Hibiscus) is classified as
 #### Deterministic Retrieval Algorithm
 Queries are scored against protocol database records using normalized token sets:
 
-$$\text{Score}(P, Q) = 150 \cdot \mathbb{I}_{\text{exact}}(P_{\text{disease}}, Q) + 80 \cdot \mathbb{I}_{\text{sub}}(P_{\text{disease}}, Q) + 30 \cdot |T(P_{\text{crop}}) \cap T(Q)| + 10 \cdot |T(P_{\text{keywords}}) \cap T(Q)|$$
+$$\mathrm{Score}(P, Q) = 150 \cdot \mathbb{I}_{\mathrm{exact}}(P_{\mathrm{disease}}, Q) + 80 \cdot \mathbb{I}_{\mathrm{sub}}(P_{\mathrm{disease}}, Q) + 30 \cdot |T(P_{\mathrm{crop}}) \cap T(Q)| + 10 \cdot |T(P_{\mathrm{keywords}}) \cap T(Q)|$$
 
-* **Zero-Guesswork Invariant:** If no protocol achieves $\text{Score} \ge 40.0$, the agent returns `proposed_chemical: "None - Consultation Required"` and `safe_dosage_ml_per_acre: 0.0`. Under no circumstances is an LLM allowed to generate or guess pesticide recommendations.
+* **Zero-Guesswork Invariant:** If no protocol achieves $\mathrm{Score} \ge 40.0$, the agent returns `proposed_chemical: "None - Consultation Required"` and `safe_dosage_ml_per_acre: 0.0`. Under no circumstances is an LLM allowed to generate or guess pesticide recommendations.
 
 ---
 
@@ -285,13 +285,15 @@ Pesticides are strictly segregated by physical formulation:
 
 Dosage calculation applies statutory clamping, humidity attenuation, and minimum inhibitory concentration (MIC) protection:
 
-$$D_{\text{bounded}} = \min \left( D_{\text{RAG}}, D_{\text{max\_statutory}} \right) \quad (D_{\text{max\_statutory}} = 350.0\text{ ml/g})$$
+$$D_{\mathrm{bounded}} = \min(D_{\mathrm{RAG}}, D_{\mathrm{ceiling}}) \quad (D_{\mathrm{ceiling}} = 350.0\text{ ml or g})$$
 
-$$D_{\text{attenuated}} = \begin{cases} D_{\text{bounded}} \times 0.90 & \text{if } \text{Humidity} > 80.0\% \\ D_{\text{bounded}} & \text{otherwise} \end{cases}$$
+$$D_{\mathrm{attenuated}} = \begin{cases} D_{\mathrm{bounded}} \times 0.90 & \text{if } H \gt 80 \\ D_{\mathrm{bounded}} & \text{otherwise} \end{cases}$$
 
-$$\mathbf{D}_{\text{final}} = \begin{cases} D_{\text{min\_MIC}} & \text{if } D_{\text{min\_MIC}} > 0 \land D_{\text{attenuated}} < D_{\text{min\_MIC}} \implies (\text{is\_mic\_protected} = \text{true}) \\ D_{\text{attenuated}} & \text{otherwise} \end{cases}$$
+$$\mathbf{D}_{\mathrm{final}} = \begin{cases} D_{\mathrm{MIC}} & \text{if } D_{\mathrm{MIC}} \gt 0 \text{ and } D_{\mathrm{attenuated}} \lt D_{\mathrm{MIC}} \\ D_{\mathrm{attenuated}} & \text{otherwise} \end{cases}$$
 
-* **Agronomic Principle:** When relative humidity exceeds 80%, stomata dilate and foliar cuticle permeability surges. Attenuating dosage by 10% prevents chemical burn. However, dropping dosage below $D_{\text{min\_MIC}}$ allows sub-lethal pathogen exposure, inducing genetic fungicide resistance. The safety engine clamps dosage at the MIC floor to prevent resistance.
+*where $H$ is ambient relative humidity (%).*
+
+* **Agronomic Principle:** When relative humidity exceeds 80%, stomata dilate and foliar cuticle permeability surges. Attenuating dosage by 10% prevents chemical burn. However, dropping dosage below $D_{\mathrm{MIC}}$ allows sub-lethal pathogen exposure, inducing genetic fungicide resistance. The safety engine clamps dosage at the MIC floor to prevent resistance.
 
 ---
 
@@ -365,7 +367,7 @@ Sarvam AI Bulbul:v3 enforces a strict 500-character ceiling per API request. Bec
 
 #### 4-Tier Meteorological Fallback Cascade
 1. **Primary: OpenWeatherMap (Weather & Air Pollution APIs):**
-   Fetches temperature ($^\circ\text{C}$), humidity ($\%$), wind speed ($\text{km/h}$), and atmospheric Air Quality Index (AQI 1-5, PM2.5).
+   Fetches temperature (°C), humidity (%), wind speed (km/h), and atmospheric Air Quality Index (AQI 1–5, PM2.5).
 2. **Fallback Cascade 1: Open-Meteo API (Keyless):**
    Zero-key REST endpoint fetching 6-hour precipitation probabilities.
 3. **Fallback Cascade 2: Met.no (Norwegian Meteorological Institute):**
@@ -375,9 +377,11 @@ Sarvam AI Bulbul:v3 enforces a strict 500-character ceiling per API request. Bec
 5. **Offline Safety Baseline:** Returns standard safety-restricted constants when network is down.
 
 #### Agronomic Spray Safety Interlock Formula
-Spray operations are declared safe ($\text{is\_spray\_safe} = \text{true}$) if and only if **all four** atmospheric conditions are met:
+Spray operations are declared safe (`is_spray_safe = true`) if and only if **all four** atmospheric conditions are met:
 
-$$\text{is\_spray\_safe} = (\text{Wind} \le 15.0\text{ km/h}) \land (\text{Rain Risk (6h)} < 35.0\%) \land (\text{Temp} \le 36.0^\circ\text{C}) \land (\text{AQI} < 5)$$
+$$S_{\mathrm{spray}} = (W \le 15.0) \land (R_{\mathrm{6h}} \lt 35) \land (T \le 36.0) \land (\mathrm{AQI} \lt 5)$$
+
+*where $W$ is wind speed (km/h), $R_{\mathrm{6h}}$ is 6-hour precipitation risk (%), $T$ is temperature (°C), and $\mathrm{AQI}$ is Air Quality Index (1–5).*
 
 - **Rain-Fastness Gate:** Rain risk $\ge 35\%$ blocks spraying to prevent chemical wash-off into groundwater.
 - **Wind Drift Gate:** Wind speed $\ge 15\text{ km/h}$ blocks spraying to prevent chemical aerosol drift onto adjacent food crops.
@@ -389,7 +393,7 @@ $$\text{is\_spray\_safe} = (\text{Wind} \le 15.0\text{ km/h}) \land (\text{Rain 
 ### 5.7 Subsystem 7: Statutory Non-Actionable Referral & ICAR KVK Resolver
 
 * **Primary Source Code:** [`backend/app/services/kvk_service.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/services/kvk_service.py) & [`backend/app/data/kvk_directory.json`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/data/kvk_directory.json)
-* **Core Role:** Inviolable statutory circuit breaker. Whenever diagnostic confidence falls below statutory thresholds ($<60\%$) or an uncertified plant is detected, chemical prescription is locked to $0.0\text{ ml/g}$.
+* **Core Role:** Inviolable statutory circuit breaker. Whenever diagnostic confidence falls below statutory thresholds (< 60%) or an uncertified plant is detected, chemical prescription is locked to 0.0 ml/g.
 
 #### Sub-Millisecond Haversine Geolocation Engine
 Computes spherical great-circle distance across 731 verified ICAR Krishi Vigyan Kendra centers:
@@ -452,7 +456,7 @@ $$d = 2 R \cdot \text{atan2}\left(\sqrt{a}, \sqrt{1-a}\right) \quad (R = 6371.0\
 
 #### Cryptographic Authentication Engine (`auth_service.py`)
 - **Password Hashing:** Implements PBKDF2 with SHA-256 and 120,000 iterations:
-  $$\text{Digest} = \text{PBKDF2-HMAC-SHA256}(\text{Password}, \text{Salt}_{16\text{ bytes}}, 120000)$$
+  $$\mathrm{Digest} = \operatorname{PBKDF2-HMAC-SHA256}(\text{Password}, \text{Salt}, 120000)$$
 - **Session Tokens:** 32-byte URL-safe cryptographically secure tokens (`secrets.token_urlsafe(32)`), stored as SHA-256 digests (`_token_hash`) with a 7-day TTL (`TOKEN_TTL_DAYS = 7`).
 - **Domain Gate:** Mandates `@gmail.com` addresses.
 - **RBAC:** Protects admin routes (`is_admin: true`) for extension supervisors.
@@ -480,7 +484,7 @@ Dedicated administrative interface for extension supervisors:
 #### 3D Telemetry Control Room & Laser Line Propagation
 - WebSocket event bus on `/ws/telemetry`.
 - **Session Isolation:** Telemetry broadcasts tag every event with `session_id`. `TelemetryView` filters events matching `window.__agrinexus_active_session`, eliminating cross-device or multi-tab cross-talk.
-- **850ms Progressive Laser Propagation:** Sequentially animates SVG laser beams across nodes (`vision` $\to$ `rag` $\to$ `safety` $\to$ `web3` $\to$ `voice`) with kinetic bot animations (circular wobble, float, shield rotation, 3D tilt, harmonic pulse).
+- **850ms Progressive Laser Propagation:** Sequentially animates SVG laser beams across nodes (`vision` → `rag` → `safety` → `web3` → `voice`) with kinetic bot animations (circular wobble, float, shield rotation, 3D tilt, harmonic pulse).
 
 #### Progressive Web App (PWA) Architecture
 - **Multi-tiered Service Worker (`sw.js`):**
@@ -620,13 +624,13 @@ def build_agrinexus_graph():
 | Threat Vector | Severity | Vulnerability Description | Mitigation Architecture & Defense Implementation |
 | :--- | :--- | :--- | :--- |
 | **LLM Chemical Hallucination** | 🔴 Critical | LLM outputs unverified toxic pesticide mixtures or lethal dosages. | **Deterministic C++ Intercept:** Zero LLM authority over chemistry. C++ safety core checks CIB&RC banned list and clamps dosages to statutory ceilings and ICAR MIC floors. |
-| **Pesticide Overdose & Resistance** | 🔴 Critical | High-humidity foliar scorching or sub-MIC pathogen resistance. | **Mathematical Attenuation Formula:** 10% attenuation when $H > 80\%$, bounded strictly above the Minimum Inhibitory Concentration floor. |
+| **Pesticide Overdose & Resistance** | 🔴 Critical | High-humidity foliar scorching or sub-MIC pathogen resistance. | **Mathematical Attenuation Formula:** 10% attenuation when relative humidity exceeds 80%, bounded strictly above the Minimum Inhibitory Concentration floor. |
 | **Counterfeit Export Provenance** | 🟠 High | Fabricated harvest safety certificates or altered chemical records. | **Base Sepolia Cryptographic Passports:** SHA-256 hashes of foliar image and treatment minted immutably on Base L2 blockchain; verifiable on BaseScan. |
 | **Private Key Exposure** | 🟠 High | Exposure of developer relayer private keys in client bundles. | **Server-Side Key Isolation:** Developer keys loaded solely in backend environment variables (`DEVELOPER_PRIVATE_KEY`); client PWA interacts via gasless API endpoints. |
 | **Path Traversal & Injection** | 🟠 High | Malicious file uploads containing `../` traversal or script payloads. | **Filename Sanitization:** Basename extraction, regex stripping (`replace("..", "").replace("/", "").replace("\\", "")`), and UUID random generation. |
 | **Session Hijacking & Replay** | 🟡 Medium | Man-in-the-middle theft of authorization tokens. | **PBKDF2-HMAC-SHA256 & SHA-256 Token Hashes:** Passwords salted with 120,000 rounds; raw session tokens never stored in database (only SHA-256 token digests). |
 | **Telemetry Session Crosstalk** | 🟡 Medium | Multiple farmers viewing each other's live laser scan paths. | **Session ID Scoping:** All WebSocket messages tagged with client `session_id`; `TelemetryView` filters events matching active session. |
-| **Edge RAM Tab Crash** | 🟡 Medium | 71MB ONNX model exhausting memory on $50 mobile phones. | **Single-Threaded WASM & Chlorophyll Pre-Filter:** `ort.env.wasm.numThreads = 1`; Canvas 4% pigment filter intercepts non-plant images in sub-2ms before ONNX tensor creation. |
+| **Edge RAM Tab Crash** | 🟡 Medium | 71MB ONNX model exhausting memory on \$50 mobile phones. | **Single-Threaded WASM & Chlorophyll Pre-Filter:** `ort.env.wasm.numThreads = 1`; Canvas 4% pigment filter intercepts non-plant images in sub-2ms before ONNX tensor creation. |
 
 ---
 
