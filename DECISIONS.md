@@ -2058,3 +2058,42 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 
 
 
+
+---
+
+### ADR-088: Comprehensive Enterprise Architecture Synchronization & High/Low-Level System Design Specification
+
+* **Context & The Problem:**
+  1. *Architectural Drift from Codebase Evolution:* As AgriNexus expanded to incorporate enterprise cloud persistence (MongoDB Atlas), cryptographic PBKDF2 authentication, RBAC administration (Nexus Command), Cloudinary CDN ingestion, dynamic client-side PDF field reporting (`jsPDF`), multi-modal geolocation hierarchies (Photo EXIF GPS via `exifr`, Device GPS, Interactive Leaflet Map Pin), and desktop WebRTC webcam stream capture (`LaptopWebcamModal`), `ARCHITECTURE.md` had fallen behind the actual codebase.
+  2. *Need for Complete High-Level and Low-Level Technical Clarity:* A new engineer, architect, or hackathon evaluator reading `ARCHITECTURE.md` required a unified, authoritative reference specifying the complete micro-monolith topology, state machine definitions (`AgriNexusState`), mathematical boundary equations, dual execution mechanisms (Cloud LangGraph Swarm vs. In-Browser WASM Swarm), API network contracts, threat models, and sequence diagrams.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Complete Overhaul of `ARCHITECTURE.md`:*
+     - **High-Level System Topology & Dual Execution Diagrams:** Codified the synchronous and asynchronous data flows across the Cloud LangGraph Swarm (`routes.py`, `graph.py`) and the In-Browser WASM Edge Swarm (`swarmOrchestrator.js`, `edgeVisionAgent.js`, `edgeSafetyAgent.js`).
+     - **Exhaustive Subsystem Specifications (Agents 1–5 & Services):** Documented all 10 platform subsystems including Edge Vision (EfficientNet-B4 ONNX with 97% confidence floor and 60% margin floor), Grounded ICAR RAG Core (38 certified protocols), C++17 Deterministic Safety Core (CIB&RC 19-chemical schedule, formulation separation, and MIC floor protection), Base Sepolia Web3 Relayer (`CropPassport.sol`), and Sarvam AI Bulbul:v3 multi-chunk binary WAV concatenation.
+     - **Enterprise Persistence, Data Entity Model & Auth:** Formally specified the MongoDB Atlas multi-tenant cluster schema (`users`, `sessions`, `user_scans`), compound index strategies (`(user_id, created_at DESC)`), PBKDF2-HMAC-SHA256 password salting, 7-day token lifecycles, and Cloudinary asset ingestion.
+     - **Client UI & Extension Supervisor Subsystems:** Documented `FarmerView`, `TelemetryView` session isolation (`session_id`), `AdminDashboard` (Nexus Command), `UserScansModal` PDF export engine (`jsPDF` + `jspdf-autotable`), `MapModal` (Leaflet), and `LaptopWebcamModal` (WebRTC).
+     - **Complete Low-Level State Schema & LangGraph Architecture:** Documented the full `AgriNexusState` TypedDict, route_after_vision early-exit rules, monadic append-only error collectors, and the complete REST API network contract.
+     - **Threat Modeling & Zero-Trust Penetration Controls:** Systematized threat vectors (LLM chemical hallucination, pesticide overdose, counterfeit provenance, private key exposure, path traversal, session hijacking, edge memory exhaustion) and their architectural mitigations.
+
+* **Architectural Rationale:**
+  - *Single Source of Truth:* Architecture documentation must never diverge from production implementation. A comprehensive document containing both high-level system topology and low-level mathematical formulas and state keys guarantees zero cognitive friction for developers, system auditors, and judges.
+  - *Verification of Non-Bypassability:* Formally demonstrating how deterministic gates (Canvas chlorophyll bouncer, 97% Dual-Gate, C++ safety engine, Base Sepolia cryptographic hashes) intercept and clamp LLM outputs reinforces AgriNexus's zero-trust commercial-grade positioning.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-088</strong></summary>
+
+> **Question:** In the AgriNexus dual execution architecture, why does the client-side edge swarm (`swarmOrchestrator.js`) enforce the identical 97% confidence floor ($p_{(1)} \ge 0.97$) and 60% runner-up margin ($\Delta \ge 0.60$) as the server-side LangGraph vision agent (`vision_agent.py`)?
+>
+> 1. Because WebAssembly only supports floating point operations above 0.97.
+> 2. To ensure strict cross-platform polyglot determinism: whether a farmer is diagnosed online via the FastAPI cloud swarm or offline in a remote field via in-browser WebAssembly, an out-of-distribution subject (such as an ornamental Hibiscus leaf or text document) is rejected with the exact same mathematical threshold, preventing uncertified chemical prescriptions in both execution modes.
+> 3. Because Google Gemini API mandates 97% confidence before accepting multimodal requests.
+> 4. To reduce mobile battery consumption by terminating neural network layers early.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In a zero-trust agronomy system, offline fallback cannot be a degraded safety hazard. Ensuring that `edgeVisionAgent.js` and `vision_agent.py` enforce identical mathematical criteria ($p_{(1)} \ge 0.97 \land \Delta \ge 0.60$) guarantees cross-platform safety parity, blocking false positives on unmodeled flora regardless of internet connectivity.
+> </details>
+</details>
