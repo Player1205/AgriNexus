@@ -151,13 +151,13 @@
 ### Hard
 - **Q: How does the early-exit routing work in LangGraph?**
   - **A:** In [`backend/app/agents/graph.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/agents/graph.py), `route_after_vision` checks:
-    $$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{Confidence} < 0.97 \implies \text{voice}$$
-    It bypasses RAG, Safety, and Web3 completely, directly issuing a safe KVK referral.
+    $$\text{Route to Voice} \iff (\neg S_{\mathrm{crop}}) \lor (C \lt 0.97)$$
+    *(Direct bypass to Voice Agent and KVK escalation if `is_crop_supported == false` or model confidence $C \lt 0.97$, bypassing chemical RAG, safety clamping, and blockchain passporting)*
 
 ### Tricky
 - **Q: What is the exact mathematical difference between your Top-1 confidence floor and margin floor?**
   - **A:** Top-1 confidence is the raw softmax probability of the highest-scoring class:
-    $$p_{(1)} = \max_i (\text{softmax}(\mathbf{z})_i) \ge 0.97$$
+    $$p_{(1)} = \max_i (\operatorname{Softmax}(\mathbf{z})_i) \ge 0.97$$
     Margin is the distance between the winning class and the runner-up:
-    $$\Delta_{\text{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
+    $$\Delta_{\mathrm{margin}} = p_{(1)} - p_{(2)} \ge 0.60$$
     Even if $p_{(1)} = 0.975$, if $p_{(2)} = 0.38$ (e.g. multi-label lesion overlap), the prediction is rejected as ambiguous and routed to Gemini Vision fallback.

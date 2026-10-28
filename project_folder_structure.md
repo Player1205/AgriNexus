@@ -83,7 +83,8 @@ The Python 3.12 + FastAPI + LangGraph micro-monolith responsible for AI executio
   - **LANGGRAPH STATE MACHINE ORCHESTRATOR.**
   - Compiles the 5 agent nodes (`vision`, `rag`, `safety`, `web3`, `voice`).
   - Defines the `route_after_vision` early-exit conditional gate:
-    $$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{Confidence} < 0.97 \implies \text{Route directly to 'voice' (bypassing RAG/Safety/Web3)}$$
+    $$\text{Route to Voice} \iff (\neg S_{\mathrm{crop}}) \lor (C \lt 0.97)$$
+    *(Directly routes to Agent 5 for safe organic advisory and ICAR KVK referral when `is_crop_supported == false` or confidence $C \lt 0.97$, bypassing chemical RAG, safety clamping, and blockchain passporting)*
 
 - [`backend/app/agents/vision_agent.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/agents/vision_agent.py):
   - **Agent 1: Vision Pathology & Dual-Gate Guard.**

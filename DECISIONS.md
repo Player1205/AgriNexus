@@ -805,11 +805,11 @@ Each record explains:
 * **Context & Problem:** Treating liquid suspensions (`SC`/`EC` measured in $\text{ml}$) and solid wettable powders (`WP`/`WG` measured in $\text{g}$) with an identical flat clamping scalar ($350$) introduces severe physical density mismatches. Furthermore, cutting dosages by 10% under high humidity could accidentally reduce chemical concentrations below the pathogen's Minimum Inhibitory Concentration (MIC), rendering the treatment ineffective and breeding drug-resistant fungal strains.
 * **What Was Changed & How:** Re-engineered [`backend/app/cpp_core/safety_engine.cpp`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/cpp_core/safety_engine.cpp) and [`backend/app/data/icar_protocols.json`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/data/icar_protocols.json):
   1. *Formulation Typing:* Split all 38 protocols into explicit units (`ml` vs `g`) and formulation codes (`LIQUID_SC`, `LIQUID_EC`, `SOLID_WP`, `SOLID_WG`, `BIO_WP`).
-  2. *Therapeutic Operating Windows:* Defined explicit $[\text{min\_mic\_dosage}, \text{max\_statutory\_dosage}]$ boundaries for every active ingredient.
+  2. *Therapeutic Operating Windows:* Defined explicit $[D_{\mathrm{MIC}}, D_{\mathrm{ceiling}}]$ boundaries for every active ingredient.
   3. *MIC Floor Protection Invariant:*
-     $$\text{Bounded} = \min(D_{\text{RAG}}, \text{Max Statutory Ceiling})$$
-     $$\text{Attenuated} = \text{Bounded} \times \left(1.0 - \max\left(0, \frac{H - 80}{100}\right)\right)$$
-     $$\mathbf{\text{Final Safe Dosage}} = \max(\text{Min MIC Floor}, \text{Attenuated})$$
+     $$D_{\mathrm{bounded}} = \min(D_{\mathrm{RAG}}, D_{\mathrm{ceiling}})$$
+     $$D_{\mathrm{attenuated}} = D_{\mathrm{bounded}} \times \left(1.0 - \max\left(0, \frac{H - 80}{100}\right)\right)$$
+     $$\mathbf{D}_{\mathrm{final}} = \max(D_{\mathrm{MIC}}, D_{\mathrm{attenuated}})$$
 * **Architectural Rationale:** Prevents chemical foliar scorching without ever dropping below the biological threshold required to eradicate the pathogen.
 
 <details>
@@ -1814,7 +1814,7 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
    - In [`frontend/src/services/swarmOrchestrator.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/swarmOrchestrator.js): Aligned cloud fallback trigger to `vision_confidence < 0.85 || is_crop_supported === false`.
 2. *Strict StateGraph Early Exit Containment (`backend/app/agents/graph.py`):*
    - Updated LangGraph routing edge `route_after_vision` to evaluate both support status and confidence:
-     $$\text{If } \neg(\text{is\_crop\_supported}) \lor \text{vision\_confidence} < 0.85 \implies \text{Jump directly to Voice (Agent 5)}$$
+     $$\text{Route to Voice} \iff (\neg S_{\mathrm{crop}}) \lor (C \lt 0.85)$$
    - Agents 2 (RAG), 3 (Safety), and 4 (Web3) are unconditionally bypassed whenever confidence is below 85% or the crop is uncertified.
 3. *Telemetry Latency Optimization & Client Timeout Extension:*
    - In [`backend/app/api/routes.py`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/api/routes.py): Reduced telemetry animation delay from 1.6s to 0.8s per node, saving 4.0s of idle server latency.
@@ -1857,13 +1857,13 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 **What Was Changed & How It Was Changed:**
 1. *Backend Vision Gatekeeper (`backend/app/agents/vision_agent.py`):*
    - Elevated Tier 1 ONNX acceptance condition to:
-     $$\text{confidence} \ge 0.97 \quad \text{AND} \quad \text{confidence\_margin} \ge 0.60$$
+     $$C \ge 0.97 \quad \land \quad \Delta_{\mathrm{margin}} \ge 0.60$$
    - Any inference score below 97% or margin below 60% immediately logs:
      `[TIER 1 UNCERTAIN / OOD] Confidence < 97% or Margin < 60%. Engaging Tier 2 Gemini Gatekeeper...`
    - Tier 2 Gemini identifies the exact botanical genus/species (e.g. Hibiscus) and flags uncertified flora with `is_crop_supported = False`.
 2. *LangGraph Routing Edge (`backend/app/agents/graph.py`):*
    - In `route_after_vision`, updated the conditional routing check:
-     $$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{vision\_confidence} < 0.97 \implies \text{Jump directly to Voice (Agent 5)}$$
+     $$\text{Route to Voice} \iff (\neg S_{\mathrm{crop}}) \lor (C \lt 0.97)$$
    - Guaranteed that Agents 2 (RAG), 3 (Safety), and 4 (Web3) are unconditionally bypassed whenever confidence is below 97% or the crop is uncertified.
 3. *In-Browser Edge AI Gatekeeper (`frontend/src/services/edgeVisionAgent.js`):*
    - Updated Gate 2 to `if (top1.prob < 0.97 || margin < 0.60)` to reject any ambiguous or sub-97% classification as unsupported.
@@ -2177,5 +2177,48 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 >
 > **Correct Answer: 2**  
 > *Explanation:* In standard LaTeX syntax, `%` initiates a comment until the end of the line. In multi-line environments like `\begin{cases} ... \end{cases}`, an unescaped or markdown-processed `%` comments out the closing tokens, leaving the environment unclosed and triggering a fatal parser failure.
+> </details>
+</details>
+
+
+---
+
+### ADR-091: Universal Early-Exit KaTeX Math Hardening across Project Documentation
+
+* **Context & The Problem:**
+  - In [`project_folder_structure.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/project_folder_structure.md) and [`HACKATHON_JUDGE_DEFENSE_GUIDE.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/HACKATHON_JUDGE_DEFENSE_GUIDE.md), the LangGraph early-exit routing invariant was documented using variable names inside LaTeX text mode:
+    `$$\text{If } \neg(\text{is\_crop\_supported}) \quad \lor \quad \text{Confidence} < 0.97 \implies \text{Route directly to 'voice'}$$`
+  - GitHub's markdown renderer preprocesses markdown escape characters before passing equation blocks to KaTeX. The markdown engine unescapes `\_` to a raw underscore `_` and converts `<` into HTML entity `&lt;`.
+  - When KaTeX evaluates `\text{is_crop_supported}`, it strictly raises the error `'_' allowed only in math mode` because text mode strictly prohibits unescaped underscores. Furthermore, `&lt;` injects spurious alignment characters, causing red parsing error boxes on GitHub.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Early-Exit Logic Normalization:*
+     - In [`project_folder_structure.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/project_folder_structure.md) and [`HACKATHON_JUDGE_DEFENSE_GUIDE.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/HACKATHON_JUDGE_DEFENSE_GUIDE.md), rewritten as:
+       $$\text{Route to Voice} \iff (\neg S_{\mathrm{crop}}) \lor (C \lt 0.97)$$
+     - Accompanied by plain prose explaining the variable bindings ($S_{\mathrm{crop}} = \text{is\_crop\_supported}$ and $C = \text{vision\_confidence}$).
+  2. *Softmax & Margin Standardization:*
+     - Normalized `\text{softmax}` to standard LaTeX math operator `\operatorname{Softmax}`.
+     - Normalized `\Delta_{\text{margin}}` to Roman math font `\Delta_{\mathrm{margin}}`.
+  3. *Historical Record Sanitization:*
+     - Sanitized historical early-exit and therapeutic clamping formulas in [`DECISIONS.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/DECISIONS.md) (ADR-052, ADR-078, ADR-080).
+
+* **Architectural Rationale:**
+  - Eliminates parser crashes across GitHub web rendering, mobile clients, and offline markdown readers, ensuring pristine technical presentation during judge audits and hackathon evaluations.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-091</strong></summary>
+
+> **Question:** Why does writing code identifiers with underscores inside LaTeX `\text{...}` (e.g. `\text{is_crop_supported}`) cause GitHub's KaTeX renderer to fail with `'_' allowed only in math mode`?
+>
+> 1. Because KaTeX does not allow letters in equations.
+> 2. Because GitHub Markdown unescapes `\_` to `_` before KaTeX parses it, and in LaTeX syntax, `\text{}` temporarily leaves math mode to enter text mode where raw `_` is strictly forbidden.
+> 3. Because Python variable names cannot exceed 12 characters.
+> 4. Because GitHub only supports LaTeX equations written in ASCII-7.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In standard LaTeX / KaTeX grammar, `\text{...}` switches the typesetting engine into text mode. Underscores `_` are subscript operators only permitted in math mode; in text mode, they represent a syntax error unless escaped. Since GitHub Markdown strips backslashes before sending tokens to the KaTeX engine, code identifiers should either be typeset as math variables with Roman subscripts (e.g., $S_{\mathrm{crop}}$) or placed in markdown backticks.
 > </details>
 </details>
