@@ -2097,3 +2097,43 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* In a zero-trust agronomy system, offline fallback cannot be a degraded safety hazard. Ensuring that `edgeVisionAgent.js` and `vision_agent.py` enforce identical mathematical criteria ($p_{(1)} \ge 0.97 \land \Delta \ge 0.60$) guarantees cross-platform safety parity, blocking false positives on unmodeled flora regardless of internet connectivity.
 > </details>
 </details>
+
+---
+
+### ADR-089: Commercial README Synchronization & Production System Architecture Alignment
+
+* **Context & The Problem:**
+  1. *Public Documentation Desynchronization:* As recent major platform enhancements were implemented—specifically the 97% confidence and 60% runner-up margin vision gates, multi-chunk RIFF WAV audio merging, MongoDB Atlas multi-tenant persistence, Cloudinary CDN ingestion, client-side PDF field reports, and the Nexus Command administrative portal—the public [`README.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/README.md) still contained outdated metrics (such as the legacy 60% vision threshold, incomplete weather cascades, and omission of the persistence and PDF reporting architecture).
+  2. *Auditor and Judge Onboarding Clarity:* Potential government clients, research auditors (ICAR/CIB&RC), and hackathon judges reviewing the project's primary entry point require an accurate, commercial-grade overview aligned with [`ARCHITECTURE.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/ARCHITECTURE.md) and the production codebase.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Complete Synchronization of [`README.md`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/README.md):*
+     - **Header Badges & Identity:** Added MongoDB Atlas badge alongside existing Base Sepolia, Sarvam AI, ONNX Runtime, C++, FastAPI, and React badges.
+     - **5-Agent Swarm Flowchart:** Updated the high-level Mermaid sequence to reflect the 3-tier GPS hierarchy, the OpenWeatherMap & Air Pollution AQI cascade, and the conditional early-exit routing where uncertified crops bypass chemical RAG/Safety.
+     - **Meteorological & AQI Gates:** Formally detailed the 4-tier meteorological fallback cascade (OpenWeatherMap + AQI $\to$ Open-Meteo $\to$ Met.no $\to$ WTTR.in) and the AQI = 5 mandatory spray halt.
+     - **Deterministic C++ Formulation Clamping & MIC Floor:** Updated the C++ safety engine section to explain liquid (`ml`) vs solid (`g`) formulation separation and the Minimum Inhibitory Concentration (MIC) pathogen resistance floor equation.
+     - **Edge AI 97% Dual-Gate Invariant:** Codified the 97.0% Top-1 probability floor ($p_{(1)} \ge 0.97$), 60% runner-up margin ($\Delta \ge 0.60$), Canvas chlorophyll pre-filter ($<4\%$ rejection), and Gemini Flash-Lite/Flash zero-retry failover.
+     - **Acoustic Speech Synthesis:** Documented multi-chunk sentence splitting ($\le 450$ chars), server and client binary WAV frame concatenation, and audience separation (clean vernacular farmer guidance vs technical provenance).
+     - **Enterprise Persistence & Nexus Command Admin:** Created dedicated sections documenting the multi-tenant MongoDB Atlas data layer, PBKDF2 password cryptography, Cloudinary media storage, downloadable PDF field reports (`jsPDF`), and the Nexus Command administrative portal.
+     - **Automated Verification Matrix:** Updated the test table to reflect all test suites across Pytest (Deterministic core, MongoDB auth, TTS client), Vitest (client swarm, PWA), and Hardhat (Base Sepolia smart contracts).
+
+* **Architectural Rationale:**
+  - *Public-Facing Architectural Parity:* A project's `README.md` is its front-line architectural facade. Ensuring that benchmarks, equations, and subsystem descriptions in `README.md` exactly mirror `ARCHITECTURE.md` and production code prevents miscommunication during code audits and technical defense interviews.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-089</strong></summary>
+
+> **Question:** Why does AgriNexus embed an official ICAR institute attribution (e.g. ICAR-IIVR Varanasi, ICAR-CPRI Shimla) and BaseScan transaction link inside the client-side generated PDF field report (`UserScansModal.jsx`)?
+>
+> 1. To satisfy copyright requirements of the PDF font library.
+> 2. To transform a simple mobile diagnosis into a legally grounded, verifiable agronomic document that farmers can present to APMC Mandi officials, crop insurance underwriters, and export quality certifiers to prove non-use of banned chemicals.
+> 3. To trigger an automatic Google Maps redirect when the PDF is opened.
+> 4. To allow farmers to mine cryptocurrency while exporting reports.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Smallholder farmers often suffer steep discounts or export rejections due to lack of verifiable treatment provenance. Grounding the PDF report with official ICAR institute protocols and an immutable on-chain BaseScan transaction hash establishes an indisputable paper and cryptographic audit trail for procurement agents and crop insurance inspectors.
+> </details>
+</details>
