@@ -6,6 +6,8 @@ import AuthView from "./components/AuthView";
 import UserScansModal from "./components/UserScansModal";
 import AdminDashboard from "./components/AdminDashboard";
 import { getCurrentUser, logout } from "./services/auth";
+import { registerAutoSync } from "./services/offlineSyncEngine";
+import { countPendingScans } from "./services/offlineStorage";
 import { Sprout, Cpu, Download, LogOut, Database, User as UserIcon, ShieldCheck } from "lucide-react";
 
 export default function App() {
@@ -16,6 +18,8 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isScansModalOpen, setIsScansModalOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState("hi");
+  const [syncNotification, setSyncNotification] = useState(null);
+  const [pendingOfflineCount, setPendingOfflineCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -32,6 +36,36 @@ export default function App() {
       .then(setUser)
       .finally(() => setAuthChecked(true));
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check count of pending offline scans
+    countPendingScans(user?.id).then(setPendingOfflineCount);
+
+    const cleanup = registerAutoSync({
+      getToken: () => localStorage.getItem("agrinexus_auth_token"),
+      getUserId: () => user?.id,
+    });
+
+    const handleSyncComplete = (event) => {
+      const { syncedCount } = event.detail || {};
+      if (syncedCount > 0) {
+        setSyncNotification(
+          `${syncedCount} offline scan${syncedCount > 1 ? "s" : ""} synchronized with cloud and Base Sepolia.`
+        );
+        setTimeout(() => setSyncNotification(null), 5000);
+        countPendingScans(user?.id).then(setPendingOfflineCount);
+      }
+    };
+
+    window.addEventListener("agrinexus-offline-sync-complete", handleSyncComplete);
+
+    return () => {
+      cleanup();
+      window.removeEventListener("agrinexus-offline-sync-complete", handleSyncComplete);
+    };
+  }, [user]);
 
   if (!authChecked) {
     return (
@@ -133,6 +167,11 @@ export default function App() {
           >
             <Database className="w-3.5 h-3.5 text-emerald-400" />
             <span className="hidden sm:inline">{UI_TRANSLATIONS[selectedLang]?.myScans || UI_TRANSLATIONS['en'].myScans}</span>
+            {pendingOfflineCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold text-amber-300 animate-pulse">
+                {pendingOfflineCount}
+              </span>
+            )}
           </button>
 
           {/* User Profile Pill */}
@@ -157,6 +196,14 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {/* Floating Offline Sync Reconnection Toast */}
+      {syncNotification && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-950/95 border border-emerald-500/50 text-emerald-300 text-xs font-semibold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-300">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>{syncNotification}</span>
+        </div>
+      )}
 
       {/* Main Dual Panels: Farmer View and Telemetry View */}
       {activeTab === "admin" ? (

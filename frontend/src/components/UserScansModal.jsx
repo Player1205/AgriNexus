@@ -15,6 +15,7 @@ import {
   Droplets,
 } from "lucide-react";
 import { getUserScans, deleteUserScan, getBaseApiUrl } from "../services/api";
+import { getAllOfflineScans, deleteOfflineScan } from "../services/offlineStorage";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { UI_TRANSLATIONS } from "./FarmerView";
@@ -29,8 +30,24 @@ export default function UserScansModal({ isOpen, onClose, user, selectedLang = "
   const fetchScans = async () => {
     setLoading(true);
     try {
-      const data = await getUserScans();
-      setScans(data.scans || []);
+      let serverScans = [];
+      try {
+        const data = await getUserScans();
+        serverScans = data.scans || [];
+      } catch (err) {
+        console.warn("Could not reach backend scans API, will rely on local storage:", err);
+      }
+
+      // Retrieve locally stored scans from IndexedDB
+      const offlineScans = await getAllOfflineScans(user?.id);
+
+      // Merge avoiding duplicate entries for records already synchronized to server
+      const serverIds = new Set(serverScans.map((s) => s.id));
+      const unmergedOffline = offlineScans.filter(
+        (os) => !serverIds.has(os.server_scan_id) && !serverIds.has(os.id)
+      );
+
+      setScans([...unmergedOffline, ...serverScans]);
     } catch (err) {
       console.error("Failed to load user scans:", err);
     } finally {
@@ -183,11 +200,19 @@ export default function UserScansModal({ isOpen, onClose, user, selectedLang = "
     doc.save(`AgriNexus_Scan_${scan.id || "scan"}.pdf`);
   };
 
-  const handleDelete = async (scanId) => {
+  const handleDelete = async (scan) => {
+    const scanId = typeof scan === "object" ? scan.id : scan;
+    const isOffline = typeof scan === "object" ? scan.is_offline_record : false;
+
     if (!confirm("क्या आप वाकई इस स्कैन को हटाना चाहते हैं?\nAre you sure you want to delete this scan?")) return;
     setDeletingId(scanId);
     try {
-      await deleteUserScan(scanId);
+      if (isOffline) {
+        await deleteOfflineScan(scanId);
+      }
+      try {
+        await deleteUserScan(scanId);
+      } catch {}
       setScans((prev) => prev.filter((s) => s.id !== scanId));
     } catch (err) {
       alert("Failed to delete scan: " + err.message);
@@ -374,6 +399,19 @@ export default function UserScansModal({ isOpen, onClose, user, selectedLang = "
                             {scan.crop ? scan.crop : "Field Scan"}
                           </span>
 
+                          {/* IndexedDB Offline Storage Status Badge */}
+                          {scan.is_offline_record && (
+                            <span
+                              className={`text-[11px] font-bold flex items-center gap-1 px-2.5 py-0.5 rounded-full border ${
+                                scan.sync_status === 'PENDING_SYNC'
+                                  ? 'border-amber-300 bg-amber-50 text-amber-700'
+                                  : 'border-blue-300 bg-blue-50 text-blue-700'
+                              }`}
+                            >
+                              {scan.sync_status === 'PENDING_SYNC' ? '⏳ Local (Pending Sync)' : '☁️ Synced to Base Sepolia'}
+                            </span>
+                          )}
+
                           {/* Spray safety */}
                           {scan.is_spray_safe !== undefined && (
                             <span
@@ -445,7 +483,7 @@ export default function UserScansModal({ isOpen, onClose, user, selectedLang = "
                       )}
 
                       <button
-                        onClick={() => handleDelete(scan.id)}
+                        onClick={() => handleDelete(scan)}
                         disabled={deletingId === scan.id}
                         className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition disabled:opacity-40 bg-white"
                         title="हटाएं (Delete)"

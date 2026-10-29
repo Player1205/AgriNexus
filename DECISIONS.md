@@ -2222,3 +2222,52 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* In standard LaTeX / KaTeX grammar, `\text{...}` switches the typesetting engine into text mode. Underscores `_` are subscript operators only permitted in math mode; in text mode, they represent a syntax error unless escaped. Since GitHub Markdown strips backslashes before sending tokens to the KaTeX engine, code identifiers should either be typeset as math variables with Roman subscripts (e.g., $S_{\mathrm{crop}}$) or placed in markdown backticks.
 > </details>
 </details>
+
+
+---
+
+### ADR-092: Client-Side IndexedDB Outbox Persistence & Automated Network Reconnection Sync Engine
+
+* **Context & The Problem:**
+  - AgriNexus enables autonomous foliar pathology diagnosis in remote rural fields with zero cellular connectivity using in-browser WebAssembly neural inference (`onnxruntime-web`) and client-side deterministic safety rules (`swarmOrchestrator.js`).
+  - However, because diagnostic results were held exclusively in transient React component memory (`lastResult`), closing the browser tab, clearing recent apps, or powering off the mobile phone caused irrevocable data loss.
+  - Additionally, when the farmer returned from the field and reconnected to internet connectivity (home Wi-Fi or cellular signal), offline field assessments were never propagated to MongoDB Atlas or minted as immutable Base Sepolia cryptographic crop passports.
+
+* **What Was Changed & How It Was Changed:**
+  1. *IndexedDB Storage Service (`frontend/src/services/offlineStorage.js`):*
+     - Architected a zero-dependency, asynchronous client-side database layer utilizing HTML5 `IndexedDB` (`AgriNexusOfflineDB`, version `1`, object store `offline_scans`).
+     - Established secondary indices for `sync_status` (`PENDING_SYNC` vs `SYNCED`), `created_at`, and `user_id`.
+     - Provided atomic functions: `openDB()`, `saveOfflineScan()`, `getPendingScans()`, `getAllOfflineScans()`, `markScanSynced()`, `deleteOfflineScan()`, and `countPendingScans()`.
+  2. *Automated Network Reconnection Sync Engine (`frontend/src/services/offlineSyncEngine.js`):*
+     - Implemented `syncPendingScans()` to verify network reachability (`navigator.onLine`), extract pending records, post payloads to the backend `/api/v1/user/scans` endpoint, and transition local records to `sync_status = 'SYNCED'` with server confirmation metadata.
+     - Registered automated event listeners via `registerAutoSync()` on `window.addEventListener('online')` and opportunistic initialization checks.
+  3. *Multi-Agent Swarm Orchestrator Integration (`frontend/src/services/swarmOrchestrator.js`):*
+     - Injected `persistScanLocally()` across all 3 terminal return paths: confident certified crop diagnoses, uncertified botanical subjects, and ambiguous/low-confidence KVK early exits.
+  4. *Farmer Interface & Modal Enhancement (`App.jsx` & `UserScansModal.jsx`):*
+     - Added real-time floating toast notifications upon background sync completion.
+     - Implemented dynamic pending count badges on the "My Scans" header control (`{pendingOfflineCount} offline`).
+     - Enhanced `UserScansModal.jsx` to merge local IndexedDB outbox records with remote MongoDB Atlas records, displaying distinct status badges (`⏳ Local (Pending Sync)` vs `☁️ Synced to Base Sepolia`) and permitting local deletion.
+  5. *Test-Driven Development (TDD) Validation (`frontend/src/test/OfflineStorageAndSync.test.js`):*
+     - Authored 9 comprehensive automated unit tests verifying schema creation, record persistence, user query isolation, pending status counting, sync state transitions, deletion, and offline network aborts. All 37 frontend tests passing cleanly.
+
+* **Architectural Rationale:**
+  - *Zero Frame Drops:* Unlike synchronous `localStorage`, `IndexedDB` operations execute on an isolated asynchronous browser thread, guaranteeing zero UI frame stuttering or 3D telemetry interruptions.
+  - *Eventual Consistency:* Resolves the fundamental rural connectivity divide, providing smallholder farmers with instant offline diagnosis and guaranteed cloud/blockchain provenance upon network restoration.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-092</strong></summary>
+
+> **Question:** Why is browser-native `IndexedDB` architecturally superior to `localStorage` for persisting offline agricultural scans and synchronizing them upon network restoration?
+>
+> 1. Because `localStorage` is deprecated by all modern web browsers.
+> 2. Because `IndexedDB` is completely asynchronous, supports multi-megabyte structured JSON records and binary assets without blocking the main rendering thread, and allows secondary indexing on sync statuses (`PENDING_SYNC`).
+> 3. Because `localStorage` automatically encrypts passwords using RSA-4096.
+> 4. Because `IndexedDB` runs directly on Base Sepolia blockchain nodes.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* `localStorage` is a synchronous, blocking key-value store limited to 5MB of string data; writing large diagnostic JSON objects or image representations freezes the JavaScript UI thread. `IndexedDB` is an asynchronous, transactional NoSQL database capable of storing hundreds of megabytes with custom indices (e.g. `sync_status`), ensuring smooth 60fps animations while persisting complete field records offline.
+> </details>
+</details>

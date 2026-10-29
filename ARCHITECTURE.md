@@ -493,6 +493,17 @@ Dedicated administrative interface for extension supervisors:
   - **Standalone Display Mode:** Silently suppresses install prompts when launched from the home screen (`display-mode: standalone`).
 - **Desktop Webcam Ingestion (`LaptopWebcamModal.jsx`):** Employs WebRTC `navigator.mediaDevices.getUserMedia` to stream live video to a canvas buffer, exporting a 90% quality JPEG blob for laptop users without native mobile camera pickers.
 
+#### IndexedDB Client-Side Outbox & Reconnection Sync Engine
+* **Primary Source Code:** [`frontend/src/services/offlineStorage.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/offlineStorage.js) & [`frontend/src/services/offlineSyncEngine.js`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/services/offlineSyncEngine.js)
+* **Zero Data Loss Invariant:** When a smallholder farmer performs on-device neural diagnosis in disconnected rural fields (`navigator.onLine === false`), the complete diagnostic record (pathology, ICAR formulation dosage, weather limits, local SHA-256 passport receipt) is committed to client-side persistent **IndexedDB** (`AgriNexusOfflineDB`, store: `offline_scans`) with state `sync_status: 'PENDING_SYNC'`.
+* **Asynchronous & Non-Blocking:** IndexedDB operations run on a separate browser database thread, guaranteeing zero UI frame drops or 3D telemetry stuttering.
+* **Automated Reconnection Reconciliation:** The sync engine registers an event listener on `window.addEventListener('online')` and triggers an opportunistic sweep upon application startup. When network connectivity is re-established:
+  1. The engine retrieves all records with `sync_status === 'PENDING_SYNC'`.
+  2. Submits the scan payloads to the backend `/api/v1/user/scans` endpoint with the authenticated bearer token.
+  3. Transitions local records to `sync_status = 'SYNCED'`, storing the server `scan_id` and BaseScan `tx_hash`.
+  4. Dispatches an `agrinexus-offline-sync-complete` event, rendering a floating toast notification in `App.jsx` confirming cloud and blockchain synchronization.
+* **Unified Local & Cloud Modal:** [`UserScansModal.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/components/UserScansModal.jsx) merges remote MongoDB Atlas records with local IndexedDB records, providing offline access to past scans and rendering real-time synchronization badges (`⏳ Local (Pending Sync)` vs `☁️ Synced to Base Sepolia`).
+
 ---
 
 ## 📊 6. Comprehensive API Reference & Network Contract

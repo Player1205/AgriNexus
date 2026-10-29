@@ -3,6 +3,25 @@ import { runEdgeRagAgent } from './edgeRagAgent';
 import { runEdgeSafetyAgent } from './edgeSafetyAgent';
 import { runEdgeWeb3Agent } from './edgeWeb3Agent';
 import { runEdgeVoiceAgent } from './edgeVoiceAgent';
+import { saveOfflineScan } from './offlineStorage';
+
+const persistScanLocally = async (result) => {
+    try {
+        let userId = 'anonymous';
+        if (typeof localStorage !== 'undefined') {
+            const rawUser = localStorage.getItem('agrinexus_user');
+            if (rawUser) {
+                try {
+                    const parsed = JSON.parse(rawUser);
+                    userId = parsed.id || parsed._id || 'anonymous';
+                } catch {}
+            }
+        }
+        await saveOfflineScan(result, userId);
+    } catch (err) {
+        console.warn('[OFFLINE SWARM] Non-fatal IndexedDB storage error:', err);
+    }
+};
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -268,7 +287,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                             const voiceOutput = await runEdgeVoiceAgent(uncertifiedState);
                             broadcastLocal('voice', voiceOutput);
 
-                            return {
+                            const uncertifiedResult = {
                                 ...uncertifiedState,
                                 ...voiceOutput,
                                 translated_text: voiceOutput.translated_text || uncertifiedState.translated_text,
@@ -286,6 +305,8 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                                     longitude: currentState.client_longitude
                                 }
                             };
+                            await persistScanLocally(uncertifiedResult);
+                            return uncertifiedResult;
                         } else {
                             console.log("[SWARM ORCHESTRATOR] ☁️ Gemini confirms Non-Agricultural Image.");
                         }
@@ -332,7 +353,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
             const voiceOutput = await runEdgeVoiceAgent(earlyExitState);
             broadcastLocal('voice', voiceOutput);
 
-            return {
+            const earlyExitResult = {
                 ...earlyExitState,
                 ...voiceOutput,
                 translated_text: voiceOutput.translated_text || earlyExitState.translated_text,
@@ -350,6 +371,8 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
                     longitude: currentState.client_longitude
                 }
             };
+            await persistScanLocally(earlyExitResult);
+            return earlyExitResult;
         }
     }
 
@@ -386,7 +409,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
 
     console.log("[OFFLINE SWARM] Completed 5-Agent Execution 100% On-Device!");
 
-    return {
+    const finalResult = {
         ...currentState,
         weather_data: {
             temperature_c: currentState.current_temperature,
@@ -400,4 +423,6 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
             longitude: currentState.client_longitude
         }
     };
+    await persistScanLocally(finalResult);
+    return finalResult;
 };
