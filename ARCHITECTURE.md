@@ -247,6 +247,13 @@ Prior to constructing WebAssembly tensor buffers, client-side execution runs a s
 2. Evaluates RGB pixel channels: pixel is classified as organic vegetation if $G > R \land G > B$ (healthy chlorophyll) or $R > 80 \land G > 50 \land B < 50$ (chlorotic/necrotic foliar tissue).
 3. If the ratio of organic vegetation pixels is `< 4%`, the image is instantly rejected as a non-plant (white paper, screenshot, furniture) in `< 2ms` without loading the 71MB ONNX weights into WebAssembly memory.
 
+#### Self-Hosted WebAssembly Runtime & External Model Data Mounting (`edgeVisionAgent.js`)
+To guarantee deterministic execution in remote rural fields with zero cellular connectivity:
+1. **Self-Hosted WebAssembly Binaries (`/wasm/`):** The client-side ONNX runtime loads from local static assets (`/wasm/ort-wasm-simd-threaded.jsep.wasm`, `ort-wasm-simd-threaded.jsep.mjs`), eliminating external CDN dependencies (`cdn.jsdelivr.net`) and protecting against dynamic module import failures or CORS rejections.
+2. **External Tensor Data Virtual Mounting:** The 71.2MB quantized neural model (`agrinexus_vision.onnx`) utilizes split external tensor initializers (`agrinexus_vision.onnx.data`). The edge vision agent passes an explicit `externalData` manifest to `InferenceSession.create()`, instructing ONNX Runtime to mount the raw weight binary into Emscripten virtual memory (MEMFS) before session initialization.
+3. **Single-Threaded Memory Bounds:** Single-threaded allocation (`ort.env.wasm.numThreads = 1`) guarantees cross-origin isolation safety without requiring `SharedArrayBuffer` headers (`COOP`/`COEP`).
+4. **Resilient Dual-Tier Initialization:** Local self-hosted WASM binaries take first priority, with automated failover to certified CDN mirrors if local virtual filesystem retrieval encounters an unrecoverable read failure.
+
 #### 14 Certified Commercial Food Crops
 AgriNexus enforces certified chemical protocols exclusively across 14 high-value food and horticulture crops:
 $$\mathcal{C}_{\mathrm{certified}} = \{\text{Apple}, \text{Blueberry}, \text{Cherry}, \text{Corn}, \text{Grape}, \text{Orange}, \text{Peach}, \text{Pepper}, \text{Potato}, \text{Raspberry}, \text{Soybean}, \text{Squash}, \text{Strawberry}, \text{Tomato}\}$$

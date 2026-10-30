@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrinexus-offline-v4';
+const CACHE_NAME = 'agrinexus-offline-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,7 +7,9 @@ const STATIC_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/wasm/ort-wasm-simd-threaded.jsep.mjs',
+  '/wasm/ort-wasm-simd-threaded.mjs'
 ];
 
 self.addEventListener('install', (event) => {

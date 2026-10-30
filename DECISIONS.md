@@ -2271,3 +2271,56 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* `localStorage` is a synchronous, blocking key-value store limited to 5MB of string data; writing large diagnostic JSON objects or image representations freezes the JavaScript UI thread. `IndexedDB` is an asynchronous, transactional NoSQL database capable of storing hundreds of megabytes with custom indices (e.g. `sync_status`), ensuring smooth 60fps animations while persisting complete field records offline.
 > </details>
 </details>
+
+---
+
+### ADR-093: Local Self-Hosted WebAssembly Runtime Deployment, External Model Data Mounting, and Service Worker Cache Invalidation
+
+* **Context & The Problem:**
+  - In testing the in-browser 5-Agent Multi-Agent Swarm (MAS) on client devices, foliar scan executions failed with:
+    `Diagnosis: Error Loading Model: no available backend found. ERR: [wasm] TypeError: Failed to fetch dynamically imported module: https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.0/dist/ort-wasm-simd-threaded.jsep.mjs`
+    leading to confidence $0.0\%$, model initialization aborts, and erroneous fallback to "Non-Target Subject" inspection advisories for genuine diseased crops (such as Tomato Late/Early Blight).
+  - The root cause was three-fold:
+    1. *Third-Party CDN Dependency:* `edgeVisionAgent.js` previously configured `env.wasm.wasmPaths` to point to an external CDN (`cdn.jsdelivr.net`). In remote rural fields without cellular reception, during transient network drops, or under ISP/firewall blocks, the dynamic ES module `import()` of Emscripten glue files (`ort-wasm-simd-threaded.jsep.mjs`) failed catastrophically.
+    2. *Missing Local WebAssembly Binaries:* WebAssembly binaries were missing from the local static directory (`frontend/public/wasm/`), causing Vite's SPA router to return `index.html` (`text/html`) for missing files, which the browser rejected as an invalid JavaScript module.
+    3. *Unmounted ONNX External Data Weights:* The fine-tuned `agrinexus_vision.onnx` neural network uses external tensor weight storage (`agrinexus_vision.onnx.data`, 71.2MB). Without passing explicit `externalData` configuration to `InferenceSession.create()`, ONNX Runtime WebAssembly MEMFS failed to mount weight buffers into memory.
+    4. *Stale Service Worker Caching:* Client browsers and installed desktop PWAs retained stale Service Worker caches (`agrinexus-offline-v4`) pointing to legacy bundles.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Self-Hosted WebAssembly Runtime Deployment (`frontend/public/wasm/`):*
+     - Deployed all official WebAssembly runtime binaries and Emscripten modules from `onnxruntime-web@1.30.0/dist` into `frontend/public/wasm/`:
+       - `ort-wasm-simd-threaded.jsep.mjs` (46.8 KB) & `ort-wasm-simd-threaded.jsep.wasm` (28.3 MB)
+       - `ort-wasm-simd-threaded.mjs` (24.3 KB) & `ort-wasm-simd-threaded.wasm` (14.2 MB)
+       - `ort-wasm-simd-threaded.asyncify.mjs` (53.0 KB) & `ort-wasm-simd-threaded.asyncify.wasm` (26.7 MB)
+       - `ort-wasm-simd-threaded.jspi.mjs` (50.9 KB) & `ort-wasm-simd-threaded.jspi.wasm` (16.7 MB)
+  2. *Origin-Aware Runtime Prefix & Resilient Loading (`frontend/src/services/edgeVisionAgent.js`):*
+     - Replaced hardcoded CDN string with dynamic `getWasmPath()` resolving to `${window.location.origin}/wasm/` in browser environments and `/wasm/` in base contexts.
+     - Configured `InferenceSession.create('/models/agrinexus_vision.onnx', ...)` with explicit `externalData: [{ path: 'agrinexus_vision.onnx.data', data: '/models/agrinexus_vision.onnx.data' }]`, guaranteeing that Emscripten's virtual memory filesystem mounts the 71.2MB weight buffers prior to tensor allocation.
+     - Implemented an automated failover cascade: local self-hosted WASM priority with graceful fallback to CDN if local files encounter read rejections.
+  3. *Service Worker v5 Cache Invalidation & Static Asset Pre-Caching (`frontend/public/sw.js`):*
+     - Incremented the cache version identifier to `agrinexus-offline-v5`, ensuring automatic eviction of stale v4 caches upon service worker `activate` across all client browsers and installed desktop/mobile PWAs.
+     - Added `/wasm/ort-wasm-simd-threaded.jsep.mjs` and `/wasm/ort-wasm-simd-threaded.mjs` to `STATIC_ASSETS` for immediate offline pre-caching.
+  4. *Production Build Synchronization (`frontend/dist/`):*
+     - Re-built production bundles via Vite (`npm run build`), synchronizing `dist/assets/index-KNEtXc99.js` and outputting self-hosted WebAssembly artifacts into `dist/wasm/`.
+
+* **Architectural Rationale:**
+  - *True Zero-Connectivity Edge Invariance:* In accordance with AgriNexus core commercial requirements, edge neural diagnostics must execute 100% on-device in rural fields without pinging external CDNs. Self-hosting WebAssembly runtimes eliminates external network vulnerabilities, CORS restrictions, and third-party downtime.
+  - *Deterministic Weight Mounting:* Explicit `externalData` configuration ensures that large multi-megabyte ONNX models load reliably across diverse browser engines without encountering unmounted virtual filesystem errors.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-093</strong></summary>
+
+> **Question:** When running `onnxruntime-web` in an offline Progressive Web App (PWA) with models split into external data files (e.g. `model.onnx` and `model.onnx.data`), why is it critical to pass the `externalData` option to `InferenceSession.create()`?
+>
+> 1. Because external data files are encrypted with AES-256 and require a decryption key.
+> 2. Because WebAssembly executes in an isolated sandbox with a virtual in-memory filesystem (MEMFS); passing `externalData` instructs ONNX Runtime to fetch and mount the raw weight binary into MEMFS so the model can resolve its tensor initializers locally.
+> 3. Because without `externalData`, the model automatically defaults to 8-bit integer quantization.
+> 4. Because `onnxruntime-web` only supports models with external data when running inside a Node.js process.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* In standard browser WebAssembly environments, the C++ runtime compiled by Emscripten interacts with a virtual filesystem (MEMFS). When an ONNX model references external weights (e.g. models $>2\text{GB}$ or exported with split initializers), the runtime cannot open arbitrary local filesystem paths. Providing `options.externalData = [{ path: 'model.onnx.data', data: urlOrBuffer }]` enables ONNX Runtime to download/read the weights and call `mountExternalData()` into MEMFS before graph instantiation.
+> </details>
+> </details>

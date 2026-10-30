@@ -1,7 +1,14 @@
 import { InferenceSession, Tensor, env } from 'onnxruntime-web';
 
-// Configure ONNX Runtime to use CDN WASM files to prevent local SPA routing from returning index.html (404)
-env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+// Prioritize local self-hosted WASM/MJS runtime files to guarantee 100% offline edge execution
+const getWasmPath = () => {
+    if (typeof window !== 'undefined' && window.location && window.location.origin) {
+        return window.location.origin + '/wasm/';
+    }
+    return '/wasm/';
+};
+
+env.wasm.wasmPaths = getWasmPath();
 // Disable multithreading to prevent SharedArrayBuffer crashes without COOP/COEP headers
 env.wasm.numThreads = 1;
 
@@ -56,10 +63,20 @@ let cachedSession = null;
 
 const initSession = async () => {
     if (!cachedSession) {
-        // Loads your REAL 71MB ONNX model from the frontend public folder
-        cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', {
-            executionProviders: ['wasm']
-        });
+        const sessionOptions = {
+            executionProviders: ['wasm'],
+            externalData: [
+                { path: 'agrinexus_vision.onnx.data', data: '/models/agrinexus_vision.onnx.data' }
+            ]
+        };
+        try {
+            console.log('[EDGE AI] Initializing local ONNX runtime engine from /models/agrinexus_vision.onnx...');
+            cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', sessionOptions);
+        } catch (localErr) {
+            console.warn('[EDGE AI] Local WASM init failed, attempting CDN fallback...', localErr);
+            env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+            cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', sessionOptions);
+        }
     }
     return cachedSession;
 };
