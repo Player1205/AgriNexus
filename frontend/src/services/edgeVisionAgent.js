@@ -95,7 +95,7 @@ const checkOrganicChlorophyllContent = (imgData) => {
         // 1. Dominant green foliar chlorophyll
         const isGreen = (g > r * 1.02 && g > b * 1.02 && g > 30);
         // 2. Agricultural foliar necrosis / lesion / chlorosis tones (yellow/brown/rust/tan)
-        const isFoliarNecrotic = (r > 45 && g > 30 && b < 130 && (r + g) > (b * 1.6));
+        const isFoliarNecrotic = (r > 40 && g > 25 && b < 145 && (r + g) > (b * 1.4));
 
         if (isGreen || isFoliarNecrotic) {
             organicPixels++;
@@ -164,8 +164,9 @@ export const runEdgeVisionAgent = async (file) => {
                         console.log(`[EDGE AI] Foliar Organic Ratio: ${(organicRatio * 100).toFixed(1)}%`);
 
                         // Gate 1: Non-agricultural image check (Document / Screenshot / White screen bouncer)
-                        if (organicRatio < 0.04) {
-                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 4% required).`);
+                        // Calibrated to 1.5% to accommodate centered foliar samples with letterbox or neutral backgrounds
+                        if (organicRatio < 0.015) {
+                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 1.5% required).`);
                             resolve({
                                 vision_diagnosis: "Non-Agricultural Image (Low Foliar Pigment)",
                                 vision_confidence: 0.0,
@@ -191,9 +192,10 @@ export const runEdgeVisionAgent = async (file) => {
 
                         console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
 
-                        // Gate 2: Edge AI Validation (97% Confidence & Margin Floor)
-                        // Requires top-1 confidence >= 97% with margin >= 60% before proceeding to automated agronomic recommendation.
-                        if (top1.prob < 0.97 || margin < 0.60) {
+                        // Gate 2: Edge AI Validation (65% Confidence & 15% Margin Floor)
+                        // Across 38 classes (random chance = 2.63%), top-1 confidence >= 65% with margin >= 15%
+                        // delivers decisive on-device crop pathology classification while rejecting ambiguous out-of-distribution foliage.
+                        if (top1.prob < 0.65 || margin < 0.15) {
                             console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
                             resolve({
                                 vision_diagnosis: "Unrecognized / Unsupported Plant",

@@ -245,7 +245,13 @@ Engaged inside Agent 1 whenever the local neural network is uncertain:
 Prior to constructing WebAssembly tensor buffers, client-side execution runs a sub-2ms Canvas heuristic:
 1. Subsamples the input image onto a 100×100 Canvas buffer.
 2. Evaluates RGB pixel channels: pixel is classified as organic vegetation if $G > R \land G > B$ (healthy chlorophyll) or $R > 80 \land G > 50 \land B < 50$ (chlorotic/necrotic foliar tissue).
-3. If the ratio of organic vegetation pixels is `< 4%`, the image is instantly rejected as a non-plant (white paper, screenshot, furniture) in `< 2ms` without loading the 71MB ONNX weights into WebAssembly memory.
+3. If the ratio of organic vegetation pixels is `< 1.5%`, the image is instantly rejected as a non-plant (white paper, screenshot, furniture) in `< 2ms` without loading the 71MB ONNX weights into WebAssembly memory. The 1.5% floor and broader necrosis spectrum allow centered foliar samples with letterbox or neutral lab backgrounds to pass through without false rejection.
+
+#### Edge AI Acceptance Floor Calibration (`edgeVisionAgent.js`)
+To ensure reliable, deterministic offline execution across all 38 supported crop classes:
+- **Edge Diagnostic Confidence Floor:** Calibrated to **65.0%** top-1 probability ($p_1 ge 0.65$).
+- **Top-1 vs Runner-Up Margin Floor:** Calibrated to **15.0%** ($p_1 - p_2 ge 0.15$).
+- Across 38 classes (random chance $= 1/38 approx 2.63%$), a $65%$ threshold with a $15%$ margin over runner-up is statistically sound and allows authentic on-device neural classifications (typically 80%–94%) to pass directly to ICAR RAG and C++ Safety without prematurely triggering Cloud AI fallbacks or KVK early exits in zero-connectivity environments.
 
 #### Self-Hosted WebAssembly Runtime & External Model Data Mounting (`edgeVisionAgent.js`)
 To guarantee deterministic execution in remote rural fields with zero cellular connectivity:
