@@ -2531,3 +2531,52 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
 > *Explanation:* In JavaScript, `Array.prototype.find()` returns the *first* element that satisfies the provided testing function. When the first protocol in the dataset was Tomato Late Blight and its `keywords` array included `"tomato"`, any diagnosis starting with `"Tomato"` (e.g. `"Tomato Early Blight"`, `"Tomato Leaf Mold"`) matched immediately on the generic word `"tomato"`. Isolating the protocols by crop first and filtering out generic crop/leaf tokens ensures that the matching algorithm evaluates the specific pathological token (e.g. `"early blight"`, `"leaf mold"`) rather than short-circuiting on the crop name.
 > </details>
 > </details>
+
+
+---
+
+### ADR-098: PWA Service Worker Vite Production Bundle Dynamic Pre-Caching, Edge AI Neural Model Multi-Tier Cache Persistence, and Zero-Connectivity Dark Shell Resilience
+
+* **Context & The Problem:**
+  - When opening the AgriNexus Progressive Web App (PWA) in 100% offline environments (airplane mode or rural field conditions without cell service), users encountered a completely unstyled blank white screen.
+  - Furthermore, on-device foliar disease scans failed in offline mode with "Unverified Foliar Sample (0% confidence)" or prematurely aborted into KVK early exits ("We could not identify this crop or disease with high confidence...").
+  - Root causes identified across three layers:
+    1. *Missing Hashed Chunks in Pre-Cache Manifest:* `frontend/public/sw.js` statically listed shell icon paths in `STATIC_ASSETS`, but Vite generates content-hashed production files (`/assets/index-[hash].js`, `/assets/index-[hash].css`, `/assets/*.wasm`) that were completely missing from the pre-cache list. When opened offline, requests for `/assets/index-[hash].js` missed the cache, encountered network failure, and returned empty 404 responses. Without the JavaScript bundle executing, React never mounted into `<div id="root">`.
+    2. *Raw Default White DOM Background:* `index.html` had an unstyled `<body>`, causing the browser engine to render its default `#ffffff` canvas whenever JavaScript bundle execution was delayed or interrupted.
+    3. *Missing Pre-Cache for 71MB ONNX Neural Model & WASM Binaries:* `agrinexus_vision.onnx`, `agrinexus_vision.onnx.data`, and `ort-wasm-simd-threaded.wasm` were only fetched upon the first user scan. If a user opened the app and went offline before scanning a leaf, WebAssembly and ONNX weights were not cached, causing `InferenceSession.create` to fail offline.
+    4. *Cache Namespace Purge Vulnerability:* When bumping cache versions (e.g. v8 to v9), the Service Worker `activate` listener wiped all older cache namespaces indiscriminately, destroying cached application bundles if the browser reloaded offline.
+
+* **What Was Changed & How It Was Changed:**
+  1. *Vite SW Dynamic Bundle Injection Plugin (`frontend/vite.config.js`):* Implemented `injectServiceWorkerAssetsPlugin` inside Vite's `closeBundle` lifecycle. It scans `dist/assets/`, extracts compiled `.js`, `.css`, and `.wasm` bundle hashes, and automatically injects them directly into `dist/sw.js`'s `STATIC_ASSETS` array during every production build.
+  2. *Multi-Tier Resilient Service Worker Pre-Caching (`frontend/public/sw.js`):*
+     - **Tier 1 (Core Shell):** Precaches static manifest, icons, and logo assets.
+     - **Tier 2 (Dynamic Bundle Discovery):** On `install`, parses `/index.html` to discover and precache all `<script src="...">` and `<link href="...">` tags.
+     - **Tier 3 (Edge AI Neural Models & WASM):** Precaches `/models/agrinexus_vision.onnx`, `/models/agrinexus_vision.onnx.data`, `/models/class_mapping.json`, and `/wasm/*.wasm` into `CACHE_NAME` without blocking core shell installation.
+     - **Offline Cache Preservation:** Updated `activate` to check `navigator.onLine`. If offline, older cache namespaces are preserved rather than deleted.
+     - **Multi-Cache & Hash-Agnostic Fallback:** Updated `fetch` handler to search across all cache namespaces and fall back to existing cached `index-*.js` / `index-*.css` files if bundle hashes changed while offline.
+  3. *Zero-FOUC Dark Shell & Embedded Pulse Skeleton (`frontend/index.html`):* Styled `body` with `#020612` background, emerald text, and an inline loading skeleton inside `<div id="root">` to make raw white unstyled screens physically impossible.
+  4. *Application Root Error Boundary & Network-Gated Reload (`frontend/src/main.jsx`):* Added `<ErrorBoundary>` wrapper and restricted SW auto-reload to `navigator.onLine`.
+  5. *Offline Auth Profile & Field Guest Bypass (`frontend/src/services/auth.js`, `frontend/src/App.jsx`, `frontend/src/components/AuthView.jsx`):* Graceful "Offline Field Farmer" session fallback and field bypass button.
+  6. *Client-Side Background Neural Pre-Warming (`frontend/src/services/edgeVisionAgent.js`, `frontend/src/components/FarmerView.jsx`):* Added `preloadEdgeVisionModel()` called via `requestIdleCallback` on mount.
+
+* **Architectural Rationale:**
+  - *True Zero-Connectivity Edge Invariance:* In accordance with AgriNexus commercial-grade standards, the application shell, diagnostic UI, and edge neural classification models must operate completely offline without network round-trips.
+  - *Fail-Safe Resilience:* Multi-tier precaching, offline cache preservation, and dark DOM fallback eliminate the risk of empty 404 white screens.
+
+<details>
+<summary>💡 <strong>Knowledge-Check Quiz: ADR-098</strong></summary>
+
+> **Question:** In an offline-first Progressive Web App (PWA) built with Vite, why is a static list of hardcoded assets in `sw.js` insufficient to prevent blank offline screens, and how does dynamic bundle injection resolve this?
+>
+> 1. Because Vite requires a special Service Worker licence to cache files offline.
+> 2. Because Vite generates content-hashed filenames (e.g. `index-Cpu9Osuc.js`) on every build; a static manifest misses these hashed chunks, causing the browser to receive 404s when offline. A custom Vite build plugin dynamically reads `dist/assets/` and injects exact compiled filenames into `dist/sw.js`.
+> 3. Because browsers only cache `.html` files, and `.js` files must always be fetched over WebSockets.
+> 4. Because Service Workers cannot cache files larger than 10KB without dynamic bundle injection.
+>
+> <details>
+> <summary>💡 <strong>Reveal Solution & Explanation</strong></summary>
+>
+> **Correct Answer: 2**  
+> *Explanation:* Vite appends cryptographic content hashes to compiled JS and CSS chunks to enable aggressive HTTP caching. If `sw.js` only contains fixed paths like `/`, `/index.html`, and `/manifest.json`, the browser never caches the main JavaScript bundle that mounts the React tree. When the user loads the app offline, the bundle request fails with a 404, resulting in a blank white screen. Injecting the exact compiled asset hashes into `sw.js` during the Vite build guarantees that all production chunks are precached during service worker installation.
+> </details>
+> </details>

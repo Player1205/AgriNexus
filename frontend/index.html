@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#16a34a" />
+    <meta name="theme-color" content="#020612" />
     <meta name="description" content="AgriNexus - 100% On-Device Autonomous Crop Disease Pathology & ICAR Safety Swarm" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -18,8 +18,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>AgriNexus - Autonomous AI Agricultural Swarm</title>
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin: 0; padding: 0; background-color: #020612; color: #ffffff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased;">
+    <div id="root">
+      <div style="display: flex; min-height: 100vh; width: 100%; flex-direction: column; align-items: center; justify-content: center; background-color: #020612; color: #34d399; gap: 14px;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; border: 3px solid rgba(16, 185, 129, 0.2); border-top-color: #10b981; animation: an-spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
+        <p style="font-size: 14px; font-weight: 700; letter-spacing: -0.01em; color: #a7f3d0; margin: 0;">AgriNexus Autonomous Swarm</p>
+        <p style="font-size: 11px; color: #6ee7b7; opacity: 0.75; margin: 0;">100% On-Device Agricultural Intelligence</p>
+      </div>
+      <style>
+        @keyframes an-spin { to { transform: rotate(360deg); } }
+      </style>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

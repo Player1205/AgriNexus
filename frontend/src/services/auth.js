@@ -42,7 +42,17 @@ export const register = async (name, email, password) => {
 
 export const getCurrentUser = async () => {
   const token = getAuthToken();
-  if (!token) return null;
+  if (!token) {
+    const cachedUser = localStorage.getItem(USER_KEY);
+    if (cachedUser) {
+      try {
+        return JSON.parse(cachedUser);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
   try {
     const user = await authRequest("/api/v1/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
@@ -56,7 +66,14 @@ export const getCurrentUser = async () => {
       return null;
     }
     const cachedUser = localStorage.getItem(USER_KEY);
-    return cachedUser ? JSON.parse(cachedUser) : null;
+    if (cachedUser) {
+      try {
+        return JSON.parse(cachedUser);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 };
 

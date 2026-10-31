@@ -61,6 +61,17 @@ const EFFICIENTNET_CLASSES = [
 
 let cachedSession = null;
 
+export const preloadEdgeVisionModel = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+        console.log('[EDGE AI] Pre-warming on-device ONNX session in background...');
+        await initSession();
+        console.log('[EDGE AI] On-device ONNX model pre-warmed and memory-ready.');
+    } catch (e) {
+        console.warn('[EDGE AI] Background pre-warm note:', e?.message || e);
+    }
+};
+
 const initSession = async () => {
     if (!cachedSession) {
         const sessionOptions = {
@@ -73,9 +84,14 @@ const initSession = async () => {
             console.log('[EDGE AI] Initializing local ONNX runtime engine from /models/agrinexus_vision.onnx...');
             cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', sessionOptions);
         } catch (localErr) {
-            console.warn('[EDGE AI] Local WASM init failed, attempting CDN fallback...', localErr);
-            env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
-            cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', sessionOptions);
+            console.warn('[EDGE AI] Local WASM init failed:', localErr);
+            if (typeof navigator !== 'undefined' && navigator.onLine) {
+                console.log('[EDGE AI] Online mode: attempting CDN fallback for ONNX runtime...');
+                env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/';
+                cachedSession = await InferenceSession.create('/models/agrinexus_vision.onnx', sessionOptions);
+            } else {
+                throw localErr;
+            }
         }
     }
     return cachedSession;

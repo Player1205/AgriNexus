@@ -517,11 +517,22 @@ Dedicated administrative interface for extension supervisors:
 - **Session Isolation:** Telemetry broadcasts tag every event with `session_id`. `TelemetryView` filters events matching `window.__agrinexus_active_session`, eliminating cross-device or multi-tab cross-talk.
 - **850ms Progressive Laser Propagation:** Sequentially animates SVG laser beams across nodes (`vision` → `rag` → `safety` → `web3` → `voice`) with kinetic bot animations (circular wobble, float, shield rotation, 3D tilt, harmonic pulse).
 
-#### Progressive Web App (PWA) Architecture
-- **Multi-tiered Service Worker (`sw.js`):**
-  - **Network-First for Navigation / HTML:** Queries network first for `index.html` during online sessions, eliminating stale bundle hash deadlocks.
-  - **Cache-First for Hashed Assets:** Immutable static bundles (`.js`, `.css`, fonts, icons) hydrate instantly from cache.
+#### Progressive Web App (PWA) Architecture & Offline Resilience
+- **Vite Service Worker Asset Injection Plugin (`injectServiceWorkerAssetsPlugin` in `vite.config.js`):**
+  - Vite automatically generates content-hashed production filenames (`/assets/index-[hash].js`, `/assets/index-[hash].css`, `/assets/*.wasm`) for long-term immutable caching.
+  - During the `closeBundle` lifecycle, the custom plugin reads `dist/assets/`, extracts compiled bundles, and injects them into `dist/sw.js`'s `STATIC_ASSETS` array, guaranteeing that every production bundle is precached upon initial installation.
+- **Multi-tiered Service Worker (`sw.js` - `agrinexus-offline-v10`):**
+  - **Tier 1 (Core Shell):** Precaches static manifest, icons, and shell assets.
+  - **Tier 2 (Dynamic HTML Bundle Discovery):** On `install`, parses `/index.html` to discover and precache all `<script src="...">` and `<link href="...">` assets.
+  - **Tier 3 (Edge AI Neural Models & WASM):** Precaches `/models/agrinexus_vision.onnx`, `/models/agrinexus_vision.onnx.data`, `/models/class_mapping.json`, and `/wasm/*.wasm` into `CACHE_NAME` without blocking core shell installation.
+  - **Offline Cache Preservation:** On `activate`, verifies `navigator.onLine`. If offline, older cache namespaces are preserved rather than deleted, preventing destructive evictions.
+  - **Multi-Cache & Hash-Agnostic Fallback:** On `fetch`, if a requested bundle hash misses, the service worker searches across all cache namespaces and matches by pathname or serves existing cached `index-*.js` / `index-*.css` files, completely eliminating empty 404 white screens.
+  - **Network-First for Navigation / HTML:** Queries network first for `index.html` during online sessions, falling back to cached HTML when offline.
   - **Standalone Display Mode:** Silently suppresses install prompts when launched from the home screen (`display-mode: standalone`).
+- **Zero-FOUC Dark Shell & Embedded Pulse Skeleton (`index.html`):**
+  - `<body>` is inline-styled with background `#020612` and emerald typography, rendering an embedded pulse loading skeleton inside `<div id="root">`. A raw white `#ffffff` canvas is physically impossible under any network condition.
+- **Client-Side Background Neural Pre-Warming (`FarmerView.jsx` & `edgeVisionAgent.js`):**
+  - On mount, `FarmerView` triggers `preloadEdgeVisionModel()` via `requestIdleCallback`, compiling WebAssembly modules and mounting the 71.2MB ONNX model weights in background memory before the user triggers a foliar capture.
 - **Desktop Webcam Ingestion (`LaptopWebcamModal.jsx`):** Employs WebRTC `navigator.mediaDevices.getUserMedia` to stream live video to a canvas buffer, exporting a 90% quality JPEG blob for laptop users without native mobile camera pickers.
 
 #### IndexedDB Client-Side Outbox & Reconnection Sync Engine

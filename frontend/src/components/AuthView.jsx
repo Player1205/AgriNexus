@@ -438,6 +438,26 @@ export default function AuthView({ onAuthenticated }) {
           </button>
         </form>
 
+        {/* Offline Guest Mode Action */}
+        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const offlineUser = {
+                id: "offline_field_farmer",
+                name: "Kisan (Offline Field Mode)",
+                email: "farmer@agrinexus.local",
+                role: "farmer"
+              };
+              localStorage.setItem("agrinexus_auth_user", JSON.stringify(offlineUser));
+              onAuthenticated(offlineUser);
+            }}
+            className="w-full py-2.5 px-3 rounded-xl border border-emerald-600/30 bg-emerald-50/80 hover:bg-emerald-100/80 text-emerald-800 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>🌾 Continue in 100% Offline Field Mode</span>
+          </button>
+        </div>
+
         {/* Bottom Switcher: Register / Login (NO Google auth as requested) */}
         <div className="mt-7 text-center text-xs sm:text-[13px] text-gray-500">
           {isRegistering ? (

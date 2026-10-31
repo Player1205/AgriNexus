@@ -34,7 +34,30 @@ export default function App() {
 
   useEffect(() => {
     getCurrentUser()
-      .then(setUser)
+      .then((u) => {
+        if (u) {
+          setUser(u);
+        } else if (typeof navigator !== "undefined" && !navigator.onLine) {
+          // Automatic offline field farmer profile when offline with no saved user
+          const offlineUser = {
+            id: "offline_field_farmer",
+            name: "Kisan (Offline Field Mode)",
+            email: "farmer@agrinexus.local",
+            role: "farmer",
+          };
+          setUser(offlineUser);
+        }
+      })
+      .catch(() => {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          setUser({
+            id: "offline_field_farmer",
+            name: "Kisan (Offline Field Mode)",
+            email: "farmer@agrinexus.local",
+            role: "farmer",
+          });
+        }
+      })
       .finally(() => setAuthChecked(true));
   }, []);
 

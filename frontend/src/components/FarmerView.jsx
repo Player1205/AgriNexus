@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadImage, createTelemetrySocket, getBaseApiUrl, getClientLocation } from '../services/api';
 import { synthesizeSarvamSpeech } from '../services/edgeVoiceAgent';
+import { preloadEdgeVisionModel } from '../services/edgeVisionAgent';
 import { Camera, Volume2, Globe, AlertTriangle, CheckCircle, MapPin, Phone, ExternalLink, WifiOff, RefreshCw, Image as ImageIcon, Database } from 'lucide-react';
 import LaptopWebcamModal from './LaptopWebcamModal';
 import MapModal from './MapModal';
@@ -85,6 +86,17 @@ export default function FarmerView({ onAnalysisComplete, onOpenScans, selectedLa
     const cameraInputRef = useRef(null);
     const galleryInputRef = useRef(null);
     const audioRef = useRef(null);
+    // Pre-warm on-device Edge AI neural model in the background
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(() => preloadEdgeVisionModel(), { timeout: 3000 });
+            } else {
+                setTimeout(() => preloadEdgeVisionModel(), 1500);
+            }
+        }
+    }, []);
+
 
     // Online / Offline Network State Monitoring & Store-and-Forward Sync
     useEffect(() => {
