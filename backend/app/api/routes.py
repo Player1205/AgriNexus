@@ -274,6 +274,11 @@ async def analyze_image(
                 "filename": safe_filename,
             })
             safe_response["scan_id"] = saved_scan.get("id")
+
+            # Agent 6: AI Ingestion & Triage Gatekeeper (Way A: Separate Collections)
+            from app.agents.ingestion_agent import triage_and_route_scan
+            triage_meta = triage_and_route_scan(authenticated["id"], saved_scan.get("id"), safe_response)
+            safe_response["triage_metadata"] = triage_meta
         except Exception as scan_err:
             print(f"[MONGODB ATLAS SCAN RECORD ERROR] {scan_err}")
         return JSONResponse(content=safe_response)
@@ -305,4 +310,67 @@ async def get_banned_pesticides():
             "pesticides": banned_list
         }
     return JSONResponse(status_code=500, content={"error": "Banned pesticides registry unavailable"})
+
+class SaveScanPayload(BaseModel):
+    vision_diagnosis: Optional[str] = "Crop Foliage"
+    crop: Optional[str] = "Crop"
+    safe_dosage_ml_per_acre: Optional[float] = 0.0
+    dosage_unit: Optional[str] = "g"
+    is_safe: Optional[bool] = True
+    is_mic_protected: Optional[bool] = False
+    treatment: Optional[str] = ""
+    safety_warning: Optional[str] = ""
+    weather_data: Optional[dict] = None
+    nearest_kvk: Optional[dict] = None
+    translated_text: Optional[str] = ""
+    tx_hash: Optional[str] = ""
+    image_url: Optional[str] = ""
+    filename: Optional[str] = ""
+    vision_confidence: Optional[float] = 0.85
+
+@router.post("/api/v1/user/scans")
+async def create_user_scan_endpoint(payload: SaveScanPayload, authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict):
+        return user
+    
+    scan_dict = payload.model_dump()
+    saved = save_user_scan(user["id"], scan_dict)
+    
+    # Run Ingestion & Triage Agent (Way A)
+    from app.agents.ingestion_agent import triage_and_route_scan
+    triage_meta = triage_and_route_scan(user["id"], saved.get("id"), scan_dict)
+    
+    return {"status": "ok", "scan": saved, "triage_metadata": triage_meta}
+
+class KvkReviewPayload(BaseModel):
+    action: str
+    officer_notes: Optional[str] = ""
+    corrected_diagnosis: Optional[str] = None
+
+@router.get("/api/v1/kvk/review-queue")
+async def get_kvk_queue(limit: int = 50, authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict):
+        return user
+    from app.agents.ingestion_agent import get_pending_kvk_reviews
+    items = get_pending_kvk_reviews(limit=limit)
+    return {"review_queue": items, "count": len(items)}
+
+@router.post("/api/v1/kvk/review/{item_id}")
+async def resolve_kvk_item(item_id: str, payload: KvkReviewPayload, authorization: Optional[str] = Header(None)):
+    user = _require_user(authorization)
+    if not isinstance(user, dict):
+        return user
+    from app.agents.ingestion_agent import resolve_kvk_review
+    try:
+        res = resolve_kvk_review(item_id, payload.action, payload.officer_notes, payload.corrected_diagnosis)
+        return res
+    except ValueError as e:
+        return JSONResponse(status_code=404, content={"error": str(e)})
+
+@router.get("/api/v1/telemetry/stats")
+async def get_platform_telemetry_stats(authorization: Optional[str] = Header(None)):
+    from app.agents.ingestion_agent import get_telemetry_stats
+    return get_telemetry_stats()
 

@@ -47,6 +47,12 @@ def get_sessions_collection() -> Collection:
 def get_scans_collection() -> Collection:
     return get_db()["user_scans"]
 
+def get_verified_telemetry_collection() -> Collection:
+    return get_db()["verified_telemetry"]
+
+def get_kvk_review_queue_collection() -> Collection:
+    return get_db()["kvk_review_queue"]
+
 def init_mongo_db() -> bool:
     """
     Verifies connection to MongoDB Atlas and ensures all required indexes are present.
@@ -69,8 +75,17 @@ def init_mongo_db() -> bool:
         sessions.create_index([("token_hash", ASCENDING)], unique=True, name="idx_session_token_unique")
         sessions.create_index([("expires_at", ASCENDING)], name="idx_session_expires_at")
 
-        # 3. Compound index on user_scans (user_id + created_at DESC) for fast isolated history queries
+# 3. Compound index on user_scans (user_id + created_at DESC) for fast isolated history queries
         scans.create_index([("user_id", ASCENDING), ("created_at", DESCENDING)], name="idx_user_scans_user_time")
+
+        # 4. Indexes for verified_telemetry
+        verified = db["verified_telemetry"]
+        verified.create_index([("crop", ASCENDING), ("vision_confidence", DESCENDING)], name="idx_verified_crop_conf")
+        verified.create_index([("curated_at", DESCENDING)], name="idx_verified_time")
+
+        # 5. Indexes for kvk_review_queue (HITL)
+        review_q = db["kvk_review_queue"]
+        review_q.create_index([("review_status", ASCENDING), ("audit_priority", ASCENDING), ("created_at", DESCENDING)], name="idx_kvk_audit_queue")
 
         logger.info("MongoDB Atlas indexes verified successfully.")
         return True

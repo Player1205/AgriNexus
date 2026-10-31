@@ -345,3 +345,47 @@ export const fetchBannedPesticides = async () => {
   const fallback = await import("../data/banned_pesticides.json");
   return fallback.default || fallback;
 };
+
+export const getKvkReviewQueue = async () => {
+  const baseUrl = getBaseApiUrl();
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("agrinexus_auth_token") : null;
+  if (!token) return { review_queue: [], count: 0 };
+  const response = await fetch(`${baseUrl}/api/v1/kvk/review-queue`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Failed to load KVK review queue");
+  return await response.json();
+};
+
+export const resolveKvkReviewItem = async (itemId, action, officerNotes = "", correctedDiagnosis = null) => {
+  const baseUrl = getBaseApiUrl();
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("agrinexus_auth_token") : null;
+  if (!token) throw new Error("Authentication required");
+  const response = await fetch(`${baseUrl}/api/v1/kvk/review/${itemId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      action,
+      officer_notes: officerNotes,
+      corrected_diagnosis: correctedDiagnosis,
+    }),
+  });
+  if (!response.ok) throw new Error("Failed to resolve KVK review item");
+  return await response.json();
+};
+
+export const getTelemetryStats = async () => {
+  const baseUrl = getBaseApiUrl();
+  try {
+    const response = await fetch(`${baseUrl}/api/v1/telemetry/stats`);
+    if (!response.ok) {
+      return { total_user_scans: 0, verified_telemetry_count: 0, pending_kvk_reviews: 0, resolved_kvk_reviews: 0 };
+    }
+    return await response.json();
+  } catch (_) {
+    return { total_user_scans: 0, verified_telemetry_count: 0, pending_kvk_reviews: 0, resolved_kvk_reviews: 0 };
+  }
+};
