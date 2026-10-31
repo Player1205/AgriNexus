@@ -18,7 +18,7 @@ function injectServiceWorkerAssetsPlugin() {
         }
         
         const assetFiles = fs.readdirSync(assetsDir)
-          .filter(f => f.endsWith('.js') || f.endsWith('.css') || f.endsWith('.wasm'))
+          .filter(f => f.endsWith('.js') || f.endsWith('.css'))
           .map(f => `/assets/${f}`);
         
         let swContent = fs.readFileSync(swPath, 'utf-8');

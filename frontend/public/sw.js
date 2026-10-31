@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrinexus-offline-v10';
+const CACHE_NAME = 'agrinexus-offline-v11';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -16,15 +16,23 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
       console.log('[SW] Pre-caching core application shell into', CACHE_NAME);
-      try {
-        await cache.addAll(STATIC_ASSETS);
-      } catch (err) {
-        console.warn('[SW] Non-fatal pre-cache warning for static assets:', err);
+
+      // 1. Precache essential static shell assets individually (non-atomic for resilience)
+      for (const asset of STATIC_ASSETS) {
+        try {
+          const res = await fetch(asset);
+          if (res && res.ok) {
+            await cache.put(asset, res);
+          }
+        } catch (err) {
+          console.warn('[SW] Non-fatal pre-cache warning for static asset:', asset, err);
+        }
       }
 
-      // Dynamically discover and precache all linked Vite production bundle assets from /index.html
+      // 2. Dynamically discover and precache all linked Vite production bundle assets from /index.html
       try {
         const indexResp = await fetch('/index.html', { cache: 'no-cache' });
         if (indexResp && indexResp.ok) {
@@ -55,7 +63,11 @@ self.addEventListener('install', (event) => {
             }
           }
         }
-      // Asynchronously pre-cache Edge AI WASM binaries & ONNX model weights without blocking core shell
+      } catch (err) {
+        console.warn('[SW] Dynamic bundle discovery warning:', err);
+      }
+
+      // 3. Asynchronously pre-cache Edge AI WASM binaries & ONNX model weights without blocking core shell
       const EDGE_AI_ASSETS = [
         '/wasm/ort-wasm-simd-threaded.wasm',
         '/wasm/ort-wasm-simd-threaded.jsep.wasm',
@@ -77,7 +89,7 @@ self.addEventListener('install', (event) => {
           console.warn('[SW] Non-fatal Edge AI pre-cache fetch warning:', modelUrl, fetchErr);
         }
       }
-    })
+    })()
   );
 });
 
@@ -116,44 +128,60 @@ self.addEventListener('fetch', (event) => {
   // 2. NETWORK-FIRST for HTML / Navigation requests with instant offline fallback
   if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      (async () => {
+        // Fast path: if online, try network first
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+          try {
+            const networkResponse = await fetch(event.request);
+            if (networkResponse && networkResponse.status === 200) {
+              const cache = await caches.open(CACHE_NAME);
+              cache.put(event.request, networkResponse.clone());
+              cache.put('/index.html', networkResponse.clone());
+              cache.put('/', networkResponse.clone());
+              return networkResponse;
+            }
+          } catch (netErr) {
+            console.log('[SW] Network navigation fetch failed, falling back to cache');
           }
-          return networkResponse;
-        })
-        .catch(async () => {
-          // Offline fallback: Check current cache first, then any previous cache
-          const cachedIndex = (await caches.match('/index.html')) || (await caches.match('/'));
-          if (cachedIndex) return cachedIndex;
+        }
 
-          const allCaches = await caches.keys();
-          for (const cName of allCaches) {
-            const c = await caches.open(cName);
-            const match = (await c.match('/index.html')) || (await c.match('/'));
-            if (match) return match;
-          }
+        // Offline navigation fallback: Check current cache first, then any previous cache
+        const cachedIndex = (await caches.match('/index.html')) || (await caches.match('/'));
+        if (cachedIndex) return cachedIndex;
 
-          return new Response('AgriNexus is offline. Please reconnect once to cache the full application.', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({ 'Content-Type': 'text/plain' })
-          });
-        })
+        const allCaches = await caches.keys();
+        for (const cName of allCaches) {
+          const c = await caches.open(cName);
+          const match = (await c.match('/index.html')) || (await c.match('/'));
+          if (match) return match;
+        }
+
+        return new Response('AgriNexus is offline. Please reconnect once to cache the full application.', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain' })
+        });
+      })()
     );
     return;
   }
 
   // 3. CACHE-FIRST for versioned static assets (CSS, JS, WASM, models, images)
   event.respondWith(
-    caches.match(event.request).then(async (cachedResponse) => {
+    (async () => {
+      // 1. Check exact match in current cache
+      const cachedResponse = await caches.match(event.request);
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      // Try network if online
+      // 2. Try pathname match in current cache
+      if (url.pathname) {
+        const pathMatch = await caches.match(url.pathname);
+        if (pathMatch) return pathMatch;
+      }
+
+      // 3. Try network if online
       if (typeof navigator !== 'undefined' && navigator.onLine) {
         try {
           const networkResponse = await fetch(event.request);
@@ -168,7 +196,7 @@ self.addEventListener('fetch', (event) => {
         }
       }
 
-      // Resilient Offline Fallback: Search across ALL cache namespaces
+      // 4. Resilient Offline Fallback: Search across ALL cache namespaces
       const allCaches = await caches.keys();
       for (const cName of allCaches) {
         const c = await caches.open(cName);
@@ -210,6 +238,6 @@ self.addEventListener('fetch', (event) => {
 
       // If truly not found, return 404
       return new Response('', { status: 404, statusText: 'Not Found' });
-    })
+    })()
   );
 });

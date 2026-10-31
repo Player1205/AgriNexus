@@ -521,7 +521,7 @@ Dedicated administrative interface for extension supervisors:
 - **Vite Service Worker Asset Injection Plugin (`injectServiceWorkerAssetsPlugin` in `vite.config.js`):**
   - Vite automatically generates content-hashed production filenames (`/assets/index-[hash].js`, `/assets/index-[hash].css`, `/assets/*.wasm`) for long-term immutable caching.
   - During the `closeBundle` lifecycle, the custom plugin reads `dist/assets/`, extracts compiled bundles, and injects them into `dist/sw.js`'s `STATIC_ASSETS` array, guaranteeing that every production bundle is precached upon initial installation.
-- **Multi-tiered Service Worker (`sw.js` - `agrinexus-offline-v10`):**
+- **Multi-tiered Service Worker (`sw.js` - `agrinexus-offline-v11`):**
   - **Tier 1 (Core Shell):** Precaches static manifest, icons, and shell assets.
   - **Tier 2 (Dynamic HTML Bundle Discovery):** On `install`, parses `/index.html` to discover and precache all `<script src="...">` and `<link href="...">` assets.
   - **Tier 3 (Edge AI Neural Models & WASM):** Precaches `/models/agrinexus_vision.onnx`, `/models/agrinexus_vision.onnx.data`, `/models/class_mapping.json`, and `/wasm/*.wasm` into `CACHE_NAME` without blocking core shell installation.
