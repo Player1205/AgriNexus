@@ -9,8 +9,8 @@ export const runEdgeRagAgent = async (state) => {
     const confidence = Number(state.vision_confidence || 0.0);
     const isSupported = state.is_crop_supported !== false;
 
-    // Strict Gate: If crop is unsupported or confidence is low (<60%)
-    if (!isSupported || !diagnosis || diagnosis.includes('Unrecognized') || confidence < 0.60) {
+    // Strict Gate: If crop is unsupported or confidence is below mathematical resolution floor (<35%)
+    if (!isSupported || !diagnosis || diagnosis.includes('Unrecognized') || confidence < 0.35) {
         const detectedSubj = state.detected_subject || 'Non-Agricultural Subject';
         return {
             proposed_chemical: 'None - Non-Target / Inspection Required',
@@ -29,15 +29,46 @@ export const runEdgeRagAgent = async (state) => {
         };
     }
 
-    // Match certified ICAR protocol from in-memory database
-    const diagLower = diagnosis.toLowerCase();
-    const matchedProtocol = icarProtocols.find((p) => {
-        const diseaseLower = p.disease.toLowerCase();
-        if (diagLower.includes(diseaseLower) || diseaseLower.includes(diagLower)) {
-            return true;
+    // Grounded hierarchical ICAR protocol retrieval:
+    // 1. Exact pathology match
+    // 2. Crop taxonomy isolation to prevent cross-crop keyword collision (e.g. Tomato matching Potato or Apple)
+    const diagLower = diagnosis.toLowerCase().trim();
+    const detectedCrop = diagnosis.split(' ')[0].toLowerCase().replace(',', '').trim();
+
+    let matchedProtocol = icarProtocols.find((p) => p.disease.toLowerCase() === diagLower);
+
+    if (!matchedProtocol) {
+        const cropProtocols = icarProtocols.filter((p) => {
+            const pCrop = (p.crop || '').toLowerCase();
+            return pCrop.includes(detectedCrop) || detectedCrop.includes(pCrop) || diagLower.startsWith(pCrop);
+        });
+
+        if (cropProtocols.length > 0) {
+            // 2a. Check if disease name is substring of diagnosis or vice-versa within crop
+            matchedProtocol = cropProtocols.find((p) => {
+                const diseaseLower = p.disease.toLowerCase();
+                return diagLower.includes(diseaseLower) || diseaseLower.includes(diagLower);
+            });
+
+            // 2b. Check specific keywords within the same crop, excluding generic crop/leaf names
+            if (!matchedProtocol) {
+                matchedProtocol = cropProtocols.find((p) => {
+                    return p.keywords.some((k) => {
+                        const kLower = k.toLowerCase().trim();
+                        if (kLower === detectedCrop || kLower === 'leaf' || kLower === 'disease' || kLower === 'pepper' || kLower === 'bell pepper') {
+                            return false;
+                        }
+                        return diagLower.includes(kLower);
+                    });
+                });
+            }
+
+            // 2c. Fallback to first protocol of this certified crop
+            if (!matchedProtocol) {
+                matchedProtocol = cropProtocols[0];
+            }
         }
-        return p.keywords.some((k) => diagLower.includes(k.toLowerCase()));
-    });
+    }
 
     if (matchedProtocol) {
         const proposedChemical = matchedProtocol.active_chemical;

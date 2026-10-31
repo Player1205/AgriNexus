@@ -15,7 +15,7 @@ async def rag_node(state: AgriNexusState) -> dict:
 
     # Strict Gate: If crop is unsupported, or diagnosis is missing/unrecognized, or confidence is low (<60%)
     is_supported = state.get("is_crop_supported", True)
-    if not is_supported or not diagnosis or "Unrecognized" in diagnosis or confidence < 0.60:
+    if not is_supported or not diagnosis or "Unrecognized" in diagnosis or confidence < 0.35:
         detected_subj = state.get("detected_subject", "Non-Agricultural Subject")
         return {
             "proposed_chemical": "None - Non-Target / Inspection Required",

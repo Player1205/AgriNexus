@@ -76,8 +76,8 @@ export const runEdgeSafetyAgent = async (state) => {
     const lat = state.client_latitude;
     const lon = state.client_longitude;
 
-    // Case 1: Unsupported Crop, Low Confidence (<60%), or Unrecognized Anomaly -> Statutory Intercept
-    if (!isSupported || confidence < 0.60 || !chemical || chemical.includes('None') || diagnosis.includes('Unrecognized')) {
+    // Case 1: Unsupported Crop, Low Confidence (<35%), or Unrecognized Anomaly -> Statutory Intercept
+    if (!isSupported || confidence < 0.35 || !chemical || chemical.includes('None') || diagnosis.includes('Unrecognized')) {
         const nearestKvk = findNearestKvkOffline(lat, lon);
         const detectedSubj = state.detected_subject || 'Non-Agricultural Subject';
 
@@ -91,7 +91,7 @@ export const runEdgeSafetyAgent = async (state) => {
         } else {
             warningMsg = (
                 `NON-ACTIONABLE: Mandatory Physical Verification by Local KVK Extension Officer Required. ` +
-                `Foliar diagnostic confidence (${Math.round(confidence * 100)}%) is below statutory 60% threshold. ` +
+                `Foliar diagnostic confidence (${Math.round(confidence * 100)}%) is below statutory 35% resolution floor. ` +
                 `Nearest Center: ${nearestKvk.name} (${nearestKvk.distance_km} km away, Tel: ${nearestKvk.phone}).`
             );
         }

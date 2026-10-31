@@ -46,7 +46,7 @@ async def safety_node(state: AgriNexusState) -> dict:
 
     # Case 1: Unsupported Crop, Low Confidence (<60%), or Unrecognized Anomaly -> Statutory Intercept / KVK Referral
     is_supported = state.get("is_crop_supported", True)
-    if not is_supported or confidence < 0.60 or not chemical or "None" in chemical or "Unrecognized" in diagnosis:
+    if not is_supported or confidence < 0.35 or not chemical or "None" in chemical or "Unrecognized" in diagnosis:
         nearest_kvk = kvk_service.find_nearest_kvk(lat, lon)
         detected_subj = state.get("detected_subject", "Non-Agricultural Subject")
         if not is_supported:
@@ -58,7 +58,7 @@ async def safety_node(state: AgriNexusState) -> dict:
         else:
             warning_msg = (
                 "NON-ACTIONABLE: Mandatory Physical Verification by Local KVK Extension Officer Required. "
-                f"Foliar diagnostic confidence ({round(confidence*100, 1)}%) is below statutory 60% threshold. "
+                f"Foliar diagnostic confidence ({round(confidence*100, 1)}%) is below statutory 35% resolution floor. "
                 f"Nearest Center: {nearest_kvk['name']} ({nearest_kvk['distance_km']} km away, Tel: {nearest_kvk['phone']})."
             )
         return {

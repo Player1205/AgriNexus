@@ -321,9 +321,17 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
             }
         }
 
-        // 2. If Cloud Failed or Offline -> KVK Early Exit
+        // 2. If Cloud Succeeded, state was updated. If Cloud Failed or Offline, verify if On-Device Edge AI is valid:
         if (!isCloudSuccess) {
-            console.log("[SWARM ORCHESTRATOR] 🛑 Triggering Early Exit (KVK Fallback).");
+            const isEdgeValid = visionOutput.is_crop_supported && 
+                                visionOutput.vision_confidence >= 0.35 && 
+                                !visionOutput.vision_diagnosis.includes("Unrecognized") &&
+                                !visionOutput.vision_diagnosis.includes("Non-Agricultural");
+
+            if (isEdgeValid) {
+                console.log(`[SWARM ORCHESTRATOR] 🌿 Continuing offline with on-device Edge AI Diagnosis: ${visionOutput.vision_diagnosis} (${(visionOutput.vision_confidence * 100).toFixed(1)}%)`);
+            } else {
+                console.log("[SWARM ORCHESTRATOR] 🛑 Triggering Early Exit (KVK Fallback).");
 
             const earlyExitState = {
                 ...currentState,
@@ -373,6 +381,7 @@ export const runOfflineSwarmPipeline = async (file, language = 'hi', location = 
             };
             await persistScanLocally(earlyExitResult);
             return earlyExitResult;
+            }
         }
     }
 

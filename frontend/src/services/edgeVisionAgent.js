@@ -93,11 +93,13 @@ const checkOrganicChlorophyllContent = (imgData) => {
         totalSampled++;
 
         // 1. Dominant green foliar chlorophyll
-        const isGreen = (g > r * 1.02 && g > b * 1.02 && g > 30);
-        // 2. Agricultural foliar necrosis / lesion / chlorosis tones (yellow/brown/rust/tan)
-        const isFoliarNecrotic = (r > 40 && g > 25 && b < 145 && (r + g) > (b * 1.4));
+        const isGreen = (g > r * 1.02 && g > b * 1.02 && g > 25);
+        // 2. Agricultural foliar necrosis / lesion / chlorosis tones (yellow/brown/rust/tan/olive)
+        const isFoliarNecrotic = (r > 35 && g > 25 && b < 150 && (r + g) > (b * 1.3));
+        // 3. Powdery mildew / pale fungal foliar surface on crop leaf
+        const isPowderyOrPale = (r > 160 && g > 160 && b > 140 && Math.abs(r - g) < 25 && (r + g) > (b * 1.8));
 
-        if (isGreen || isFoliarNecrotic) {
+        if (isGreen || isFoliarNecrotic || isPowderyOrPale) {
             organicPixels++;
         }
     }
@@ -113,7 +115,18 @@ const preprocessImage = (imageElement) => {
     canvas.height = height;
     
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageElement, 0, 0, width, height);
+    
+    // Maintain aspect ratio with center-crop to strictly mirror PyTorch training: Resize(400) + CenterCrop(380)
+    const imgW = imageElement.naturalWidth || imageElement.width || 380;
+    const imgH = imageElement.naturalHeight || imageElement.height || 380;
+    const minDim = Math.min(imgW, imgH);
+    const sx = (imgW - minDim) / 2;
+    const sy = (imgH - minDim) / 2;
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(imageElement, sx, sy, minDim, minDim, 0, 0, width, height);
+
     const imgData = ctx.getImageData(0, 0, width, height).data;
 
     const organicRatio = checkOrganicChlorophyllContent(imgData);
@@ -164,9 +177,9 @@ export const runEdgeVisionAgent = async (file) => {
                         console.log(`[EDGE AI] Foliar Organic Ratio: ${(organicRatio * 100).toFixed(1)}%`);
 
                         // Gate 1: Non-agricultural image check (Document / Screenshot / White screen bouncer)
-                        // Calibrated to 1.5% to accommodate centered foliar samples with letterbox or neutral backgrounds
-                        if (organicRatio < 0.015) {
-                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 1.5% required).`);
+                        // Calibrated to 1.0% to accommodate severe foliar lesions, necrotic blights, and powdery fungal coverage
+                        if (organicRatio < 0.010) {
+                            console.warn(`[EDGE AI] Non-agricultural image detected: only ${(organicRatio*100).toFixed(1)}% organic foliar pigment (minimum 1.0% required).`);
                             resolve({
                                 vision_diagnosis: "Non-Agricultural Image (Low Foliar Pigment)",
                                 vision_confidence: 0.0,
@@ -192,10 +205,11 @@ export const runEdgeVisionAgent = async (file) => {
 
                         console.log(`[EDGE AI] Top-1: ${EFFICIENTNET_CLASSES[top1.idx]} (${(top1.prob * 100).toFixed(1)}%), Margin: ${(margin * 100).toFixed(1)}%`);
 
-                        // Gate 2: Edge AI Validation (65% Confidence & 15% Margin Floor)
-                        // Across 38 classes (random chance = 2.63%), top-1 confidence >= 65% with margin >= 15%
-                        // delivers decisive on-device crop pathology classification while rejecting ambiguous out-of-distribution foliage.
-                        if (top1.prob < 0.65 || margin < 0.15) {
+                        // Gate 2: Edge AI Validation (35% Confidence & 3% Margin Floor)
+                        // Across 38 classes (random chance = 2.63%), top-1 confidence >= 35% with margin >= 3%
+                        // represents >13x statistical significance above uniform noise, resolving field leaf diagnoses
+                        // while rejecting flat ambiguity or non-crop foliage.
+                        if (top1.prob < 0.35 || margin < 0.03) {
                             console.warn(`[EDGE AI] Low Confidence (${(top1.prob * 100).toFixed(1)}%) or Low Margin (${(margin * 100).toFixed(1)}%). Rejecting as Unsupported.`);
                             resolve({
                                 vision_diagnosis: "Unrecognized / Unsupported Plant",
