@@ -291,3 +291,18 @@ async def synthesize_speech_endpoint(payload: TTSPayload):
     if audio_path:
         return {"audio_url": audio_path}
     return JSONResponse(status_code=500, content={"error": "Speech synthesis failed"})
+
+@router.get("/api/v1/safety/banned-pesticides")
+async def get_banned_pesticides():
+    data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "banned_pesticides.json")
+    if os.path.exists(data_path):
+        with open(data_path, "r", encoding="utf-8") as f:
+            banned_list = json.load(f)
+        return {
+            "statutory_authority": "Central Insecticides Board and Registration Committee (CIBRC)",
+            "governing_act": "Insecticides Act, 1968 / Section 27",
+            "total_banned_count": len(banned_list),
+            "pesticides": banned_list
+        }
+    return JSONResponse(status_code=500, content={"error": "Banned pesticides registry unavailable"})
+

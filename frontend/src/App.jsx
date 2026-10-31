@@ -5,6 +5,7 @@ import PwaInstallBanner from "./components/PwaInstallBanner";
 import AuthView from "./components/AuthView";
 import UserScansModal from "./components/UserScansModal";
 import AdminDashboard from "./components/AdminDashboard";
+import BannedPesticidesTicker from "./components/BannedPesticidesTicker";
 import { getCurrentUser, logout } from "./services/auth";
 import { registerAutoSync } from "./services/offlineSyncEngine";
 import { countPendingScans } from "./services/offlineStorage";
@@ -87,6 +88,9 @@ export default function App() {
 
   return (
     <div className="relative flex flex-col h-[100dvh] w-full max-w-[100vw] overflow-hidden bg-[#020612]">
+      {/* Statutory Banned Pesticides Marquee */}
+      <BannedPesticidesTicker selectedLang={selectedLang} />
+
       {/* Top Application Header Bar */}
       <header className="shrink-0 flex items-center justify-between border-b border-gray-800/80 bg-[#050b1a] px-3 sm:px-4 py-2 z-40 shadow-lg">
         {/* Left: Brand */}

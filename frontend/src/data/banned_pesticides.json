@@ -1,0 +1,211 @@
+[
+  {
+    "id": "CIBRC-01",
+    "chemical_name": "endosulfan",
+    "display_name": "Endosulfan",
+    "hi_name": "एंडोसल्फान",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Supreme Court Order / Gazette S.O. 1102(E)",
+    "hazard_class": "Class Ib (Highly Hazardous)",
+    "reason": "Severe neurotoxicity, congenital disorders, persistent organic pollutant (Stockholm Convention).",
+    "safe_alternative": "Neem Oil 10,000 ppm / Emamectin Benzoate 5% SG"
+  },
+  {
+    "id": "CIBRC-02",
+    "chemical_name": "monocrotophos",
+    "display_name": "Monocrotophos",
+    "hi_name": "मोनोक्रोटोफॉस",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "CIB&RC S.O. 4212(E) / Insecticides Act 1968",
+    "hazard_class": "Class Ib (Highly Toxic Organophosphate)",
+    "reason": "Acute mammalian toxicity, mass avian mortality, banned for foliar spraying on vegetables.",
+    "safe_alternative": "Chlorantraniliprole 18.5% SC / Spinosad 45% SC"
+  },
+  {
+    "id": "CIBRC-03",
+    "chemical_name": "paraquat",
+    "display_name": "Paraquat Dichloride",
+    "hi_name": "पैराक्वाट डाइक्लोराइड",
+    "status": "RESTRICTED / BANNED",
+    "gazette_ref": "CIB&RC 418th Meeting Resolution",
+    "hazard_class": "Class II (Extremely Toxic / Irreversible Pulmonary Fibrosis)",
+    "reason": "Irreversible lung damage without known antidote; banned for general agricultural spray.",
+    "safe_alternative": "Mechanical mulching / Glufosinate Ammonium (where approved)"
+  },
+  {
+    "id": "CIBRC-04",
+    "chemical_name": "carbofuran",
+    "display_name": "Carbofuran",
+    "hi_name": "कार्बोफ्यूरन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "CIB&RC Gazette Notification 2020",
+    "hazard_class": "Class Ib (Systemic Carbamate)",
+    "reason": "Extreme toxicity to honeybees and earthworms; high groundwater leaching risk.",
+    "safe_alternative": "Trichoderma viride 1.5% WP / Neem seed kernel extract (NSKE 5%)"
+  },
+  {
+    "id": "CIBRC-05",
+    "chemical_name": "phorate",
+    "display_name": "Phorate",
+    "hi_name": "फोरेट",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Banned Under S.O. 3951(E)",
+    "hazard_class": "Class Ia (Extremely Hazardous Organophosphate)",
+    "reason": "One of the most toxic anticholinesterase chemicals known; fatal upon skin absorption.",
+    "safe_alternative": "Cartap Hydrochloride 4% G (Safe soil bio-agents)"
+  },
+  {
+    "id": "CIBRC-06",
+    "chemical_name": "triazophos",
+    "display_name": "Triazophos",
+    "hi_name": "ट्रायाजोफॉस",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "CIB&RC Anupam Verma Committee Recommendations",
+    "hazard_class": "Class Ib (Highly Hazardous)",
+    "reason": "Destroys natural beneficial predator populations; causes severe pest resurgence.",
+    "safe_alternative": "Flubendiamide 39.35% SC / Bacillus thuringiensis (Bt)"
+  },
+  {
+    "id": "CIBRC-07",
+    "chemical_name": "methomyl",
+    "display_name": "Methomyl",
+    "hi_name": "मेथोमाइल",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Banned Under S.O. 3951(E)",
+    "hazard_class": "Class Ib (Carbamate Cholinesterase Inhibitor)",
+    "reason": "High acute oral and inhalation toxicity; extreme threat to farm laborers without hazmat gear.",
+    "safe_alternative": "Lecanicillium lecanii / Indoxacarb 14.5% SC"
+  },
+  {
+    "id": "CIBRC-08",
+    "chemical_name": "dicofol",
+    "display_name": "Dicofol",
+    "hi_name": "डाइकोफॉल",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Stockholm Convention Global Elimination Listing",
+    "hazard_class": "Class II (Organochlorine / Endocrine Disruptor)",
+    "reason": "Structurally related to DDT; long-term bioaccumulation and reproductive failure in wildlife.",
+    "safe_alternative": "Fenazaquin 10% EC / Wettable Sulfur 80% WDG"
+  },
+  {
+    "id": "CIBRC-09",
+    "chemical_name": "methyl parathion",
+    "display_name": "Methyl Parathion",
+    "hi_name": "मिथाइल पैराथियान",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Rotterdam Convention Annex III / CIB&RC Complete Ban",
+    "hazard_class": "Class Ia (Extremely Hazardous)",
+    "reason": "Extremely high toxicity to humans, pollinators, and aquatic ecosystems.",
+    "safe_alternative": "Azadirachtin 50,000 ppm / Spinetoram 11.7% SC"
+  },
+  {
+    "id": "CIBRC-10",
+    "chemical_name": "diazinon",
+    "display_name": "Diazinon",
+    "hi_name": "डायजिनॉन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Insecticides Rules / Schedule Prohibition",
+    "hazard_class": "Class II (Organophosphate)",
+    "reason": "Known carcinogen and neurotoxin; high avian mortality.",
+    "safe_alternative": "Beauveria bassiana 1.15% WP"
+  },
+  {
+    "id": "CIBRC-11",
+    "chemical_name": "alachlor",
+    "display_name": "Alachlor",
+    "hi_name": "एलाक्लोर",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Gazette S.O. 3951(E) Phased Out",
+    "hazard_class": "Class III (Carcinogenic Chloroacetanilide)",
+    "reason": "High groundwater contaminant; classified by WHO as likely human carcinogen.",
+    "safe_alternative": "Pendimethalin 30% EC (Strictly as pre-emergence)"
+  },
+  {
+    "id": "CIBRC-12",
+    "chemical_name": "captafol",
+    "display_name": "Captafol",
+    "hi_name": "कैप्टाफोल",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "CIB&RC Complete Prohibition",
+    "hazard_class": "Class Ib (Carcinogenic / Mutagenic Fungicide)",
+    "reason": "Confirmed animal carcinogen causing DNA mutations; zero allowable dietary residue.",
+    "safe_alternative": "Copper Oxychloride 50% WP / Chlorothalonil 75% WP"
+  },
+  {
+    "id": "CIBRC-13",
+    "chemical_name": "lindane",
+    "display_name": "Lindane (gamma-HCH)",
+    "hi_name": "लिंडेन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Stockholm Convention POP Elimination",
+    "hazard_class": "Class II (Persistent Organochlorine)",
+    "reason": "Immune system disruptor and carcinogen; persists in soil for over 30 years.",
+    "safe_alternative": "Bio-nematicides / Metarhizium anisopliae"
+  },
+  {
+    "id": "CIBRC-14",
+    "chemical_name": "chlordane",
+    "display_name": "Chlordane",
+    "hi_name": "क्लोरडेन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Insecticides Act Section 27 Prohibition",
+    "hazard_class": "Class II (Dirty Dozen POP)",
+    "reason": "Bioaccumulates in human adipose tissue and mother's milk; causes hepatic damage.",
+    "safe_alternative": "Integrated Termite / Soil Pest Management"
+  },
+  {
+    "id": "CIBRC-15",
+    "chemical_name": "aldrin",
+    "display_name": "Aldrin",
+    "hi_name": "एल्ड्रिन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Gazette S.O. Banned Pesticide Schedule",
+    "hazard_class": "Class Ia (Dirty Dozen POP)",
+    "reason": "Rapidly metabolizes to dieldrin; extreme environmental bio-persistence.",
+    "safe_alternative": "Cultural crop rotation & solarization"
+  },
+  {
+    "id": "CIBRC-16",
+    "chemical_name": "dieldrin",
+    "display_name": "Dieldrin",
+    "hi_name": "डिल्ड्रिन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Gazette S.O. Banned Pesticide Schedule",
+    "hazard_class": "Class Ia (Dirty Dozen POP)",
+    "reason": "Extreme environmental hazard; completely prohibited worldwide.",
+    "safe_alternative": "Certified botanical bio-extracts"
+  },
+  {
+    "id": "CIBRC-17",
+    "chemical_name": "phosphamidon",
+    "display_name": "Phosphamidon",
+    "hi_name": "फॉस्फेमिडॉन",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "CIB&RC 2020 Final Gazette Notification",
+    "hazard_class": "Class Ia (Extremely Hazardous Organophosphate)",
+    "reason": "Acute human fatality risk; severe cardiovascular and respiratory collapse.",
+    "safe_alternative": "Thiamethoxam 25% WG / Acetamiprid 20% SP"
+  },
+  {
+    "id": "CIBRC-18",
+    "chemical_name": "sodium cyanide",
+    "display_name": "Sodium Cyanide",
+    "hi_name": "सोडियम साइनाइड",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "CIB&RC Prohibited Fumigant List",
+    "hazard_class": "Class Ia (Deadly Systemic Poison)",
+    "reason": "Blocks cellular oxygen utilization; immediate life hazard upon contact.",
+    "safe_alternative": "Hermetic grain storage / Aluminum Phosphide under certified supervision"
+  },
+  {
+    "id": "CIBRC-19",
+    "chemical_name": "fenitrothion",
+    "display_name": "Fenitrothion",
+    "hi_name": "फेनिट्रोथियान",
+    "status": "STATUTORY BANNED",
+    "gazette_ref": "Banned for Agricultural Food Crop Use",
+    "hazard_class": "Class II (Broad-Spectrum Organophosphate)",
+    "reason": "Destroys non-target pollinators and aquatic fauna; high residue persistence on crops.",
+    "safe_alternative": "Novaluron 10% EC / Pyriproxyfen 10% EC"
+  }
+]

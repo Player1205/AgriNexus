@@ -326,3 +326,22 @@ export const adminDeleteScan = async (scanId) => {
   return await response.json();
 };
 
+
+export const fetchBannedPesticides = async () => {
+  const baseUrl = getBaseApiUrl();
+  if (baseUrl && typeof navigator !== "undefined" && navigator.onLine) {
+    try {
+      const response = await fetch(`${baseUrl}/api/v1/safety/banned-pesticides`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && Array.isArray(data.pesticides) && data.pesticides.length > 0) {
+          return data.pesticides;
+        }
+      }
+    } catch (_) {}
+  }
+  const fallback = await import("../data/banned_pesticides.json");
+  return fallback.default || fallback;
+};

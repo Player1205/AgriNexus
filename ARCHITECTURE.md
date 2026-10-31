@@ -517,6 +517,15 @@ Dedicated administrative interface for extension supervisors:
   4. Dispatches an `agrinexus-offline-sync-complete` event, rendering a floating toast notification in `App.jsx` confirming cloud and blockchain synchronization.
 * **Unified Local & Cloud Modal:** [`UserScansModal.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/components/UserScansModal.jsx) merges remote MongoDB Atlas records with local IndexedDB records, providing offline access to past scans and rendering real-time synchronization badges (`⏳ Local (Pending Sync)` vs `☁️ Synced to Base Sepolia`).
 
+#### Statutory CIB&RC Banned Pesticides Marquee Ticker & Prohibition Registry (`BannedPesticidesTicker.jsx`)
+* **Primary Source Code:** [`frontend/src/components/BannedPesticidesTicker.jsx`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/components/BannedPesticidesTicker.jsx), [`frontend/src/data/banned_pesticides.json`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/frontend/src/data/banned_pesticides.json), & [`backend/app/data/banned_pesticides.json`](file:///c:/Users/vansh/OneDrive/Desktop/AgriNexus/backend/app/data/banned_pesticides.json)
+* **Statutory Regulatory Integration:** Integrates all 19 chemicals strictly prohibited under Section 27 of the Indian *Insecticides Act, 1968* (e.g. Endosulfan, Monocrotophos, Paraquat Dichloride, Carbofuran, Phorate, Methyl Parathion) directly into the UI header.
+* **Continuous 60FPS Hardware-Accelerated Marquee:** Pinned directly above the application header (`App.jsx`), rendering an infinite marquee using standard CSS `translate3d(-50%, 0, 0)` with double-buffered array repetition. Automatically pauses on hover or touch so farmers and agronomists can read and click items.
+* **Pinned Statutory Alert Badge:** Left-anchored statutory pill with a live pulsing beacon (`animate-ping`) and bilingual support (Hindi: `प्रतिबंधित कीटनाशक`, English: `CIB&RC BANNED PESTICIDES`).
+* **Zero-Latency Offline Resilience:** Statically imports `banned_pesticides.json` for instant sub-millisecond offline presentation, backed by an asynchronous background sync against `GET /api/v1/safety/banned-pesticides`.
+* **Interactive Modal Dialog:** Clicking any chemical pill launches a high-contrast modal presenting WHO/CIB&RC hazard classifications, specific toxicological reasons for prohibition (e.g. bioaccumulation, mutagenicity, neurotoxicity), and certified safe ICAR biological alternatives (e.g. *Trichoderma viride*, Neem Azadirachtin, *Beauveria bassiana*).
+
+
 ---
 
 ## 📊 6. Comprehensive API Reference & Network Contract

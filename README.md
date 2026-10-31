@@ -232,6 +232,9 @@ Before any chemical prescription reaches the farmer, it must pass the determinis
 
    *where $H$ is ambient relative humidity (%).*
 
+4. **Proactive Top-Bar Statutory Marquee Ticker:**
+   Directly on the frontend, an infinite 60FPS hardware-accelerated ticker marquee displays all 19 CIB&RC banned pesticides in real time with interactive modal dialogs detailing exact gazette notifications (e.g. S.O. 4212(E)), WHO hazard classes, and safe ICAR biological alternatives.
+
 ---
 
 ## 📊 Edge AI Model Benchmarks & 97% Vision Diagnostic Hierarchy

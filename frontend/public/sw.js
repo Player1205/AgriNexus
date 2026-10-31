@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrinexus-offline-v6';
+const CACHE_NAME = 'agrinexus-offline-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

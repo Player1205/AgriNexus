@@ -32,4 +32,25 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  @keyframes ticker-marquee {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  .animate-ticker-marquee {
+    display: flex;
+    width: max-content;
+    animation: ticker-marquee 55s linear infinite;
+    will-change: transform;
+  }
+
+  .animate-ticker-marquee:hover,
+  .animate-ticker-marquee:active {
+    animation-play-state: paused;
+  }
 }
