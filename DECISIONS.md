@@ -2395,6 +2395,9 @@ In commit `a24cbe1`, hyper-restrictive gatekeeper thresholds were introduced to 
      - Implemented an accessible modal that launches upon clicking any scrolling pesticide tag, displaying complete statutory credentials, regulatory gazette citations, specific health/ecological hazards, and certified non-toxic biological substitutes.
   4. *Authoritative Backend Statutory Registry Endpoint (`backend/app/api/routes.py`):*
      - Implemented `GET /api/v1/safety/banned-pesticides`, exposing the authoritative 19-chemical registry with statutory metadata, authority details, and total prohibited counts for external integration.
+6. *Complete 11-Language Indic Localization Matrix (`BannedPesticidesTicker.jsx` & `banned_pesticides.json`):*
+     - Expanded all 19 statutory prohibited chemicals with native script representations across all 11 supported languages: Hindi (`hi`), Punjabi (`pa`), Telugu (`te`), Tamil (`ta`), Malayalam (`ml`), Kannada (`kn`), Bengali (`bn`), Marathi (`mr`), Gujarati (`gu`), Odia (`od`), and English (`en`).
+     - Localized all UI ticker elements, statutory badges, hazard classifications, and legal warning notices dynamically based on the farmer's active session language.
   5. *Dual-Layer Offline Cache & Service Worker Invalidation (`frontend/public/sw.js` & `frontend/dist/sw.js`):*
      - Integrated `fetchBannedPesticides()` in `api.js` to attempt background synchronization while instantly falling back to local static JSON in offline modes.
      - Bumped Service Worker cache identifier to `agrinexus-offline-v7` across both public and build directories, ensuring instant cache invalidation upon client reload.
